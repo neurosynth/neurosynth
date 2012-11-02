@@ -25,7 +25,7 @@ Unpack the archive, which should contain 2 files: database.txt and features.txt.
 
 Now generate a new Dataset instance from the database.txt file:
 
-	> from neurosynth.base import dataset
+	> from neurosynth.base.dataset import Dataset
 	> dataset = Dataset('database.txt')
 
 This should take several minutes to process.
