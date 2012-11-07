@@ -20,7 +20,7 @@ class Dataset:
 		# Load the volume into a new Mask
 		try:
 			if volume is None:
-				resource_dir = os.path.join(os.path.dirname(__file__), '../resources')
+				resource_dir = os.path.join(os.path.dirname(__file__), '../../resources')
 				volume = os.path.join(resource_dir, 'MNI152_T1_2mm_brain.nii.gz')
 			self.volume = mask.Mask(volume)
 		except Exception, e:
