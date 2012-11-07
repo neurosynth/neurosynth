@@ -1,5 +1,5 @@
 from distutils.core import setup
-files = ['resources/*']
+files = ['../resources/*']
 setup(name = "neurosynth", 
 			version = "0.2", 
 			maintainer='Tal Yarkoni', 
