@@ -42,5 +42,19 @@ def average_within_regions(dataset, img, threshold=None, remove_zero=True, repla
 		result = result.astype(bool)
 	return result
 
-def random_voxels(dataset, img, n_voxels):
-	pass
+def get_random_voxels(dataset, n_voxels):
+	""" Returns mappable data for a random subset of voxels.
+
+	May be useful as a baseline in predictive analyses--e.g., to compare performance 
+	of a more principled feature selection method with simple random selection.
+
+	Args:
+		dataset: A Dataset instance
+		n_voxels: An integer specifying the number of random voxels to select.
+
+	Returns:
+		A 2D numpy array with (randomly-selected) voxels in rows and mappables in columns.
+	"""
+	voxels = np.range(dataset.volume.num_vox_in_mask)
+	selected = np.random.shuffle(voxels)[0:n_voxels]
+	return dataset.get_image_data(voxels=selected)

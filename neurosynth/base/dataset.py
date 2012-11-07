@@ -257,18 +257,26 @@ class ImageTable:
 		if use_sparse: self.data = sparse.csr_matrix(self.data)
 
 
-	def get_image_data(self, ids=None, dense=True):
-		""" Returns image data for specified mappable IDs.
+	def get_image_data(self, ids=None, voxels=None, dense=True):
+		""" Slices and returns a subset of image data.
 
-		Selects columns from the voxel x mappable data matrix. Images will be returned in the 
-		same format, i.e., each column in the array corresponds to a single mappable.
-		If dense is True (default), convert the result to a dense array before returning.
-		Note that toarray() can be quite slow when a large subset of data is requested. 
-		If ids is None, return all data.
+		Args:
+			ids: A list or 1D numpy array of Mappable ids to return. If None, returns 
+				data for all Mappables.
+			voxels: A list or 1D numpy array of voxel indices (i.e., rows) to return. 
+				If None, returns data for all voxels.
+			dense: Optional boolean. When True (default), convert the result to a dense 
+				array before returning. When False, keep as sparse matrix.
+
+		Returns:
+			A 2D numpy array, with voxels in rows and mappables in columns.
 		"""
-		if ids is None: return self.data
-		idxs = [i for i in range(len(self.ids)) if self.ids[i] in ids]
-		result = self.data[:,idxs]
+		if ids is None and voxels is None:
+			res = self.data
+		else:
+			# ???
+			idxs = [i for i in range(len(self.ids)) if self.ids[i] in ids]
+			result = self.data[:,idxs]
 		return result.toarray() if dense else result
 
 
