@@ -18,6 +18,7 @@ class Mask:
 		self.full = np.float64(self.volume.get_data().ravel())
 		self.in_mask = np.where(self.full) # Indices of in-mask voxels within full volume
 		self.num_vox_in_mask = np.shape(self.in_mask)[1]
+		self.vox_dims = self.get_header().get_zooms()
 		
 	def mask(self, img):
 		""" Vectorize an image and mask out all invalid voxels, returning
