@@ -167,7 +167,7 @@ class Dataset:
 		mask = nb.load(mask).get_data().astype(bool).ravel()
 		mask = self.volume.mask(mask)
 		# mask = np.squeeze(mask)
-		prop_mask_active = np.dot(self.image_table.T, mask).astype(float) / self.volume.num_vox_in_mask
+		prop_mask_active = np.dot(self.image_table.data.T, mask).astype(float) / self.volume.num_vox_in_mask
 		ids = np.where(prop_mask_active > threshold)
 		return self.get_image_data(ids) if get_image_data else ids
 
@@ -176,7 +176,7 @@ class Dataset:
 		""" A wrapper for get_ids_by_mask. Takes a list of xyz 
 		coordinates and generates a new Nifti1Image to use as a mask. """
 		img = imageutils.map_peaks_to_image(peaks, r, vox_dims=self.volume.vox_dims,
-				dims=self.volume.shape, header=self.volume.get_header())
+				dims=self.volume.volume. shape, header=self.volume.	_header())
 		return self.get_ids_by_mask(img, r, threshold, get_image_data=get_image_data)
 
 
