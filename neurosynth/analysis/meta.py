@@ -8,105 +8,111 @@ from scipy.stats import norm
 
 class MetaAnalysis:
 
-	""" Meta-analysis of a Dataset. Currently contrasts two subsets of 
-	studies within a Dataset and saves a bunch of statistical images.
-	Only one list of study IDs (ids) needs to be passed; the Universe will
-	be bisected into studies that are and are not included in the 
-	list, and the contrast is then performed across these two groups.
-	If a seond optional second study list is provided (ids2), the Dataset 
-	is first constrained to the union of ids1 and ids2, and the standard 
-	contrast is then performed."""
+  """ Meta-analysis of a Dataset. Currently contrasts two subsets of 
+  studies within a Dataset and saves a bunch of statistical images.
+  Only one list of study IDs (ids) needs to be passed; the Universe will
+  be bisected into studies that are and are not included in the 
+  list, and the contrast is then performed across these two groups.
+  If a seond optional second study list is provided (ids2), the Dataset 
+  is first constrained to the union of ids1 and ids2, and the standard 
+  contrast is then performed."""
 
-	# DESPERATELY NEEDS REFACTORING!!!
+  # DESPERATELY NEEDS REFACTORING!!!
 
-	def __init__(self, dataset, ids, ids2=None, **kwargs):
+  def __init__(self, dataset, ids, ids2=None, **kwargs):
 
-		self.dataset = dataset
-		mt = dataset.image_table
-		self.selected_ids = list(set(mt.ids) & set(ids))
-		self.selected_id_indices = np.in1d(mt.ids, ids)
+    """ Initiaize a new MetaAnalysis instance and run an analysis.
+    Args:
+      dataset: A Dataset instance.
+      ids: A list of Mappable IDs to include in the meta-analysis.
+      ids2: Optional second list of Mappable IDs. If passed, the set of studies will 
+        be restricted to the union of ids and ids2 before performing the meta-analysis.
+        This is useful for meta-analytic contrasts, as the resulting images will in 
+        effect identify regions that are reported/activated more frequently in one 
+        list than in the other.
+      kwargs: Additional optional arguments. Currently implemented:
+        q: The FDR threshold to use when correcting for multiple comparisons. Set to 
+          .01 by default.
+    """
 
-		# Calculate different count variables
-		print "Calculating counts..."
-		n_mappables = len(mt.ids)
-		n_selected = len(self.selected_ids)
-		n_unselected = n_mappables - n_selected
-		
-		# If ids2 is provided, we only use mappables explicitly in either ids or ids2.
-		# Otherwise, all mappables not in the ids list are used as the control condition.
-		unselected_id_indices = ~self.selected_id_indices if ids2 == None else np.in1d(mt.ids, ids2)
-		
-		n_selected_active_voxels = mt.data.dot(self.selected_id_indices)
-		n_unselected_active_voxels = mt.data.dot(unselected_id_indices)
+    self.dataset = dataset
+    mt = dataset.image_table
+    self.selected_ids = list(set(mt.ids) & set(ids))
+    self.selected_id_indices = np.in1d(mt.ids, ids)
 
-		# Nomenclature for variables below: p = probability, S = selected, g = given, 
-		# U = unselected, A = activation. So, e.g., pAgS = p(A|S) = probability of activation 
-		# in voxel given that the mappable is selected (i.e., is included in the ids list 
-		# passed to the constructor).
-		pS = (n_selected+1.0)/(n_mappables+2)
+    # Calculate different count variables
+    print "Calculating counts..."
+    n_mappables = len(mt.ids)
+    n_selected = len(self.selected_ids)
+    n_unselected = n_mappables - n_selected
+    
+    # If ids2 is provided, we only use mappables explicitly in either ids or ids2.
+    # Otherwise, all mappables not in the ids list are used as the control condition.
+    unselected_id_indices = ~self.selected_id_indices if ids2 == None else np.in1d(mt.ids, ids2)
+    
+    n_selected_active_voxels = mt.data.dot(self.selected_id_indices)
+    n_unselected_active_voxels = mt.data.dot(unselected_id_indices)
 
-		# Conditional probabilities, with Laplace smoothing
-		print "Calculating conditional probabilities..."
-		# pA = np.asarray(sparse.spmatrix.mean(mt.data, 1)) + 1.0/n_mappables
-		pA = (n_selected_active_voxels+1.0) / (n_mappables+2)
-		pAgS = (n_selected_active_voxels+1.0)/(n_selected+2)
-		pAgU = (n_unselected_active_voxels+1.0)/(n_unselected+2)
-		pSgA = pAgS * pS / pA
-		
-		# Recompute conditionals with uniform prior
-		print "Recomputing with uniform priors..."
-		prior_pS = kwargs.get('prior', 0.5)
-		pAgS_unif = prior_pS * pAgS + (1-prior_pS) * pAgU
-		pSgA_unif = pAgS * prior_pS / pAgS_unif
+    # Nomenclature for variables below: p = probability, S = selected, g = given, 
+    # U = unselected, A = activation. So, e.g., pAgS = p(A|S) = probability of activation 
+    # in voxel given that the mappable is selected (i.e., is included in the ids list 
+    # passed to the constructor).
+    pS = (n_selected+1.0)/(n_mappables+2)
 
-		# Set voxel-wise FDR to .05 unless explicitly specified	
-		q = kwargs.get('q', 0.01)
+    # Conditional probabilities, with Laplace smoothing
+    print "Calculating conditional probabilities..."
+    # pA = np.asarray(sparse.spmatrix.mean(mt.data, 1)) + 1.0/n_mappables
+    pA = (n_selected_active_voxels+1.0) / (n_mappables+2)
+    pAgS = (n_selected_active_voxels+1.0)/(n_selected+2)
+    pAgU = (n_unselected_active_voxels+1.0)/(n_unselected+2)
+    pSgA = pAgS * pS / pA
+    
+    # Recompute conditionals with uniform prior
+    print "Recomputing with uniform priors..."
+    prior_pS = kwargs.get('prior', 0.5)
+    pAgS_unif = prior_pS * pAgS + (1-prior_pS) * pAgU
+    pSgA_unif = pAgS * prior_pS / pAgS_unif
 
-		# One-way chi-square test for consistency of activation
-		p_vals = stats.one_way(np.squeeze(n_selected_active_voxels), n_selected)
-		p_vals[p_vals < 1e-240] = 1e-240  # prevents overflow due to loss of precision
-		z_sign = np.sign(n_selected_active_voxels - np.mean(n_selected_active_voxels)).ravel()
-		pAgS_z = np.abs(norm.ppf(p_vals/2)) * z_sign
-		
-		fdr_thresh = stats.fdr(p_vals, q)
-		pAgS_z_FDR = imageutils.threshold_img(pAgS_z, fdr_thresh, p_vals, mask_out='above')
-		
+    # Set voxel-wise FDR to .05 unless explicitly specified 
+    q = kwargs.get('q', 0.01)
 
-		# Two-way chi-square for specificity of activation
-		cells = np.squeeze(np.array([[n_selected_active_voxels, n_unselected_active_voxels],
-			[n_selected-n_selected_active_voxels, n_unselected-n_unselected_active_voxels]]).T)
-		p_vals = stats.two_way(cells)
-		p_vals[p_vals < 1e-240] = 1e-240  # prevents overflow
-		z_sign = np.sign(pAgS - pAgU).ravel()
-		pSgA_z = np.abs(norm.ppf(p_vals/2)) * z_sign
-		fdr_thresh = stats.fdr(p_vals, q)
-		pSgA_z_FDR = imageutils.threshold_img(pSgA_z, fdr_thresh, p_vals, mask_out='above')
+    # One-way chi-square test for consistency of activation
+    p_vals = stats.one_way(np.squeeze(n_selected_active_voxels), n_selected)
+    p_vals[p_vals < 1e-240] = 1e-240  # prevents overflow due to loss of precision
+    z_sign = np.sign(n_selected_active_voxels - np.mean(n_selected_active_voxels)).ravel()
+    pAgS_z = np.abs(norm.ppf(p_vals/2)) * z_sign
+    
+    fdr_thresh = stats.fdr(p_vals, q)
+    pAgS_z_FDR = imageutils.threshold_img(pAgS_z, fdr_thresh, p_vals, mask_out='above')
+    
 
-		# Retain any images we may want to save later
-		self.images = { 'pAgS': pAgS,
-						'pSgA': pSgA,
-						'pAgS_unif': pAgS_unif,
-						'pSgA_unif': pSgA_unif,
-						'pAgS_z': pAgS_z,
-						'pSgA_z': pSgA_z,
-						('pAgS_z_FDR_%s' % q): pAgS_z_FDR,
-						('pSgA_z_FDR_%s' % q): pSgA_z_FDR }
+    # Two-way chi-square for specificity of activation
+    cells = np.squeeze(np.array([[n_selected_active_voxels, n_unselected_active_voxels],
+      [n_selected-n_selected_active_voxels, n_unselected-n_unselected_active_voxels]]).T)
+    p_vals = stats.two_way(cells)
+    p_vals[p_vals < 1e-240] = 1e-240  # prevents overflow
+    z_sign = np.sign(pAgS - pAgU).ravel()
+    pSgA_z = np.abs(norm.ppf(p_vals/2)) * z_sign
+    fdr_thresh = stats.fdr(p_vals, q)
+    pSgA_z_FDR = imageutils.threshold_img(pSgA_z, fdr_thresh, p_vals, mask_out='above')
 
-	# def _setup(self):
-	# 	pass
+    # Retain any images we may want to save later
+    self.images = { 'pAgS': pAgS,
+            'pSgA': pSgA,
+            'pAgS_unif': pAgS_unif,
+            'pSgA_unif': pSgA_unif,
+            'pAgS_z': pAgS_z,
+            'pSgA_z': pSgA_z,
+            ('pAgS_z_FDR_%s' % q): pAgS_z_FDR,
+            ('pSgA_z_FDR_%s' % q): pSgA_z_FDR }
 
-	# def one_sample_test(self, ids):
-	# 	pass
 
-	# def two_sample_test(self, ids1, ids2):
-	# 	pass
-
-	def save_results(self, outroot, image_list=None):
-		""" Write out any images generated by the meta-analysis. The outroot argument is prepended 
-		to all file names. Optionally, a restricted list of images to save can be passed; otherwise, 
-		all images currently stored in self.images will be saved. """
-		print "Saving results..."
-		if image_list == None: image_list = self.images.keys()
-		for suffix, img in self.images.items():
-			if suffix in image_list:
-				imageutils.save_img(img, '%s_%s.nii.gz' % (outroot, suffix), self.dataset.volume)
+  def save_results(self, outroot, image_list=None):
+    """ Write out any images generated by the meta-analysis. The outroot argument is prepended 
+    to all file names. Optionally, a restricted list of images to save can be passed; otherwise, 
+    all images currently stored in self.images will be saved. """
+    print "Saving results..."
+    if image_list == None: image_list = self.images.keys()
+    for suffix, img in self.images.items():
+      if suffix in image_list:
+        imageutils.save_img(img, '%s_%s.nii.gz' % (outroot, suffix), self.dataset.volume)
