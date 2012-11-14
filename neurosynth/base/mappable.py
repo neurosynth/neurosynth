@@ -13,9 +13,12 @@ class Mappable(object):
     try:
       self.data = data
       self.id = data['id']
-      self.space = data['space']
+      # If space is not explicitly set, assume the coordinates are already in 
+      # the target space.
+      self.space = data['space'] if 'space' in data else transformer.target
+      
     except:
-      print "Error: missing ID and/or space fields. Please check source."
+      print "Error: missing ID and/or space fields. Please check database file."
       exit()
     
     # Loop through rows and set coordinates
@@ -30,7 +33,6 @@ class Mappable(object):
     # Convert from XYZ coordinates to matrix indices, saving both
     self.xyz = peaks
     self.peaks = transformations.xyz_to_mat(peaks)
-    # self.map_peaks
     
   def map_peaks(self):
     """Map all Peaks to a new Nifti1Image."""
