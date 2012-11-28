@@ -215,9 +215,10 @@ class Dataset:
     warrant inclusion. E.g., if threshold = 0.1, only mappables with 
     > 10% of voxels activated in mask will be returned. """
     mask = self.volume.mask(mask).astype(bool)
-    prop_mask_active = self.image_table.data.T.dot(mask).astype(float) / self.volume.num_vox_in_mask
-    ids = np.where(prop_mask_active > threshold)[0]
-    return self.get_image_data(ids) if get_image_data else ids
+    num_vox = np.sum(mask)
+    prop_mask_active = self.image_table.data.T.dot(mask).astype(float) / num_vox
+    indices = np.where(prop_mask_active > threshold)[0]
+    return self.get_image_data(indices) if get_image_data else [self.image_table.ids[ind] for ind in indices]
 
 
   def get_ids_by_peaks(self, peaks, r=10, threshold=0.0, get_image_data=False):

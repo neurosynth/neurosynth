@@ -53,13 +53,13 @@ class TestBase(unittest.TestCase):
     Only one peak in the test dataset (in study5) should be within the sgACC. """
     ids = self.dataset.get_ids_by_mask('data/sgacc_mask.nii.gz')
     self.assertEquals(len(ids), 1)
-    self.assertEquals(self.dataset.image_table.ids.index('study5'), ids[0])
+    self.assertEquals('study5', ids[0])
 
   def test_selection_by_peaks(self):
     """ Test peak-based Mappable selection. """
     ids = self.dataset.get_ids_by_peaks(np.array([[3, 30, -9]]))
     self.assertEquals(len(ids), 1)
-    self.assertEquals(self.dataset.image_table.ids.index('study5'), ids[0])   
+    self.assertEquals('study5', ids[0])
   
   # def test_invalid_coordinates_ignored(self):
     """ Test dataset contains 3 valid coordinates and one outside mask. But this won't work 
