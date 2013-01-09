@@ -33,6 +33,8 @@ def analyze_features(dataset, features, image_type=None, threshold=0.001, q=0.05
     image_type = 'pSgA_z'
   if save is None:
     result = np.zeros((dataset.volume.num_vox_in_mask, len(features)))
+  else:
+    result=[]
 
   for i, f in enumerate(features):
     ids = dataset.get_ids_by_features(f, threshold=threshold)
