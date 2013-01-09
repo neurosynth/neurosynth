@@ -379,8 +379,9 @@ class FeatureTable:
     try:
       self._features_from_json(filename, validate)
     except Exception, e:
-      print e
-      try: 
+      print 'Error loading JSON:',e
+      try:
+        print 'Trying plain text'
         self._features_from_txt(filename, validate)
       except Exception, e:
         print e
