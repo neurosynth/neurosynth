@@ -252,7 +252,7 @@ class Dataset:
     return self.feature_table.feature_names
 
   @classmethod
-  def load(filename):
+  def load(cls,filename):
     """ Load a pickled Dataset instance from file. """
     import cPickle
     return cPickle.load(open(filename, 'rb'))
