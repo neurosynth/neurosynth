@@ -36,7 +36,7 @@ class Decoder:
     self.load_features(features, image_type=image_type)
 
 
-  def decode(self, filenames, method=None, save=None, fmt='%.3f'):
+  def decode(self, filenames, method=None, save=None, round=4, names=None):
     """ Decodes a set of images.
 
     Args:
@@ -45,10 +45,15 @@ class Decoder:
         the method set when the Decoder instance was initialized.
       save: Optional filename to save results to. If None (default), returns 
         all results as an array.
-      fmt: Optional format to pass to numpy.savetxt() if saving to file.
+      round: Optional integer indicating number of decimals to round result 
+        to. Defaults to 4.
+      names: Optional list of names corresponding to the images in filenames.
+        If passed, must be of same length and in same order as filenames.
+        By default, the columns in the output will be named using the image 
+        filenames.
 
     Returns:
-      An n_files x n_features numpy array, where each feature is a row and 
+      An n_features x n_files numpy array, where each feature is a row and 
       each image is a column. The meaning of the values depends on the 
       decoding method used. """
 
@@ -60,12 +65,18 @@ class Decoder:
       'pattern': self._pattern_expression(imgs_to_decode)
     }
 
-    result = methods[method]
+    result = np.around(methods[method], round)
 
     if save is not None:
+
+      if names is None:
+        names = filenames
+
+      rownames = np.array(self.feature_names, dtype='|S32')[:,np.newaxis]
+
       f = open(save, 'w')
-      f.write('\t'.join(self.feature_names) + '\n')
-      np.savetxt(f, result, fmt='%.3f', delimiter='\t')
+      f.write('\t'.join(['Feature'] + names) + '\n')
+      np.savetxt(f, np.hstack((rownames, result)), fmt='%s', delimiter='\t')
     else:
       return methods[method]
 
@@ -126,13 +137,13 @@ class Decoder:
         in columns.
 
     Returns:
-      An n_images x n_features 2D array, with each cell representing the pearson 
-      correlation between the i'th image and the j'th feature across all voxels.
+      An n_features x n_images 2D array, with each cell representing the pearson 
+      correlation between the i'th feature and the j'th image across all voxels.
     """
     x, y = imgs_to_decode.astype(float), self.feature_images.astype(float)
     x, y = x - x.mean(0), y - y.mean(0)
     x, y = x/np.sqrt((x**2).sum(0)), y/np.sqrt((y**2).sum(0))
-    return x.T.dot(y)
+    return x.T.dot(y).T
 
 
   def _naive_bayes(self, imgs_to_decode):
@@ -144,4 +155,4 @@ class Decoder:
     """ Decode images using pattern expression. For explanation, see:
     http://wagerlab.colorado.edu/wiki/doku.php/help/fmri_help/pattern_expression_and_connectivity
     """
-    return np.dot(imgs_to_decode.T, self.feature_images)
+    return np.dot(imgs_to_decode.T, self.feature_images).T
