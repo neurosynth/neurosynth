@@ -33,6 +33,10 @@ class Decoder:
       from neurosynth.base import mask
       self.mask = mask.Mask(mask)
 
+    print features
+    if features is None:
+      features=dataset.list_features()
+      
     self.load_features(features, image_type=image_type)
 
 
