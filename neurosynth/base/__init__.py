@@ -1,1 +1,1 @@
-__all__ = ['dataset', 'mask', 'imageutils', 'mappable', 'transformations']
+__all__ = ['dataset', 'mask', 'imageutils', 'mappable', 'transformations', 'lexparser']

@@ -72,24 +72,24 @@ class MetaAnalysis:
         list than in the other.
       kwargs: Additional optional arguments. Currently implemented:
         q: The FDR threshold to use when correcting for multiple comparisons. Set to 
-          .01 by default.
+          .05 by default.
     """
 
     self.dataset = dataset
     mt = dataset.image_table
     self.selected_ids = list(set(mt.ids) & set(ids))
     self.selected_id_indices = np.in1d(mt.ids, ids)
-
-    # Calculate different count variables
-    # print "Calculating counts..."
-    n_mappables = len(mt.ids)
-    n_selected = len(self.selected_ids)
-    n_unselected = n_mappables - n_selected
     
     # If ids2 is provided, we only use mappables explicitly in either ids or ids2.
     # Otherwise, all mappables not in the ids list are used as the control condition.
     unselected_id_indices = ~self.selected_id_indices if ids2 == None else np.in1d(mt.ids, ids2)
-    
+
+    # Calculate different count variables
+    # print "Calculating counts..."
+    n_selected = len(self.selected_ids)
+    n_unselected = np.sum(unselected_id_indices)
+    n_mappables = n_selected + n_unselected
+
     n_selected_active_voxels = mt.data.dot(self.selected_id_indices)
     n_unselected_active_voxels = mt.data.dot(unselected_id_indices)
 

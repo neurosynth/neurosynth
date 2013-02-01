@@ -28,16 +28,17 @@ def map_peaks_to_image(peaks, r=4, vox_dims=(2,2,2), dims=(91,109,91), header=No
   return nifti1.Nifti1Image(data, None, header=header)
   
 
-def disjunction(images):
-  """ Returns a binary disjunction of all passed images, i.e., value=1
-  at any voxel that's non-zero in at least one image."""
-  pass
+# def disjunction(images):
+#   """ Returns a binary disjunction of all passed images, i.e., value=1
+#   at any voxel that's non-zero in at least one image."""
+#   pass
 
 
-def conjunction(images):
-  """ Returns a binary conjunction of all passed images, i.e., value=1
-  at any voxel that's non-zero in at least one image."""
-  pass
+# def conjunction(images):
+#   """ Returns a binary conjunction of all passed images, i.e., value=1
+#   at any voxel that's non-zero in at least one image."""
+#   pass
+
 
 def load_imgs(filenames, mask):
   """ Load multiple images from file into an ndarray.
@@ -82,5 +83,63 @@ def threshold_img(data, threshold, mask=None, mask_out='below'):
   elif mask_out.startswith('a'):
     data[data > threshold] = 0
   return data
+
+
+def img_to_json(img, mask=None, round=2):
+
+  """ Convert an image volume to web-ready JSON format.
+
+  Args:
+    img: Either an image filename or a masked data vector.
+    round: optional integer giving number of decimals to round values to.
+
+  Returns:
+    a JSON-formatted string.
+
+  """
+  if isinstance(img, basestring):
+    try:
+      tmp = NiftiImage(source)
+      if tmp.max:
+        data = tmp.data * tmp.max / np.max(tmp.data)
+      else:
+        data = tmp.data
+    except:
+      print "Error: The file %s does not exist or is not a valid image file." % source
+      exit()
+  else:
+    try:
+      data = source.data
+    except:
+      print "Error: the input doesn't appear to be a valid NiftiImage object."
+      exit()
+  
+  # Skip empty images
+  if np.sum(data) == 0:
+    return
+    
+  # Grab threshold before resampling
+  thresh = np.min(np.abs(data[np.nonzero(data)]))
+  
+  # compress into 2 lists, one with values, the other with list of indices for each value
+  ds = np.round_(ds, round)
+  uniq = list(np.unique(ds))
+  uniq.remove(0)
+  if len(uniq) == 0:
+    return
+  
+  contents = '{"thresh":%s,"max":%s,"min":%s,' % (round(thresh, round), round(np.max(ds), round), round(np.min(ds), round))
+  contents += '"vals":[' + ','.join([str(x) for x in uniq]) + ']'
+  ds_flat = ds.ravel()
+  all_inds = []
+  for val in uniq:
+    if val == 0:
+      continue
+    ind = list(np.where(ds_flat == val)[0])
+    all_inds.append("[" + ','.join([str(x) for x in ind]) + ']')
+  contents += ',"inds":[' + ','.join(all_inds) + ']}'
+  return contents
+
+
 
 

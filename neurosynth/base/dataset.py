@@ -192,7 +192,7 @@ class Dataset:
       return [m for m in self.mappables if m.id in ids]
 
     
-  def get_ids_by_features(self, features, threshold=None, func='sum', get_image_data=False):
+  def get_ids_by_features(self, features, threshold=None, func='sum', get_image_data=False, get_weights=False):
     """ A wrapper for FeatureTable.get_ids(). 
 
     Args:
@@ -204,8 +204,13 @@ class Dataset:
       get_image_data: An optional boolean. When True, returns a voxel x mappable matrix 
         of image data rather than the Mappable instances themselves.
     """
-    ids = self.feature_table.get_ids(features, threshold, func)
+    ids = self.feature_table.get_ids(features, threshold, func, get_weights)
     return self.get_image_data(ids) if get_image_data else ids
+
+
+  def get_ids_by_expression(self, expression, threshold=0.001, func='sum', get_image_data=False):
+    ids = self.feature_table.get_ids_by_expression(expression, threshold, func)
+    return self.get_image_data(ids) if get_image_data else ids    
 
     
   def get_ids_by_mask(self, mask, threshold=0.0, get_image_data=False):
@@ -230,14 +235,6 @@ class Dataset:
     return self.get_ids_by_mask(img, threshold, get_image_data=get_image_data)
 
 
-  # def get_features_by_mask(self, mask, feature_list=None, func='mean'):
-  #   """ Unimplemented. """
-  #   pass
-
-  # def get_features_by_peaks(self, peaks, r=10, feature_list=None, func='mean'):
-  #   pass
-
-
   def add_features(self, filename, description='', validate=False):
     """ Construct a new FeatureTable from file. """
     self.feature_table = FeatureTable(self, filename, description, validate)
@@ -252,7 +249,7 @@ class Dataset:
     return self.feature_table.feature_names
 
   @classmethod
-  def load(filename):
+  def load(cls, filename):
     """ Load a pickled Dataset instance from file. """
     import cPickle
     return cPickle.load(open(filename, 'rb'))
@@ -421,25 +418,42 @@ class FeatureTable:
     self.data = sparse.csr_matrix(self.data)
 
 
-  def get_ids(self, features, threshold=None, func='sum'):
+  def get_ids(self, features, threshold=None, func='sum', get_weights=False):
     """ Returns a list of all Mappables in the table that meet the desired feature-based
-    criteria. Will most commonly be used to retrieve Mappables that use one or more 
-    features with some minimum frequency; e.g.,:
-      get_ids(['fear', 'anxiety'], threshold=0.001)
-    The func argument can be any numpy function (default: sum). The function will be 
-    applied to the list of features and the result compared to the threshold. This can be 
-    used to change the meaning of the query in powerful ways. E.g,:
-      max: any of the features have to pass threshold (i.e., max > thresh)
-      min: all features must each individually pass threshold (i.e., min > thresh)
-      sum: the summed weight of all features must pass threshold (i.e., sum > thresh) 
+    criteria. 
+
+    Will most commonly be used to retrieve Mappables that use one or more 
+    features with some minimum frequency; e.g.,: get_ids(['fear', 'anxiety'], threshold=0.001)
+
+    Args:
+      features: a list of feature names to search on
+      threshold: optional float indicating threshold features must pass to be included
+      func: any numpy function to use for thresholding (default: sum). The function will be 
+        applied to the list of features and the result compared to the threshold. This can be 
+        used to change the meaning of the query in powerful ways. E.g,:
+          max: any of the features have to pass threshold (i.e., max > thresh)
+          min: all features must each individually pass threshold (i.e., min > thresh)
+          sum: the summed weight of all features must pass threshold (i.e., sum > thresh)
+      get_weights: boolean indicating whether or not to return weights.
+
+    Returns:
+      When get_weights is false (default), returns a list of Mappable names. When true, 
+      returns a dict, with mappable names as keys and feature weights as values.
     """
+
     if type(features) == str : features = [features]
     features = self.search_features(features)  # Expand wild cards
     feature_indices = np.in1d(np.array(self.feature_names), np.array(features))
     data = self.data.toarray()
     feature_weights = data[:,feature_indices]
     weights = eval("np.%s(tw, 1)" % func, {}, {'np':np, 'tw':feature_weights}) # Safe eval
-    return self.ids[weights >= threshold]
+    above_thresh = (weights >= threshold)
+    ids_to_keep = self.ids[above_thresh]
+    if get_weights:
+      return dict(zip(ids_to_keep, list(weights[above_thresh])))
+    else:
+      return ids_to_keep
+
 
   def search_features(self, search):
     ''' Returns all features that match any of the elements in the input list. '''
@@ -450,7 +464,12 @@ class FeatureTable:
     return results
 
 
-  def get_ids_by_expression(self, expression):
-    """ Use a PEG to parse expression and return mappables. Currently unimplemented. """ 
-    # Need to port the old Ruby code!
-    pass
+  def get_ids_by_expression(self, expression, threshold=0.001, func='sum'):
+    """ Use a PEG to parse expression and return mappables. """ 
+    from neurosynth.base import lexparser as lp
+    lexer = lp.Lexer()
+    lexer.build()
+    parser = lp.Parser(lexer, self.dataset, threshold=threshold, func='sum')
+    parser.build()
+    return parser.parse(expression).keys()
+
