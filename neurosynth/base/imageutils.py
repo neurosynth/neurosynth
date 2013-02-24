@@ -1,4 +1,5 @@
 from nibabel import nifti1
+import nibabel as nb
 import numpy as np
 
 """ Miscellaneous image-related functions. """
@@ -85,60 +86,71 @@ def threshold_img(data, threshold, mask=None, mask_out='below'):
   return data
 
 
-def img_to_json(img, mask=None, round=2):
+def img_to_json(img, decimals=2, swap=False, save=None):
 
-  """ Convert an image volume to web-ready JSON format.
+  """ Convert an image volume to web-ready JSON format suitable for import into 
+  the Neurosynth viewer.
 
   Args:
-    img: Either an image filename or a masked data vector.
-    round: optional integer giving number of decimals to round values to.
+    img: An image filename.
+    round: Optional integer giving number of decimals to round values to.
+    swap: A temporary kludge to deal with some orientation problems. For some reason 
+      the switch from PyNifti to NiBabel seems to produce images that load in a 
+      different orientation given the same header. In practice this can be addressed 
+      by flipping the x and z axes (swap = True), but need to look into this and 
+      come up with a permanent solution.
 
   Returns:
     a JSON-formatted string.
 
   """
-  if isinstance(img, basestring):
-    try:
-      tmp = NiftiImage(source)
-      if tmp.max:
-        data = tmp.data * tmp.max / np.max(tmp.data)
-      else:
-        data = tmp.data
-    except:
-      print "Error: The file %s does not exist or is not a valid image file." % source
-      exit()
-  else:
-    try:
-      data = source.data
-    except:
-      print "Error: the input doesn't appear to be a valid NiftiImage object."
-      exit()
+  try:
+    data = nb.load(img).get_data()
+  except:
+    print "Error: The file %s does not exist or is not a valid image file." % img
+    exit()
   
   # Skip empty images
   if np.sum(data) == 0:
     return
+
+  # Round values to save space. Note that in practice the resulting JSON file will 
+  # typically be larger than the original nifti unless the image is relatively 
+  # dense (even when compressed). More reason to switch from JSON to nifti reading 
+  # in the viewer!
+  data = np.round_(data, decimals)
+
+  # Temporary kludge to fix orientation issue
+  if swap:
+    data = np.swapaxes(data, 0, 2)
     
-  # Grab threshold before resampling
+  # Identify threshold--minimum nonzero value
   thresh = np.min(np.abs(data[np.nonzero(data)]))
   
   # compress into 2 lists, one with values, the other with list of indices for each value
-  ds = np.round_(ds, round)
-  uniq = list(np.unique(ds))
+  uniq = list(np.unique(data))
   uniq.remove(0)
   if len(uniq) == 0:
     return
   
-  contents = '{"thresh":%s,"max":%s,"min":%s,' % (round(thresh, round), round(np.max(ds), round), round(np.min(ds), round))
-  contents += '"vals":[' + ','.join([str(x) for x in uniq]) + ']'
-  ds_flat = ds.ravel()
+  contents = '{"thresh":%s,"max":%s,"min":%s, "dims":[%s], ' % (round(thresh, decimals), round(np.max(data), decimals), round(np.min(data), decimals), ', '.join([str(c) for c in list(data.shape)]))
+  contents += '"values":[' + ','.join([str(x) for x in uniq]) + ']'
+  ds_flat = data.ravel()
   all_inds = []
   for val in uniq:
     if val == 0:
       continue
     ind = list(np.where(ds_flat == val)[0])
     all_inds.append("[" + ','.join([str(x) for x in ind]) + ']')
-  contents += ',"inds":[' + ','.join(all_inds) + ']}'
-  return contents
+  contents += ',"indices":[' + ','.join(all_inds) + ']}'
+
+  # Write to file or return string
+  if save is not None:
+    outf = open(save, 'w')
+    outf.write(contents)
+    outf.close()
+  else:
+    return contents
 
 
 
