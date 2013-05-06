@@ -1,6 +1,7 @@
 from nibabel import nifti1
 import nibabel as nb
 import numpy as np
+import json
 
 """ Miscellaneous image-related functions. """
 
@@ -109,10 +110,33 @@ def img_to_json(img, decimals=2, swap=False, save=None):
   except:
     print "Error: The file %s does not exist or is not a valid image file." % img
     exit()
+
+  dims = ', '.join([str(c) for c in list(data.shape)])
   
+  def image_to_json(contents = None):
+    if contents is None:
+      contents = {
+        'thresh': 0.0,
+        'max': 0.0,
+        'min': 0.0,
+        'dims': dims,
+        'values': [],
+        'indices': []
+      }
+    contents = json.dumps(contents)
+    # Write to file or return string
+    if save is not None:
+      outf = open(save, 'w')
+      outf.write(contents)
+      outf.close()
+    else:
+      return result
+
   # Skip empty images
+  data = np.nan_to_num(data)
   if np.sum(data) == 0:
-    return
+    print "Image is empty!"
+    return image_to_json()
 
   # Round values to save space. Note that in practice the resulting JSON file will 
   # typically be larger than the original nifti unless the image is relatively 
@@ -129,28 +153,29 @@ def img_to_json(img, decimals=2, swap=False, save=None):
   
   # compress into 2 lists, one with values, the other with list of indices for each value
   uniq = list(np.unique(data))
+  # uniq = np.unique()
   uniq.remove(0)
   if len(uniq) == 0:
-    return
-  
-  contents = '{"thresh":%s,"max":%s,"min":%s, "dims":[%s], ' % (round(thresh, decimals), round(np.max(data), decimals), round(np.min(data), decimals), ', '.join([str(c) for c in list(data.shape)]))
-  contents += '"values":[' + ','.join([str(x) for x in uniq]) + ']'
+    return image_to_json()
+
+  contents = {
+    'thresh': round(thresh, decimals),
+    'max': round(np.max(data), decimals),
+    'min': round(np.min(data), decimals),
+    'dims': dims,
+    'values': [float('%.2f' % u) for u in uniq]
+  }
   ds_flat = data.ravel()
   all_inds = []
+
   for val in uniq:
     if val == 0:
       continue
-    ind = list(np.where(ds_flat == val)[0])
-    all_inds.append("[" + ','.join([str(x) for x in ind]) + ']')
-  contents += ',"indices":[' + ','.join(all_inds) + ']}'
+    ind = [int(x) for x in list(np.where(ds_flat == val)[0])] # UGH
+    all_inds.append(ind)
+  contents['indices'] = all_inds
 
-  # Write to file or return string
-  if save is not None:
-    outf = open(save, 'w')
-    outf.write(contents)
-    outf.close()
-  else:
-    return contents
+  return image_to_json(contents)
 
 
 

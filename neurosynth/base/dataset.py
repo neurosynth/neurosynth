@@ -244,7 +244,9 @@ class Dataset:
 
 
   def add_features(self, filename, description='', validate=False):
-    """ Construct a new FeatureTable from file. """
+    """ Construct a new FeatureTable from file. Note: this is destructive, and will 
+    overwrite existing FeatureTable. Need to add merging operations that gracefully 
+    handle missing studies and conflicting feature names. """
     self.feature_table = FeatureTable(self, filename, description, validate)
 
   
