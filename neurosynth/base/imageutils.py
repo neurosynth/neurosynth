@@ -111,7 +111,7 @@ def img_to_json(img, decimals=2, swap=False, save=None):
     print "Error: The file %s does not exist or is not a valid image file." % img
     exit()
 
-  dims = ', '.join([str(c) for c in list(data.shape)])
+  dims = list(data.shape)
   
   def image_to_json(contents = None):
     if contents is None:
@@ -135,7 +135,6 @@ def img_to_json(img, decimals=2, swap=False, save=None):
   # Skip empty images
   data = np.nan_to_num(data)
   if np.sum(data) == 0:
-    print "Image is empty!"
     return image_to_json()
 
   # Round values to save space. Note that in practice the resulting JSON file will 
