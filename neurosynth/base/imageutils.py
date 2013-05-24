@@ -1,12 +1,15 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
+#ex: set sts=2 ts=2 sw=2 noet:
+""" Miscellaneous image-related functions. """
+
 from nibabel import nifti1
 import nibabel as nb
 import numpy as np
 import json
 
-""" Miscellaneous image-related functions. """
 
 def get_sphere(coords, r=4, vox_dims=(2,2,2), dims=(91,109,91)):
-  """ # Return all points within r mm of coordinates. Generates a cube 
+  """ # Return all points within r mm of coordinates. Generates a cube
   and then discards all points outside sphere. Only returns values that
   fall within the dimensions of the image."""
   r = float(r)
@@ -19,7 +22,7 @@ def get_sphere(coords, r=4, vox_dims=(2,2,2), dims=(91,109,91)):
 
 def map_peaks_to_image(peaks, r=4, vox_dims=(2,2,2), dims=(91,109,91), header=None):
   """ Take a set of discrete foci (i.e., 2-D array of xyz coordinates)
-  and generate a corresponding image, convolving each focus with a 
+  and generate a corresponding image, convolving each focus with a
   hard sphere of radius r."""
   data = np.zeros(dims)
   for p in peaks:
@@ -28,7 +31,7 @@ def map_peaks_to_image(peaks, r=4, vox_dims=(2,2,2), dims=(91,109,91), header=No
     data[tuple(valid.T)] = 1
   # affine = header.get_sform() if header else None
   return nifti1.Nifti1Image(data, None, header=header)
-  
+
 
 # def disjunction(images):
 #   """ Returns a binary disjunction of all passed images, i.e., value=1
@@ -50,7 +53,7 @@ def load_imgs(filenames, mask):
     mask: A Mask instance.
 
   Returns:
-    An m x n 2D numpy array, where m = number of voxels in mask and 
+    An m x n 2D numpy array, where m = number of voxels in mask and
     n = number of images passed.
   """
   data = np.zeros((mask.num_vox_in_mask, len(filenames)))
@@ -71,11 +74,11 @@ def save_img(data, filename, mask, header=None):
 
 def threshold_img(data, threshold, mask=None, mask_out='below'):
   """ Threshold data, setting all values in the array above/below threshold to zero.
-  Optionally, can provide a mask (a 1D array with the same length as data), in which 
-  case the threshold is first applied to the mask, and the resulting indices are used 
-  to threshold the data. This is primarily useful when, e.g., applying a statistical 
-  threshold to a z-value image based on a p-value threshold. The mask_out argument 
-  indicates whether to zero out values 'below' the threshold (default) or 'above' the 
+  Optionally, can provide a mask (a 1D array with the same length as data), in which
+  case the threshold is first applied to the mask, and the resulting indices are used
+  to threshold the data. This is primarily useful when, e.g., applying a statistical
+  threshold to a z-value image based on a p-value threshold. The mask_out argument
+  indicates whether to zero out values 'below' the threshold (default) or 'above' the
   threshold. Note: use 'above' when masking based on p values. """
   if mask is not None:
     mask = threshold_img(mask, threshold, mask_out=mask_out)
@@ -89,16 +92,16 @@ def threshold_img(data, threshold, mask=None, mask_out='below'):
 
 def img_to_json(img, decimals=2, swap=False, save=None):
 
-  """ Convert an image volume to web-ready JSON format suitable for import into 
+  """ Convert an image volume to web-ready JSON format suitable for import into
   the Neurosynth viewer.
 
   Args:
     img: An image filename.
     round: Optional integer giving number of decimals to round values to.
-    swap: A temporary kludge to deal with some orientation problems. For some reason 
-      the switch from PyNifti to NiBabel seems to produce images that load in a 
-      different orientation given the same header. In practice this can be addressed 
-      by flipping the x and z axes (swap = True), but need to look into this and 
+    swap: A temporary kludge to deal with some orientation problems. For some reason
+      the switch from PyNifti to NiBabel seems to produce images that load in a
+      different orientation given the same header. In practice this can be addressed
+      by flipping the x and z axes (swap = True), but need to look into this and
       come up with a permanent solution.
 
   Returns:
@@ -112,7 +115,7 @@ def img_to_json(img, decimals=2, swap=False, save=None):
     exit()
 
   dims = list(data.shape)
-  
+
   def image_to_json(contents = None):
     if contents is None:
       contents = {
@@ -137,19 +140,19 @@ def img_to_json(img, decimals=2, swap=False, save=None):
   if np.sum(data) == 0:
     return image_to_json()
 
-  # Round values to save space. Note that in practice the resulting JSON file will 
-  # typically be larger than the original nifti unless the image is relatively 
-  # dense (even when compressed). More reason to switch from JSON to nifti reading 
+  # Round values to save space. Note that in practice the resulting JSON file will
+  # typically be larger than the original nifti unless the image is relatively
+  # dense (even when compressed). More reason to switch from JSON to nifti reading
   # in the viewer!
   data = np.round_(data, decimals)
 
   # Temporary kludge to fix orientation issue
   if swap:
     data = np.swapaxes(data, 0, 2)
-    
+
   # Identify threshold--minimum nonzero value
   thresh = np.min(np.abs(data[np.nonzero(data)]))
-  
+
   # compress into 2 lists, one with values, the other with list of indices for each value
   uniq = list(np.unique(data))
   # uniq = np.unique()

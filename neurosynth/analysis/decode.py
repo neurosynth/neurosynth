@@ -1,9 +1,12 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
+#ex: set sts=2 ts=2 sw=2 noet:
+""" Decoding-related methods """
+
 import numpy as np
 from neurosynth.base import imageutils
 
-""" Decoding-related methods """
 
-class Decoder:
+class Decoder(object):
 
   def __init__(self, dataset=None, method='pearson', features=None, mask=None, image_type=None):
     """ Initialize a new Decoder instance.
@@ -11,12 +14,12 @@ class Decoder:
     Args:
       dataset: An optional Dataset instance containing features to use in decoding.
       method: The decoding method to use (optional). By default, Pearson correlation.
-      features: Optional list of features to use in decoding. If None, use all 
-        features found in dataset. If features is a list of strings, use only the 
-        subset of features in the Dataset that are named in the list. If features 
-        is a list of filenames, ignore the dataset entirely and use only the 
+      features: Optional list of features to use in decoding. If None, use all
+        features found in dataset. If features is a list of strings, use only the
+        subset of features in the Dataset that are named in the list. If features
+        is a list of filenames, ignore the dataset entirely and use only the
         features passed as image files in decoding.
-      mask: An optional mask to apply to features and input images. If None, will use 
+      mask: An optional mask to apply to features and input images. If None, will use
         the one in the current Dataset.
       image_type: An optional string indicating the type of image to use when constructing
         feature-based images. See meta.analyze_features() for details.
@@ -35,7 +38,7 @@ class Decoder:
 
     if features is None:
       features = dataset.list_features()
-      
+
     self.load_features(features, image_type=image_type)
 
 
@@ -44,20 +47,20 @@ class Decoder:
 
     Args:
       files: A list of filenames of images to decode.
-      method: Optional string indicating decoding method to use. If None, use 
+      method: Optional string indicating decoding method to use. If None, use
         the method set when the Decoder instance was initialized.
-      save: Optional filename to save results to. If None (default), returns 
+      save: Optional filename to save results to. If None (default), returns
         all results as an array.
-      round: Optional integer indicating number of decimals to round result 
+      round: Optional integer indicating number of decimals to round result
         to. Defaults to 4.
       names: Optional list of names corresponding to the images in filenames.
         If passed, must be of same length and in same order as filenames.
-        By default, the columns in the output will be named using the image 
+        By default, the columns in the output will be named using the image
         filenames.
 
     Returns:
-      An n_features x n_files numpy array, where each feature is a row and 
-      each image is a column. The meaning of the values depends on the 
+      An n_features x n_files numpy array, where each feature is a row and
+      each image is a column. The meaning of the values depends on the
       decoding method used. """
 
     if method is None: method = self.method
@@ -92,8 +95,8 @@ class Decoder:
   def load_features(self, features, image_type=None):
     """ Load features from current Dataset instance or a list of files. """
     from os import path
-    # Check if the first element in list is a valid file; if yes, assume 
-    # we're dealing with image files, otherwise treat as names of features in 
+    # Check if the first element in list is a valid file; if yes, assume
+    # we're dealing with image files, otherwise treat as names of features in
     # the current Dataset.
     if path.exists(features[0]):
       self._load_features_from_images(features)
@@ -105,7 +108,7 @@ class Decoder:
     """ Load feature image data from the current Dataset instance.
 
     Args:
-      features: Optional list of features to use. If None, all features in the 
+      features: Optional list of features to use. If None, all features in the
         current Dataset instance will be used.
     """
     self.feature_names = self.dataset.feature_table.feature_names
@@ -132,15 +135,15 @@ class Decoder:
   def _pearson_correlation(self, imgs_to_decode):
     """ Decode images using Pearson's r.
 
-    Computes the correlation between each input image and each feature image across 
+    Computes the correlation between each input image and each feature image across
     voxels.
-    
+
     Args:
       imgs_to_decode: An ndarray of images to decode, with voxels in rows and images
         in columns.
 
     Returns:
-      An n_features x n_images 2D array, with each cell representing the pearson 
+      An n_features x n_images 2D array, with each cell representing the pearson
       correlation between the i'th feature and the j'th image across all voxels.
     """
     x, y = imgs_to_decode.astype(float), self.feature_images.astype(float)
@@ -165,13 +168,13 @@ class Decoder:
     """ Create a polar plot of decoding results.
 
     Args:
-      data: The data to plot. An m x n 2D numpy array, where images are in rows 
+      data: The data to plot. An m x n 2D numpy array, where images are in rows
         and features are in columns.
-      features: Optional list of features to include in the plot. By default, uses 
+      features: Optional list of features to include in the plot. By default, uses
         all features passed in data.
-      autoselect_features: Optional integer. If set to a value other than 0, will 
+      autoselect_features: Optional integer. If set to a value other than 0, will
         select the top N features for each image and use those in the plot.
-      autosort: Boolean indicating whether to reorder features to as to maximize 
+      autosort: Boolean indicating whether to reorder features to as to maximize
         separate in the plot.
 
     """
@@ -199,7 +202,7 @@ class Decoder:
     plt.rgrids(radial_grid)
 
     for d, color in zip(data, colors):
-        ax.plot(theta, d, color=color, lw=1) 
+        ax.plot(theta, d, color=color, lw=1)
         ax.fill(theta, d, facecolor=color, alpha=0.25)
 
     labels = image_names  # TODO: need to get this from user or instance
@@ -207,7 +210,7 @@ class Decoder:
     for l in legend.get_lines():
         l.set_linewidth(2)
     plt.setp(legend.get_texts(), fontsize='large')
-    plt.figtext(0.5, 0.965,  'Test radar plot', 
+    plt.figtext(0.5, 0.965,  'Test radar plot',
                ha='center', color='black', weight='bold', size='large')
     plt.show()
 
