@@ -1,7 +1,11 @@
 import unittest
 import numpy as np
 
+import tempfile, os, shutil
+
 from .utils import get_test_dataset, get_test_data_path
+
+from neurosynth.analysis import meta
 
 class TestBase(unittest.TestCase):
 
@@ -48,6 +52,14 @@ class TestBase(unittest.TestCase):
     self.assertEqual(len(ids), 4)
     img_data = d.get_ids_by_features(['f1', 'f3', 'g1'], 0.001, func='max', get_image_data=True)
     self.assertEqual(img_data.shape, (228453, 5))
+
+    # And some smoke-tests:
+    # run a meta-analysis
+    ma = meta.MetaAnalysis(d, ids)
+    # save the results
+    tempdir = tempfile.mkdtemp()
+    ma.save_results(tempdir + os.path.sep)
+    shutil.rmtree(tempdir)
 
   def test_selection_by_mask(self):
     """ Test mask-based Mappable selection.
