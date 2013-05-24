@@ -1,5 +1,5 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*- 
-#ex: set sts=4 ts=4 sw=4 noet:
+#emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
+#ex: set sts=2 ts=2 sw=2 noet:
 """Some handy functionality to be used by the Neurosynth test suite"""
 
 __author__ = 'Yaroslav Halchenko'

@@ -1,9 +1,11 @@
-"""' Various statistical helper methods. """
+#emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
+#ex: set sts=2 ts=2 sw=2 noet:
+"""Various statistical helper methods."""
 
+import warnings
+import numpy as np
 from scipy import special
 from scipy.stats import ss
-import numpy as np
-import warnings
 
 def pearson(self, x, y):
   """ Correlates row vector x with each row vector in 2D array y. """
@@ -15,15 +17,15 @@ def pearson(self, x, y):
   rs = temp / (datass[1:]*datass[0])
   return rs
 
-  
+
 def two_way(cells):
-  """ Two-way chi-square test of independence. 
+  """ Two-way chi-square test of independence.
   Takes a 3D array as input: N(voxels) x 2 x 2, where the last two dimensions
   are the contingency table for each of N voxels. Returns an array of p-values.
   """
   # Mute divide-by-zero warning for bad voxels since we account for that later
-  warnings.simplefilter("ignore", RuntimeWarning) 
-  
+  warnings.simplefilter("ignore", RuntimeWarning)
+
   cells = cells.astype('float64')  # Make sure we don't overflow
   total = np.apply_over_axes(np.sum, cells, [1,2]).ravel()
   chi_sq = np.zeros(cells.shape, dtype='float64')
@@ -35,7 +37,7 @@ def two_way(cells):
       chi_sq[bad_vox,i,j] = 1.0  # Set p-value for invalid voxels to 1
   chi_sq = np.apply_over_axes(np.sum, chi_sq, [1,2]).ravel()
   return special.chdtrc(1, chi_sq)#.astype(dt)
-  
+
 
 def one_way(data, n):
   """ One-way chi-square test of independence.
@@ -55,8 +57,8 @@ def one_way(data, n):
   nt_mss = (no_term - nt_exp)**2/nt_exp
   chi2 = t_mss + nt_mss
   return special.chdtrc(1, chi2)#.astype(dt)
-  
-  
+
+
 def fdr(p, q=.05):
   """ Determine FDR threshold given a p value array and desired false discovery rate q. """
   s = np.sort(p)

@@ -1,6 +1,10 @@
-""" Contains base Mappable object and all objects that inherit from Mappable.
-    A Mappable object is defined by the presence of one or more Peaks that can
-    be meaningfully represented as a spatial image. """
+#emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
+#ex: set sts=2 ts=2 sw=2 noet:
+""" Base Mappable object and all objects that inherit from Mappable.
+
+A Mappable object is defined by the presence of one or more Peaks that can
+be meaningfully represented as a spatial image.
+"""
 
 import imageutils
 import numpy as np
@@ -8,32 +12,32 @@ import transformations
 import json
 
 class Mappable(object):
-  
+
   def __init__(self, data, transformer=None):
     try:
       self.data = data
       self.id = data['id']
-      # If space is not explicitly set, assume the coordinates are already in 
+      # If space is not explicitly set, assume the coordinates are already in
       # the target space.
       self.space = data['space'] if 'space' in data else transformer.target
-      
+
     except:
       print "Error: missing ID and/or space fields. Please check database file."
       exit()
-    
+
     # Loop through rows and set coordinates
     peaks = np.zeros((len(data['peaks']), 3), dtype=int)
     for i,f in enumerate(data['peaks']):
       peaks[i,] = [float(j) for j in f[0:3]]
-    
+
     # Convert between stereotactic spaces
     if transformer is not None and self.space != transformer.target:
         peaks = transformer.apply(self.space, peaks)
-      
+
     # Convert from XYZ coordinates to matrix indices, saving both
     self.xyz = peaks
     self.peaks = transformations.xyz_to_mat(peaks)
-    
+
   def map_peaks(self):
     """Map all Peaks to a new Nifti1Image."""
     # if len(self.peaks) == 0: return
@@ -54,17 +58,16 @@ class Mappable(object):
       s += "\t%s\n" % str(p)
     return s
 
-    
+
 class Article(Mappable):
-  
+
   def __init__(self, data, transformer=None):
     super(Article, self).__init__(data, transformer)
 
-    
+
 class Table(Mappable):
-  
+
   def __init__(self, data, transformer=None, article=None):
     self.article = article
     super(Table, self).__init__(data, transformer)
 
-    
