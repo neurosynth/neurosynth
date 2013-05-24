@@ -1,17 +1,20 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
+#ex: set sts=2 ts=2 sw=2 noet:
+
 import numpy as np
 import nibabel as nb
 import os
 
-class Mask:
-  """ A lightweight wrapper around the NiBabel classes that 
+class Mask(object):
+  """ A lightweight wrapper around the NiBabel classes that
   handles vectorization/masking/unmasking of images. """
-  
+
   def __init__(self, volume):
-    """ Initialize a new ImageMask. The volume passed to the constructor indicates 
-    both the space in which all subsequent images are represented as well as the 
-    mask to use for all analyses. Any voxel in the mask with a non-zero valid is 
+    """ Initialize a new ImageMask. The volume passed to the constructor indicates
+    both the space in which all subsequent images are represented as well as the
+    mask to use for all analyses. Any voxel in the mask with a non-zero valid is
     considered valid for analyses.
-    
+
     TODO: implement additional masking to allow more efficient small-volume analyses.
     """
     self.volume = nb.load(volume)
@@ -21,10 +24,10 @@ class Mask:
     self.full = np.float64(data.ravel())
     self.in_mask = np.where(self.full) # Indices of in-mask voxels within full volume
     self.num_vox_in_mask = np.shape(self.in_mask)[1]
-    
+
   def mask(self, img):
     """ Vectorize an image and mask out all invalid voxels, returning
-    only the in-mask voxels as an array. Takes either a 3D ndarray or a filename 
+    only the in-mask voxels as an array. Takes either a 3D ndarray or a filename
     as input. """
     if isinstance(img, basestring):
       img = nb.load(img)

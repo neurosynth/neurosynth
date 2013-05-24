@@ -1,10 +1,12 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
+#ex: set sts=2 ts=2 sw=2 noet:
+""" Various transformations between coordinate frames, atlas spaces, etc. """
+
 import numpy as np
 from numpy import linalg
 
-""" Various transformations between coordinate frames, atlas spaces, etc. """
-
 def transform(foci, mat):
-  """ Convert coordinates from one space to another using provided 
+  """ Convert coordinates from one space to another using provided
   transformation matrix. """
   t = linalg.pinv(mat)
   foci = np.hstack((foci, np.ones((foci.shape[0], 1))))
@@ -33,8 +35,8 @@ def t88_to_mni():
   return np.array([[0.9254, 0.0024, -0.0118, -1.0207], [-0.0048, 0.9316, -0.0871, -1.7667], [0.0152, 0.0883,  0.8924, 4.0926], [0.0, 0.0, 0.0, 1.0]]).T
 
 
-class Transformer:
-  """ The Transformer class supports transformations between different 
+class Transformer(object):
+  """ The Transformer class supports transformations between different
   image spaces. """
 
   def __init__(self, transforms=None, target='MNI'):
@@ -47,7 +49,7 @@ class Transformer:
     self.transformations[name] = mat
 
   def apply(self, name, foci):
-    """ Apply a named transformation to a set of foci. 
+    """ Apply a named transformation to a set of foci.
 
     If the named transformation doesn't exist, return foci untransformed.
     """

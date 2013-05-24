@@ -1,7 +1,10 @@
+#emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
+#ex: set sts=2 ts=2 sw=2 noet:
+
 import ply.lex as lex
 import ply.yacc as yacc
 
-class Lexer:
+class Lexer(object):
 
 	tokens = (
 	'FEATURE', 'FLOAT', 'ANDNOT', 'OR', 'AND', 'CONTRAST', 'LPAR', 'RPAR', 'LT', 'RT'
@@ -44,7 +47,7 @@ class Lexer:
 
 
 
-class Parser:
+class Parser(object):
 
 	def __init__(self, lexer, dataset, threshold=0.001, func='sum'):
 
