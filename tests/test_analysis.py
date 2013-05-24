@@ -1,15 +1,16 @@
 import unittest
-from neurosynth.base.dataset import Dataset
-from neurosynth.analysis import *
 import numpy as np
+
+from neurosynth.analysis import *
+
+from .utils import get_test_dataset
 
 class TestAnalysis(unittest.TestCase):
 
   def setUp(self):
     """ Create a new Dataset and add features. """
-    self.dataset = Dataset('data/test_dataset.txt')
-    self.dataset.add_features('data/test_features.txt')
-  
+    self.dataset = get_test_dataset()
+
   def test_meta_analysis(self):
     """ Test full meta-analysis stream. """
     pass
@@ -18,7 +19,7 @@ class TestAnalysis(unittest.TestCase):
     pass
 
   def test_coactivation(self):
-    """ Test seed-based coactivation. """ 
+    """ Test seed-based coactivation. """
     pass
 
   def test_roi_averaging(self):
@@ -27,10 +28,10 @@ class TestAnalysis(unittest.TestCase):
   def test_get_random_voxels(self):
     pass
 
-    
+
 suite = unittest.TestLoader().loadTestsFromTestCase(TestAnalysis)
 
 if __name__ == '__main__':
     unittest.main()
 
-    
+
