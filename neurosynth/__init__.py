@@ -28,7 +28,7 @@ def set_logging_level(level=None):
 def _setup_logger(logger):
     # Basic logging setup
     console = logging.StreamHandler(sys.stdout)
-    console.setFormatter(logging.Formatter("%(levelname)-6s %(message)s"))
+    console.setFormatter(logging.Formatter("%(levelname)-6s %(module)-7s %(message)s"))
     logger.addHandler(console)
     set_logging_level()
 
