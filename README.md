@@ -11,7 +11,13 @@ Neurosynth is a Python package for large-scale synthesis of functional neuroimag
 
 ## Installation
 
-Neurosynth depends on the NumPy/SciPy libraries. It also depends on NiBabel. Assuming you have those packages in working order, download this package, then install it from source:
+Dependencies:
+
+* NumPy and SciPy libraries
+* NiBabel
+* [ply](http://www.dabeaz.com/ply/) (optional, for complex structured queries)
+
+Assuming you have those packages in working order, download this package, then install it from source:
 
 	> python setup.py install
 
