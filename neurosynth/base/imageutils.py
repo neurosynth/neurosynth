@@ -94,8 +94,7 @@ def threshold_img(data, threshold, mask=None, mask_out='below'):
 
 
 def img_to_json(img, decimals=2, swap=False, save=None):
-
-  """ Convert an image volume to web-ready JSON format suitable for import into
+  """ Convert an image volume to web-ready JSON format suitable for import into 
   the Neurosynth viewer.
 
   Args:
@@ -114,9 +113,7 @@ def img_to_json(img, decimals=2, swap=False, save=None):
   try:
     data = nb.load(img).get_data()
   except Exception, e:
-    logger.error("The file %s does not exist or is not a valid image file: e"
-                 % (img, e))
-    raise e
+    raise Exception("Error laoding %s: %s" % (img, str(e)))
 
   dims = list(data.shape)
 
