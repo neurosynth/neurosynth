@@ -20,9 +20,10 @@ if 'setuptools' in sys.modules:
 files = ['../resources/*']
 setup(name = "neurosynth",
       version = "0.2.dev",
+      description = "Large-scale synthesis of functional neuroimaging data",
       maintainer='Tal Yarkoni',
       maintainer_email='tyarkoni@gmail.com',
-      url='http://github.com/neurosynth/core',
+      url='http://github.com/NeuroSynth/Neurosynth',
       packages = ["neurosynth", "neurosynth.base", "neurosynth.analysis", "tests"],
       package_data = {'neurosynth' : ['../resources/*'],
                       'tests' : ['data/*']
