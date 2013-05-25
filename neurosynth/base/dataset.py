@@ -263,9 +263,21 @@ class Dataset(object):
     """ A convenience wrapper for ImageTable.get_image_data(). """
     return self.image_table.get_image_data(ids, dense=dense)
 
-  def list_features(self):
+
+  def get_feature_names(self):
     """ Returns a list of all current feature names. """
     return self.feature_table.feature_names
+
+
+  def get_feature_counts(self, threshold=0.001):
+    """ Returns a dictionary, where the keys are the feature names
+    and the values are the number of studies tagged with the feature. """
+    result = {}
+    for f in self.get_feature_names():
+      result[f] = len(self.get_ids_by_features([f], threshold=threshold))
+    return result
+
+
 
   @classmethod
   def load(cls, filename):

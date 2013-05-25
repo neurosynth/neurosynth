@@ -3,7 +3,7 @@ import numpy as np
 
 from neurosynth.analysis import *
 
-from .utils import get_test_dataset
+from utils import get_test_dataset
 
 class TestAnalysis(unittest.TestCase):
 

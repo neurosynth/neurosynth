@@ -3,7 +3,7 @@ import numpy as np
 
 import tempfile, os, shutil
 
-from .utils import get_test_dataset, get_test_data_path
+from utils import get_test_dataset, get_test_data_path
 
 from neurosynth.analysis import meta
 
@@ -36,7 +36,7 @@ class TestBase(unittest.TestCase):
     """ Test FeatureTable initialization. """
     tt = self.dataset.feature_table
     self.assertIsNotNone(tt)
-    self.assertEqual(len(self.dataset.list_features()), 5)
+    self.assertEqual(len(self.dataset.get_feature_names()), 5)
     self.assertEqual(tt.data.shape, (5,5))
     self.assertEqual(tt.feature_names[3], 'f4')
     self.assertEqual(tt.data[0,0], 0.0003)
