@@ -316,13 +316,31 @@ class ImageTable(object):
     self.ids = [m.id for m in mappables]
     self.volume = volume
     self.r = r
-    self.data = np.zeros((self.volume.num_vox_in_mask, len(mappables)), dtype=int)
+
+    data_shape = (self.volume.num_vox_in_mask, len(mappables))
+    if use_sparse:
+      # Fancy indexing assignment is not supported for sparse matrices, so
+      # let's keep lists of values and their indices (rows, cols) to later
+      # construct the csr_matrix.
+      vals, rows, cols = [], [], []
+    else:
+      self.data = np.zeros(data_shape, dtype=int)
 
     for i, s in enumerate(mappables):
       print "%s/%s..." % (str(i+1), str(len(mappables)))
       img = imageutils.map_peaks_to_image(s.peaks, r=r, header=self.volume.get_header())
-      self.data[:,i] = self.volume.mask(img)
-    if use_sparse: self.data = sparse.csr_matrix(self.data)
+      img_masked = self.volume.mask(img)
+      if use_sparse:
+        nz = np.nonzero(img_masked)
+        assert(len(nz) == 1)
+        vals += list(img_masked[nz])
+        rows += list(nz[0])
+        cols += [i] * len(nz[0])
+      else:
+        self.data[:, i] = img_masked
+
+    if use_sparse:
+      self.data = sparse.csr_matrix((vals, (rows, cols)), shape=data_shape)
 
 
   def get_image_data(self, ids=None, voxels=None, dense=True):
