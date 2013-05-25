@@ -2,11 +2,14 @@
 #ex: set sts=2 ts=2 sw=2 noet:
 """ Miscellaneous image-related functions. """
 
-from nibabel import nifti1
-import nibabel as nb
-import numpy as np
 import json
+import logging
 
+import nibabel as nb
+from nibabel import nifti1
+import numpy as np
+
+logger = logging.getLogger('neurosynth')
 
 def get_sphere(coords, r=4, vox_dims=(2,2,2), dims=(91,109,91)):
   """ # Return all points within r mm of coordinates. Generates a cube
@@ -110,9 +113,10 @@ def img_to_json(img, decimals=2, swap=False, save=None):
   """
   try:
     data = nb.load(img).get_data()
-  except:
-    print "Error: The file %s does not exist or is not a valid image file." % img
-    exit()
+  except Exception, e:
+    logger.error("The file %s does not exist or is not a valid image file: e"
+                 % (img, e))
+    raise e
 
   dims = list(data.shape)
 
