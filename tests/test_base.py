@@ -90,7 +90,7 @@ class TestBase(unittest.TestCase):
     result = image_table.get_image_data()
     self.assertEqual(result.all(), image_table.data.toarray().all(), result)
     
-  def test_either_dataset_or_manual_mappables(self):
+  def test_either_dataset_or_manual_image_vars(self):
     with self.assertRaises(AssertionError):
       image_table = ImageTable()
 

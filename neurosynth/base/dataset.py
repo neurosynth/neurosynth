@@ -330,7 +330,8 @@ class ImageTable(object):
     """
     if dataset is not None:
       mappables, volume, r = dataset.mappables, dataset.volume, dataset.r
-    assert mappables is not None
+    for var in [mappables, volume, r]:
+      assert var is not None
     self.ids = [m.id for m in mappables]
     self.volume = volume
     self.r = r
