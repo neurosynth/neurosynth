@@ -114,6 +114,10 @@ class TestBase(unittest.TestCase):
     image_table = ImageTable(dataset=self.dataset)
     result = image_table.get_image_data()
     self.assertEqual(result.all(), image_table.data.toarray().all(), result)
+    
+  def test_either_dataset_or_manual_image_vars(self):
+    with self.assertRaises(AssertionError):
+      image_table = ImageTable()
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
 
