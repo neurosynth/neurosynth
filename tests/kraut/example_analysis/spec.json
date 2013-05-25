@@ -1,0 +1,69 @@
+{
+  "id": "neurosynth_example_analysis_emotion",
+  "inputs": {
+    "database tarball": {
+      "type": "file",
+      "url": "http://neurosynth.org/data/current_data.tar.gz",
+      "value": "current_data.tar.gz"
+      },
+    "analysis script": {
+      "type": "file",
+      "value": "example.py"
+    }
+  },
+  "outputs": {
+    "pAgF_given_pF=0.50": {
+      "tags": ["3D image", "nifti1 format", "volumetric image"],
+      "type": "file",
+      "value": "emotion_pAgF_given_pF=0.50.nii.gz"
+    },
+    "pAgF": {
+      "tags": ["3D image", "nifti1 format", "volumetric image"],
+      "type": "file",
+      "value": "emotion_pAgF.nii.gz"
+    },
+    "pAgF_z_FDR_0.05": {
+      "tags": ["3D image", "nifti1 format", "volumetric image"],
+      "type": "file",
+      "value": "emotion_pAgF_z_FDR_0.05.nii.gz"
+    },
+    "pAgF_z": {
+      "tags": ["3D image", "nifti1 format", "volumetric image"],
+      "type": "file",
+      "value": "emotion_pAgF_z.nii.gz"
+    },
+    "pFgA_given_pF=0.50": {
+      "tags": ["3D image", "nifti1 format", "volumetric image"],
+      "type": "file",
+      "value": "emotion_pFgA_given_pF=0.50.nii.gz"
+    },
+    "pFgA": {
+      "tags": ["3D image", "nifti1 format", "volumetric image"],
+      "type": "file",
+      "value": "emotion_pFgA.nii.gz"
+    },
+    "pFgA_z_FDR_0.05": {
+      "tags": ["3D image", "nifti1 format", "volumetric image"],
+      "type": "file",
+      "value": "emotion_pFgA_z_FDR_0.05.nii.gz"
+    },
+    "pFgA_z": {
+      "tags": ["3D image", "nifti1 format", "volumetric image"],
+      "type": "file",
+      "value": "emotion_pFgA_z.nii.gz"
+    }
+  },
+  "tests": [
+    {
+      "id": "unpack database",
+      "code": "tar xf current_data.tar.gz",
+      "type": "shell"
+    },
+    {
+      "id": "run analysis",
+      "file": "example.py",
+      "type": "python"
+    }
+  ],
+  "version": 0
+}
