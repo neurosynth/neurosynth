@@ -70,6 +70,31 @@ class TestBase(unittest.TestCase):
     self.assertEquals(len(ids), 1)
     self.assertEquals('study5', ids[0])
 
+  def test_unmask(self):
+    """ Test unmasking on 1d and 2d vectors (going back to 3d and 4d)
+
+    TODO: test directly on Mask class and its functions, and on
+    some smaller example data.  But then it should get into a separate
+    TestCase to not 'reload' the same Dataset.
+    So for now let's just reuse loaded Dataset and provide
+    rudimentary testing
+    """
+    dataset = self.dataset
+    ids = dataset.get_ids_by_mask(
+        get_test_data_path() + 'sgacc_mask.nii.gz')
+    nvoxels = dataset.volume.in_mask[0].shape[0]
+
+    nvols = 2
+    data2d = np.arange(nvoxels*nvols).reshape((nvoxels, -1))
+
+    data2d_unmasked_separately = [
+      dataset.volume.unmask(data2d[:, i]) for i in xrange(nvols)]
+    data2d_unmasked = dataset.volume.unmask(data2d)
+    self.assertEqual(data2d_unmasked.shape,
+                     data2d_unmasked_separately[0].shape + (nvols,))
+    # and check corresponding volumes
+    for i in xrange(nvols):
+      self.assertTrue(np.all(data2d_unmasked[..., i] == data2d_unmasked_separately[i]))
   def test_selection_by_peaks(self):
     """ Test peak-based Mappable selection. """
     ids = self.dataset.get_ids_by_peaks(np.array([[3, 30, -9]]))

@@ -35,9 +35,21 @@ class Mask(object):
 
   def unmask(self, data):
     """ Reconstruct a masked vector into the original 3D volume. """
-    img = self.full.copy()
-    img[self.in_mask] = data
-    return np.reshape(img, self.volume.shape)
+    n_in_mask_voxels = len(self.in_mask[0])
+    if data.ndim == 2:
+      n_volumes = data.shape[1]
+      # we got two dimensions, so take 2nd dimension as the temporal dimension
+      assert(len(data) == n_in_mask_voxels)
+      assert(self.full.ndim == 1)
+      # but we generate x,y,z,t volume
+      img = np.zeros(self.full.shape + (n_volumes,))
+      #for t in xrange(n_volumes):
+      img[self.in_mask, :] = data
+      return np.reshape(img, self.volume.shape + (n_volumes,))
+    else:
+      img = self.full.copy()
+      img[self.in_mask] = data
+      return np.reshape(img, self.volume.shape)
 
   def get_header(self):
     """ A wrapper for the NiBabel method. """
