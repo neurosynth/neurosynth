@@ -9,7 +9,7 @@ import nibabel as nb
 from nibabel import nifti1
 import numpy as np
 
-logger = logging.getLogger('neurosynth')
+logger = logging.getLogger('neurosynth.imageutils')
 
 def get_sphere(coords, r=4, vox_dims=(2,2,2), dims=(91,109,91)):
   """ # Return all points within r mm of coordinates. Generates a cube
