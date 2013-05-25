@@ -6,10 +6,14 @@ A Mappable object is defined by the presence of one or more Peaks that can
 be meaningfully represented as a spatial image.
 """
 
-import imageutils
-import numpy as np
-import transformations
+import logging
 import json
+import numpy as np
+
+import imageutils
+import transformations
+
+logger = logging.getLogger('neurosynth')
 
 class Mappable(object):
 
@@ -20,9 +24,9 @@ class Mappable(object):
       # If space is not explicitly set, assume the coordinates are already in
       # the target space.
       self.space = data['space'] if 'space' in data else transformer.target
-
-    except:
-      print "Error: missing ID and/or space fields. Please check database file."
+    except Exception, e:
+      logger.error("Missing ID and/or space fields. "
+                   "Please check database file, caught: %s" % str(e))
       exit()
 
     # Loop through rows and set coordinates
