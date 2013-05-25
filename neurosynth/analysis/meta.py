@@ -39,7 +39,7 @@ def analyze_features(dataset, features, image_type=None, threshold=0.001, q=0.05
   if save is None:
     result = np.zeros((dataset.volume.num_vox_in_mask, len(features)))
   else:
-    result=[]
+    result = []
 
   for i, f in enumerate(features):
     ids = dataset.get_ids_by_features(f, threshold=threshold)
@@ -159,6 +159,7 @@ class MetaAnalysis(object):
 
     # Retain any images we may want to save or access later
     self.images = {
+      'pA': pA,
       'pAgF': pAgF,
       'pFgA': pFgA,
       ('pAgF_given_pF=%0.2f' % prior_pF): pAgF_prior,
