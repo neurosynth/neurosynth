@@ -4,6 +4,10 @@
 import ply.lex as lex
 import ply.yacc as yacc
 
+import logging
+
+logger = logging.getLogger('neurosynth')
+
 class Lexer(object):
 
 	tokens = (
@@ -34,7 +38,7 @@ class Lexer(object):
 		self.lexer = lex.lex(module=self, **kwargs)
 
 	def t_error(self, t):
-		print "Error: illegal character %s!" % t.value[0]
+		logger.error("Illegal character %s!" % t.value[0])
 		t.lexer.skip(1)
 
 	def test(self, data):

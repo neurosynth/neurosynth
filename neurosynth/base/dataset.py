@@ -2,15 +2,20 @@
 #ex: set sts=2 ts=2 sw=2 noet:
 """ A Neurosynth Dataset """
 
-import numpy as np
-import nibabel as nb
-import mappable
+import logging
 import re
 import random
 import os
+
+import numpy as np
 from scipy import sparse
 
+import nibabel as nb
+import mappable
+
 from neurosynth.base import mask, imageutils, transformations
+
+logger = logging.getLogger('neurosynth')
 
 class Dataset(object):
 
@@ -78,8 +83,9 @@ class Dataset(object):
         volume = os.path.join(resource_dir, 'MNI152_T1_2mm_brain.nii.gz')
       self.volume = mask.Mask(volume)
     except Exception, e:
-      print "Error loading volume."
-      print e
+      logger.error("Error loading volume %s: %s" % (volume, e))
+      # yoh: TODO -- IMHO should re-raise or not even swallow the exception here
+      # raise e
 
     # Create supporting tables for images and features
     self.create_image_table()
@@ -93,7 +99,7 @@ class Dataset(object):
     Args:
       filename: a string pointing to the location of the txt file to read from.
     """
-    print "Loading mappables from %s..." % filename
+    logger.info("Loading mappables from %s..." % filename)
     data = {}
     c = re.split('[\r\n]+', open(filename).read())
     header = c.pop(0).lower().split('\t')
@@ -103,8 +109,7 @@ class Dataset(object):
     try:
       for mc in mandatory_cols: mc_inds[mc] = header.index(mc)
     except Exception, e:
-      print "Error: at least one of mandatory columns (x, y, z, id, and space) is missing."
-      print e
+      logger.error("At least one of mandatory columns (x, y, z, id, and space) is missing: %s" % e)
       return
 
     for l in c:
@@ -127,7 +132,7 @@ class Dataset(object):
       data[id]['peaks'].append([x, y, z])
 
     # Initialize all mappables--for now, assume Articles are passed
-    print "Converting text to mappables..."
+    logger.info("Converting text to mappables...")
     return [mappable.Article(m, self.transformer) for m in data.values()]
 
 
@@ -143,7 +148,7 @@ class Dataset(object):
         By default, this is None, which will keep whatever value is currently
         set in the Dataset instance.
     """
-    print "Creating image table..."
+    logger.info("Creating image table...")
     if r is not None: self.r = r
     self.image_table = ImageTable(self)
 
@@ -316,13 +321,32 @@ class ImageTable(object):
     self.ids = [m.id for m in mappables]
     self.volume = volume
     self.r = r
-    self.data = np.zeros((self.volume.num_vox_in_mask, len(mappables)), dtype=int)
 
+    data_shape = (self.volume.num_vox_in_mask, len(mappables))
+    if use_sparse:
+      # Fancy indexing assignment is not supported for sparse matrices, so
+      # let's keep lists of values and their indices (rows, cols) to later
+      # construct the csr_matrix.
+      vals, rows, cols = [], [], []
+    else:
+      self.data = np.zeros(data_shape, dtype=int)
+
+    logger.info("Creating matrix of %d mappables..." % (len(mappables),))
     for i, s in enumerate(mappables):
-      print "%s/%s..." % (str(i+1), str(len(mappables)))
+      logger.debug("%s/%s..." % (str(i+1), str(len(mappables))))
       img = imageutils.map_peaks_to_image(s.peaks, r=r, header=self.volume.get_header())
-      self.data[:,i] = self.volume.mask(img)
-    if use_sparse: self.data = sparse.csr_matrix(self.data)
+      img_masked = self.volume.mask(img)
+      if use_sparse:
+        nz = np.nonzero(img_masked)
+        assert(len(nz) == 1)
+        vals += list(img_masked[nz])
+        rows += list(nz[0])
+        cols += [i] * len(nz[0])
+      else:
+        self.data[:, i] = img_masked
+
+    if use_sparse:
+      self.data = sparse.csr_matrix((vals, (rows, cols)), shape=data_shape)
 
 
   def get_image_data(self, ids=None, voxels=None, dense=True):
@@ -368,7 +392,6 @@ class ImageTable(object):
 
 
 class FeatureTable(object):
-
   """ A FeatureTable instance stores a matrix of mappables x features, along with
   associated manipulation methods. """
 
@@ -390,13 +413,11 @@ class FeatureTable(object):
     try:
       self._features_from_json(filename, validate)
     except Exception, e:
-      print 'Error loading JSON:',e
       try:
-        print 'Trying plain text'
+        logger.debug('Error loading JSON (%s).  Trying plain text' % (e,))
         self._features_from_txt(filename, validate)
       except Exception, e:
-        print e
-        print "Error: %s cannot be parsed." % filename
+        logger.error("%s cannot be parsed: %s" % (filename, e))
 
 
   def _features_from_json(self, filename, validate=False):
