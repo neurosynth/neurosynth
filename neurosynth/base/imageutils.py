@@ -88,7 +88,6 @@ def threshold_img(data, threshold, mask=None, mask_out='below'):
 
 
 def img_to_json(img, decimals=2, swap=False, save=None):
-
   """ Convert an image volume to web-ready JSON format suitable for import into 
   the Neurosynth viewer.
 
