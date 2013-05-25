@@ -6,6 +6,7 @@ import tempfile, os, shutil
 from utils import get_test_dataset, get_test_data_path
 
 from neurosynth.analysis import meta
+from neurosynth.base.dataset import ImageTable
 
 class TestBase(unittest.TestCase):
 
@@ -83,6 +84,11 @@ class TestBase(unittest.TestCase):
     # ind = self.dataset.image_table.ids.index('study1')
     # self.assertEqual(len(self.dataset.mappables[ind].peaks), 3)
 
+  def test_get_image_data(self):
+    """ Minimal test for case that ids==voxels==None """
+    image_table = ImageTable(dataset=self.dataset)
+    result = image_table.get_image_data()
+    self.assertEqual(result.all(), image_table.data.toarray().all(), result)
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
 
