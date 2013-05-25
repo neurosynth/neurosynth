@@ -6,7 +6,7 @@ import ply.yacc as yacc
 
 import logging
 
-logger = logging.getLogger('neurosynth')
+logger = logging.getLogger('neurosynth.lexparser')
 
 class Lexer(object):
 

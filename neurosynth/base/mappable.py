@@ -13,7 +13,7 @@ import numpy as np
 import imageutils
 import transformations
 
-logger = logging.getLogger('neurosynth')
+logger = logging.getLogger('neurosynth.mappable')
 
 class Mappable(object):
 

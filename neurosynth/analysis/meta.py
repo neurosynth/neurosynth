@@ -9,7 +9,7 @@ from scipy.stats import norm
 from neurosynth.base import imageutils
 import stats
 
-logger = logging.getLogger('neurosynth')
+logger = logging.getLogger('neurosynth.meta')
 
 def analyze_features(dataset, features, image_type=None, threshold=0.001, q=0.05, save=None):
   """ Generate meta-analysis images for a set of features.

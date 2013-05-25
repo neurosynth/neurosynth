@@ -15,7 +15,7 @@ import mappable
 
 from neurosynth.base import mask, imageutils, transformations
 
-logger = logging.getLogger('neurosynth')
+logger = logging.getLogger('neurosynth.dataset')
 
 class Dataset(object):
 
@@ -414,7 +414,7 @@ class FeatureTable(object):
       self._features_from_json(filename, validate)
     except Exception, e:
       try:
-        logger.debug('Error loading JSON (%s).  Trying plain text' % (e,))
+        logger.debug('Failed to load as JSON (Error: %s).  Trying plain text' % (e,))
         self._features_from_txt(filename, validate)
       except Exception, e:
         logger.error("%s cannot be parsed: %s" % (filename, e))
