@@ -113,7 +113,7 @@ def img_to_json(img, decimals=2, swap=False, save=None):
   try:
     data = nb.load(img).get_data()
   except Exception, e:
-    raise Exception("Error laoding %s: %s" % (img, str(e)))
+    raise Exception("Error loading %s: %s" % (img, str(e)))
 
   dims = list(data.shape)
 
