@@ -109,6 +109,25 @@ class TestBase(unittest.TestCase):
     # ind = self.dataset.image_table.ids.index('study1')
     # self.assertEqual(len(self.dataset.mappables[ind].peaks), 3)
 
+  def test_get_feature_counts(self):
+    # If we set threshold too high -- nothing should get through and
+    # all should be 0s
+    feature_counts = self.dataset.get_feature_counts(threshold=1.)
+    self.assertEqual(feature_counts,
+                     dict((f, 0) for f in self.dataset.get_feature_names()))
+
+    feature_counts = self.dataset.get_feature_counts()
+    # all should have some non-0 loading with default threshold,
+    # otherwise what is the point of having them?
+    for f, c in feature_counts.iteritems():
+      self.assertGreater(c, 0, "feature %s has no hits" % f)
+    # and should be equal to the ones computed directly (we do not do
+    # any fancy queries atm), assumes default threshold of 0.001
+    feature_counts_ = dict([
+      (feature, np.sum(self.dataset.feature_table.data[:, col].todense() > 0.001))
+      for col, feature in enumerate(self.dataset.feature_table.feature_names)])
+    self.assertEqual(feature_counts, feature_counts_)
+
   def test_get_image_data(self):
     """ Minimal test for case that ids==voxels==None """
     image_table = ImageTable(dataset=self.dataset)
