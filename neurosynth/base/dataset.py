@@ -376,7 +376,7 @@ class ImageTable(object):
       A 2D numpy array, with voxels in rows and mappables in columns.
     """
     if ids is None and voxels is None:
-      res = self.data
+      result = self.data
     else:
       # ???
       idxs = [i for i in range(len(self.ids)) if self.ids[i] in ids]
