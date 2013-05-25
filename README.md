@@ -1,6 +1,13 @@
+
 # What is Neurosynth?
 
 Neurosynth is a Python package for large-scale synthesis of functional neuroimaging data.
+
+## Code status
+
+* [![tests status](https://secure.travis-ci.org/NeuroSynth/Neurosynth.png?branch=master)](https://travis-ci.org/NeuroSynth/Neurosynth) travis-ci.org (master branch)
+
+* [![Coverage Status](https://coveralls.io/repos/NeuroSynth/Neurosynth/badge.png?branch=master)](https://coveralls.io/r/NeuroSynth/Neurosynth)
 
 ## Installation
 
