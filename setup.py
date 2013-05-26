@@ -21,7 +21,6 @@ if 'setuptools' in sys.modules:
 with open(os.path.join('neurosynth', 'version.py')) as f:
     exec(f.read())
 
-files = ['../resources/*']
 setup(name = "neurosynth",
       version = __version__,
       description = "Large-scale synthesis of functional neuroimaging data",
@@ -32,7 +31,7 @@ setup(name = "neurosynth",
                   "neurosynth.base",
                   "neurosynth.analysis",
                   "neurosynth.tests"],
-      package_data = {'neurosynth' : ['../resources/*'],
+      package_data = {'neurosynth' : ['resources/*'],
                       'neurosynth.tests' : ['data/*']
                       },
       **extra_setuptools_args
