@@ -10,7 +10,6 @@ import os
 import numpy as np
 from scipy import sparse
 
-import nibabel as nb
 import mappable
 
 from neurosynth.base import mask, imageutils, transformations
