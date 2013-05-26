@@ -2,4 +2,3 @@ include README.md Changelog.md LICENSE setup.py
 recursive-include examples *
 recursive-include resources *
 recursive-include neurosynth *
-recursive-include tests *

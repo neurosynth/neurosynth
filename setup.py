@@ -28,9 +28,12 @@ setup(name = "neurosynth",
       maintainer='Tal Yarkoni',
       maintainer_email='tyarkoni@gmail.com',
       url='http://github.com/NeuroSynth/Neurosynth',
-      packages = ["neurosynth", "neurosynth.base", "neurosynth.analysis", "tests"],
+      packages = ["neurosynth",
+                  "neurosynth.base",
+                  "neurosynth.analysis",
+                  "neurosynth.tests"],
       package_data = {'neurosynth' : ['../resources/*'],
-                      'tests' : ['data/*']
+                      'neurosynth.tests' : ['data/*']
                       },
       **extra_setuptools_args
       )
