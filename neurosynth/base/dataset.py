@@ -330,6 +330,8 @@ class ImageTable(object):
     """
     if dataset is not None:
       mappables, volume, r = dataset.mappables, dataset.volume, dataset.r
+    for var in [mappables, volume, r]:
+      assert var is not None
     self.ids = [m.id for m in mappables]
     self.volume = volume
     self.r = r
@@ -376,7 +378,7 @@ class ImageTable(object):
       A 2D numpy array, with voxels in rows and mappables in columns.
     """
     if ids is None and voxels is None:
-      res = self.data
+      result = self.data
     else:
       # ???
       idxs = [i for i in range(len(self.ids)) if self.ids[i] in ids]
@@ -519,4 +521,3 @@ class FeatureTable(object):
     parser = lp.Parser(lexer, self.dataset, threshold=threshold, func='sum')
     parser.build()
     return parser.parse(expression).keys()
-

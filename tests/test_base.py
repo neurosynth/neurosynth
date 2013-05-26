@@ -6,6 +6,7 @@ import tempfile, os, shutil
 from utils import get_test_dataset, get_test_data_path
 
 from neurosynth.analysis import meta
+from neurosynth.base.dataset import ImageTable
 
 class TestBase(unittest.TestCase):
 
@@ -69,6 +70,31 @@ class TestBase(unittest.TestCase):
     self.assertEquals(len(ids), 1)
     self.assertEquals('study5', ids[0])
 
+  def test_unmask(self):
+    """ Test unmasking on 1d and 2d vectors (going back to 3d and 4d)
+
+    TODO: test directly on Mask class and its functions, and on
+    some smaller example data.  But then it should get into a separate
+    TestCase to not 'reload' the same Dataset.
+    So for now let's just reuse loaded Dataset and provide
+    rudimentary testing
+    """
+    dataset = self.dataset
+    ids = dataset.get_ids_by_mask(
+        get_test_data_path() + 'sgacc_mask.nii.gz')
+    nvoxels = dataset.volume.in_mask[0].shape[0]
+
+    nvols = 2
+    data2d = np.arange(nvoxels*nvols).reshape((nvoxels, -1))
+
+    data2d_unmasked_separately = [
+      dataset.volume.unmask(data2d[:, i]) for i in xrange(nvols)]
+    data2d_unmasked = dataset.volume.unmask(data2d)
+    self.assertEqual(data2d_unmasked.shape,
+                     data2d_unmasked_separately[0].shape + (nvols,))
+    # and check corresponding volumes
+    for i in xrange(nvols):
+      self.assertTrue(np.all(data2d_unmasked[..., i] == data2d_unmasked_separately[i]))
   def test_selection_by_peaks(self):
     """ Test peak-based Mappable selection. """
     ids = self.dataset.get_ids_by_peaks(np.array([[3, 30, -9]]))
@@ -83,6 +109,34 @@ class TestBase(unittest.TestCase):
     # ind = self.dataset.image_table.ids.index('study1')
     # self.assertEqual(len(self.dataset.mappables[ind].peaks), 3)
 
+  def test_get_feature_counts(self):
+    # If we set threshold too high -- nothing should get through and
+    # all should be 0s
+    feature_counts = self.dataset.get_feature_counts(threshold=1.)
+    self.assertEqual(feature_counts,
+                     dict((f, 0) for f in self.dataset.get_feature_names()))
+
+    feature_counts = self.dataset.get_feature_counts()
+    # all should have some non-0 loading with default threshold,
+    # otherwise what is the point of having them?
+    for f, c in feature_counts.iteritems():
+      self.assertGreater(c, 0, "feature %s has no hits" % f)
+    # and should be equal to the ones computed directly (we do not do
+    # any fancy queries atm), assumes default threshold of 0.001
+    feature_counts_ = dict([
+      (feature, np.sum(self.dataset.feature_table.data[:, col].todense() > 0.001))
+      for col, feature in enumerate(self.dataset.feature_table.feature_names)])
+    self.assertEqual(feature_counts, feature_counts_)
+
+  def test_get_image_data(self):
+    """ Minimal test for case that ids==voxels==None """
+    image_table = ImageTable(dataset=self.dataset)
+    result = image_table.get_image_data()
+    self.assertEqual(result.all(), image_table.data.toarray().all(), result)
+    
+  def test_either_dataset_or_manual_image_vars(self):
+    with self.assertRaises(AssertionError):
+      image_table = ImageTable()
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
 
