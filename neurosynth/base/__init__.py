@@ -2,3 +2,9 @@
 # ex: set sts=2 ts=2 sw=2 et:
 
 __all__ = ['dataset', 'mask', 'imageutils', 'mappable', 'transformations', 'lexparser']
+
+# Verify nibabel version right here since nothing would work
+import nibabel as nib
+from distutils.version import LooseVersion
+if LooseVersion(nib.__version__) < LooseVersion("1.3"):
+    raise ImportError("Neurosynth requires nibabel >= 1.3")
