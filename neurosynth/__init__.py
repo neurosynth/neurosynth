@@ -1,12 +1,15 @@
+# emacs: -*- mode: python-mode; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
+# ex: set sts=4 ts=4 sw=4 et:
 """NeuroSynth -- large-scale synthesis of functional neuroimaging data.
 
 """
-
-__all__ = ["analysis", "base"]
+__all__ = ["analysis", "base", "set_logging_level", "__version__"]
 
 import logging
 import sys
 import os
+
+from version import __version__
 
 logger = logging.getLogger("neurosynth")
 

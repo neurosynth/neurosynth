@@ -1,4 +1,4 @@
-import sys
+import os, sys
 
 # Borrowing a trick from nibabel to enable some functionality coming
 # from setuptools.
@@ -17,9 +17,13 @@ if 'setuptools' in sys.modules:
             test='nose>=0.10.1')
     )
 
+# fetch version from within neurosynth module
+with open(os.path.join('neurosynth', 'version.py')) as f:
+    exec(f.read())
+
 files = ['../resources/*']
 setup(name = "neurosynth",
-      version = "0.2.dev",
+      version = __version__,
       description = "Large-scale synthesis of functional neuroimaging data",
       maintainer='Tal Yarkoni',
       maintainer_email='tyarkoni@gmail.com',
