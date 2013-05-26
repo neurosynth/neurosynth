@@ -36,6 +36,31 @@ def map_peaks_to_image(peaks, r=4, vox_dims=(2,2,2), dims=(91,109,91), header=No
   return nifti1.Nifti1Image(data, None, header=header)
 
 
+def convolve_image(img, r=4, header=None, method='mean', save=None):
+  """ Take an image and multiples every non-zero value found by a hard 
+  sphere of radius r. Where multiple values overlap, use either sum or
+  mean. """
+  img = nb.load(img)
+  data = img.get_data()
+  dims = data.shape
+  result = np.zeros(dims)
+  counts = np.zeros(dims)
+  nonzero = np.nonzero(data)
+  for point in zip(*nonzero):
+    fill = tuple(get_sphere(point, r, dims=dims).T)
+    # fill = tuple(fill)
+    result[fill] += data[point]
+    counts[fill] += 1
+  result = np.divide(result, counts)
+  result = np.nan_to_num(result)
+  if save is None:
+    return result
+  else:
+    img = nifti1.Nifti1Image(result, None, img.get_header())
+    img.to_filename(save)
+
+
+
 # def disjunction(images):
 #   """ Returns a binary disjunction of all passed images, i.e., value=1
 #   at any voxel that's non-zero in at least one image."""
@@ -67,7 +92,6 @@ def load_imgs(filenames, mask):
 
 def save_img(data, filename, mask, header=None):
   """ Save a vectorized image to file. """
-  # data = data.astype(dtype)
   if not header:
     header = mask.get_header()
   header.set_data_dtype(data.dtype) # Avoids loss of precision
@@ -113,7 +137,7 @@ def img_to_json(img, decimals=2, swap=False, save=None):
   try:
     data = nb.load(img).get_data()
   except Exception, e:
-    raise Exception("Error laoding %s: %s" % (img, str(e)))
+    raise Exception("Error loading %s: %s" % (img, str(e)))
 
   dims = list(data.shape)
 
