@@ -37,7 +37,7 @@ class Decoder(object):
       self.mask = mask.Mask(mask)
 
     if features is None:
-      features = dataset.list_features()
+      features = dataset.get_feature_names()
 
     self.load_features(features, image_type=image_type)
 
@@ -98,10 +98,18 @@ class Decoder(object):
     # Check if the first element in list is a valid file; if yes, assume
     # we're dealing with image files, otherwise treat as names of features in
     # the current Dataset.
-    if path.exists(features[0]):
+    if isinstance(features, basestring):
+      self._load_features_from_array(features)
+    elif path.exists(features[0]):
       self._load_features_from_images(features)
     else:
       self._load_features_from_dataset(features, image_type=image_type)
+
+
+  def _load_features_from_array(self, features):
+    self.feature_images = np.load(features)
+    print self.feature_images.shape
+    self.feature_names = range(self.feature_images.shape[1])
 
 
   def _load_features_from_dataset(self, features=None, image_type=None):

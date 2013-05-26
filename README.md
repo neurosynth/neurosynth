@@ -51,7 +51,7 @@ Now our Dataset has both activation data and some features we can use to manipul
 
 We can now do various kinds of analyses with the data. For example, we can use the features we just added to perform automated large-scale meta-analyses. Let's see what features we have:
 
-	> dataset.list_features()
+	> dataset.get_feature_names()
 	['phonetic', 'associative', 'cues', 'visually', ... ]
 
 We can use these features--either in isolation or in combination--to select articles for inclusion in a meta-analysis. For example, suppose we want to run a meta-analysis of emotion studies. We could operationally define a study of emotion as one in which the authors used words starting with 'emo' with high frequency:
