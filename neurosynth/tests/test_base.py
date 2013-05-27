@@ -14,6 +14,15 @@ class TestBase(unittest.TestCase):
     """ Create a new Dataset and add features. """
     self.dataset = get_test_dataset()
 
+  def test_dataset_save(self):
+    # smoke test of save
+    t = tempfile.mktemp()
+    self.dataset.save(t)
+    self.assertTrue(os.path.exists(t))
+    self.dataset.save(t, keep_mappables=True)
+    self.assertTrue(os.path.exists(t))
+    os.unlink(t)
+
   def test_dataset_initializes(self):
     """ Test whether dataset initializes properly. """
     self.assertIsNotNone(self.dataset.volume)
