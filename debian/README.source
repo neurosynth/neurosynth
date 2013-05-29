@@ -1,0 +1,14 @@
+neurosynth for (Neuro)Debian
+----------------------------
+
+Sources of this package generated directly from upstream git
+repository using git-buildpackage and ignore options (export-ignore in
+.gitattributes and extend-diff-ignore debian/source/options) to
+exclude MNI atlas provided by another package.
+
+This is done to ease cherry picking of bugfixes and provide users (and
+debcheckout-ers) with actual sources, not source distribution.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>, Wed, 29 May 2013 12:53:42 -0400
+
+

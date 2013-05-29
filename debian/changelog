@@ -1,0 +1,6 @@
+neurosynth (0.3-1) neurodebian; urgency=low
+
+  * Initial packaging
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 29 May 2013 12:58:04 -0400
+

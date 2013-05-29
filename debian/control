@@ -1,0 +1,29 @@
+Source: neurosynth
+Section: python
+Priority: extra
+Maintainer: NeuroDebian Team <team@neuro.debian.net>
+Uploaders: Yaroslav Halchenko <debian@onerussian.com>, Michael Hanke <michael.hanke@gmail.com>
+Build-Depends: debhelper (>= 7.0.50~), python (>= 2.6),
+               python-nose,
+               python-numpy, python-scipy, python-nibabel,
+               python-ply,
+Standards-Version: 3.9.4
+Homepage: http://neurosynth.org
+Vcs-Git: git://github.com/NeuroSynth/Neurosynth.git -b debian
+Vcs-Browser: https://github.com/NeuroSynth/Neurosynth
+
+
+Package: python-neurosynth
+Architecture: all
+Depends: ${python:Depends}, ${misc:Depends},
+         python-numpy, python-scipy, python-nibabel,
+         python-ply,
+Recommends: python-nose
+Suggests: python-testkraut
+Description: large-scale synthesis of functional neuroimaging data
+ NeuroSynth is a platform for large-scale, automated synthesis of
+ functional magnetic resonance imaging (fMRI) data extracted from
+ published articles.  This Python module at the moment provides
+ functionality for processing the database of collected terms and
+ spatial coordinates to generate associated spatial statistical maps.
+
