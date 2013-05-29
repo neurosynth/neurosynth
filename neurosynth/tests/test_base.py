@@ -7,6 +7,8 @@ from utils import get_test_dataset, get_test_data_path
 
 from neurosynth.analysis import meta
 from neurosynth.base.dataset import ImageTable
+from neurosynth.base import imageutils
+import json
 
 class TestBase(unittest.TestCase):
 
@@ -104,6 +106,7 @@ class TestBase(unittest.TestCase):
     # and check corresponding volumes
     for i in xrange(nvols):
       self.assertTrue(np.all(data2d_unmasked[..., i] == data2d_unmasked_separately[i]))
+
   def test_selection_by_peaks(self):
     """ Test peak-based Mappable selection. """
     ids = self.dataset.get_ids_by_peaks(np.array([[3, 30, -9]]))
@@ -146,6 +149,17 @@ class TestBase(unittest.TestCase):
   def test_either_dataset_or_manual_image_vars(self):
     with self.assertRaises(AssertionError):
       image_table = ImageTable()
+
+  def test_img_to_json(self):
+    path =  get_test_data_path() + 'sgacc_mask.nii.gz'
+    json_data = imageutils.img_to_json(path)
+    data = json.loads(json_data)
+    self.assertEqual(data['max'], 1)
+    self.assertEqual(data['dims'], [91, 109, 91])
+    self.assertEqual(data['values'], [1.0])
+    self.assertEqual(len(data['indices'][0]), 1142)
+
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
 

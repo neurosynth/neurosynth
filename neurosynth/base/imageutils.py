@@ -141,7 +141,9 @@ def img_to_json(img, decimals=2, swap=False, save=None):
 
   dims = list(data.shape)
 
-  def image_to_json(contents = None):
+  # Convenience method to package and output the converted data;
+  # also handles cases where image is blank.
+  def package_json(contents = None):
     if contents is None:
       contents = {
         'thresh': 0.0,
@@ -151,19 +153,16 @@ def img_to_json(img, decimals=2, swap=False, save=None):
         'values': [],
         'indices': []
       }
-    contents = json.dumps(contents)
     # Write to file or return string
-    if save is not None:
-      outf = open(save, 'w')
-      outf.write(contents)
-      outf.close()
+    if save is None:
+      return json.dumps(contents)
     else:
-      return result
+      json.dump(contents, open(save, 'w'))
 
   # Skip empty images
   data = np.nan_to_num(data)
   if np.sum(data) == 0:
-    return image_to_json()
+    return package_json()
 
   # Round values to save space. Note that in practice the resulting JSON file will
   # typically be larger than the original nifti unless the image is relatively
@@ -183,7 +182,7 @@ def img_to_json(img, decimals=2, swap=False, save=None):
   # uniq = np.unique()
   uniq.remove(0)
   if len(uniq) == 0:
-    return image_to_json()
+    return package_json()
 
   contents = {
     'thresh': round(thresh, decimals),
@@ -202,7 +201,7 @@ def img_to_json(img, decimals=2, swap=False, save=None):
     all_inds.append(ind)
   contents['indices'] = all_inds
 
-  return image_to_json(contents)
+  return package_json(contents)
 
 
 
