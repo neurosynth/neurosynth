@@ -245,8 +245,23 @@ class Dataset(object):
 
 
   def get_ids_by_peaks(self, peaks, r=10, threshold=0.0, get_image_data=False):
-    """ A wrapper for get_ids_by_mask. Takes a list of xyz
-    coordinates and generates a new Nifti1Image to use as a mask. """
+    """ A wrapper for get_ids_by_mask. Takes a set of xyz coordinates and generates 
+    a new Nifti1Image to use as a mask. 
+
+    Args:
+      peaks: Either an n x 3 numpy array, or a list of lists (e.g., [[-10, 22, 14]])
+        specifying the world (x/y/z) coordinates of the target location(s).
+      r: Radius in millimeters of the sphere to grow around each location.
+      threshold: Optional float indicating the proportion of voxels that must be 
+        active in order for a Mappable to be considered active.
+      get_image_data: If true, returns the image data for all activated Mappables in
+        a voxel x Mappable numpy array. Otherwise, returns just the IDs of Mappables.
+
+    Returns:
+      Either a list of ids (if get_image_data = False) or a numpy array of image data.
+
+    """
+    peaks = np.array(peaks)  # Make sure we have a numpy array
     peaks = transformations.xyz_to_mat(peaks)
     img = imageutils.map_peaks_to_image(peaks, r, vox_dims=self.volume.vox_dims,
         dims=self.volume.dims, header=self.volume.get_header())

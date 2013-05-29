@@ -109,9 +109,12 @@ class TestBase(unittest.TestCase):
 
   def test_selection_by_peaks(self):
     """ Test peak-based Mappable selection. """
-    ids = self.dataset.get_ids_by_peaks(np.array([[3, 30, -9]]))
+    ids = self.dataset.get_ids_by_peaks(np.array([[3, 30, -9]]))  # Test with numpy array
+    ids2 =  self.dataset.get_ids_by_peaks([[3, 30, -9]]) # Test with list of lists
+    self.assertEquals(ids, ids2)
     self.assertEquals(len(ids), 1)
     self.assertEquals('study5', ids[0])
+    # Repeat with list of lists
 
   # def test_invalid_coordinates_ignored(self):
     """ Test dataset contains 3 valid coordinates and one outside mask. But this won't work
