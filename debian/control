@@ -7,6 +7,7 @@ Build-Depends: debhelper (>= 7.0.50~), python (>= 2.6),
                python-nose,
                python-numpy, python-scipy, python-nibabel,
                python-ply,
+               fsl-mni152-templates,
 Standards-Version: 3.9.4
 Homepage: http://neurosynth.org
 Vcs-Git: git://github.com/NeuroSynth/Neurosynth.git -b debian
@@ -18,7 +19,8 @@ Architecture: all
 Depends: ${python:Depends}, ${misc:Depends},
          python-numpy, python-scipy, python-nibabel,
          python-ply,
-Recommends: python-nose
+Recommends: python-nose,
+            fsl-mni152-templates,
 Suggests: python-testkraut
 Description: large-scale synthesis of functional neuroimaging data
  NeuroSynth is a platform for large-scale, automated synthesis of

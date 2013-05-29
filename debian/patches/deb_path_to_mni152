@@ -1,0 +1,11 @@
+--- a/neurosynth/base/dataset.py
++++ b/neurosynth/base/dataset.py
+@@ -81,7 +81,7 @@ class Dataset(object):
+         resource_dir = os.path.join(os.path.dirname(__file__),
+                                     os.path.pardir,
+                                     'resources')
+-        volume = os.path.join(resource_dir, 'MNI152_T1_2mm_brain.nii.gz')
++        volume = os.path.join('/usr/share/data/fsl-mni152-templates', 'MNI152_T1_2mm_brain.nii.gz')
+       self.volume = mask.Mask(volume)
+     except Exception, e:
+       logger.error("Error loading volume %s: %s" % (volume, e))

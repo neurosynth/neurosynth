@@ -2,7 +2,7 @@
 # -*- makefile -*-
 
 %:
-	dh $@
+	dh $@ --with python2
 
 override_dh_clean:
 	rm -rf *.egg-info
@@ -10,3 +10,7 @@ override_dh_clean:
 
 override_dh_auto_test:
 	nosetests -s -v neurosynth
+
+override_dh_auto_install:
+	dh_auto_install
+	find debian/ -iname MNI152_T1_2mm_brain.nii.gz -delete
