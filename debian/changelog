@@ -1,3 +1,9 @@
+neurosynth (0.3-2) UNRELEASED; urgency=low
+
+  * Adjusting URLs to now lowercased organization/project on github
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 31 May 2013 13:33:29 -0400
+
 neurosynth (0.3-1) neurodebian; urgency=low
 
   * Initial packaging

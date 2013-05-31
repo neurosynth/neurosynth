@@ -1,7 +1,7 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: neurosynth
 Upstream-Contact: Tal Yarkoni <tyarkoni@gmail.com>
-Source: https://github.com/NeuroSynth/Neurosynth
+Source: https://github.com/neurosynth/neurosynth
 
 Files: *
 Copyright: 2011-2013, Tal Yarkoni

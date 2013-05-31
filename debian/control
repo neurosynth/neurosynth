@@ -11,8 +11,8 @@ Build-Depends: debhelper (>= 7.0.50~), python (>= 2.7),
 Standards-Version: 3.9.4
 X-Python-Version: >= 2.7
 Homepage: http://neurosynth.org
-Vcs-Git: git://github.com/NeuroSynth/Neurosynth.git -b debian
-Vcs-Browser: https://github.com/NeuroSynth/Neurosynth
+Vcs-Git: git://github.com/neurosynth/neurosynth.git -b debian
+Vcs-Browser: https://github.com/neurosynth/neurosynth
 
 
 Package: python-neurosynth

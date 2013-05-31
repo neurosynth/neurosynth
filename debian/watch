@@ -1,3 +1,3 @@
 version=3
 opts="filenamemangle=s/.*\/(.*)/neurosynth-$1/" \
-  http://github.com/NeuroSynth/Neurosynth/tags .*archive/(\d[\d\.a-z]+).tar.gz
+  http://github.com/neurosynth/neurosynth/tags .*archive/(\d[\d\.a-z]+).tar.gz
