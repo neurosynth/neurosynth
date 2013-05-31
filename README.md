@@ -30,22 +30,27 @@ That's it! You should now be ready to roll.
 
 Running analyses in Neurosynth is pretty straightforward. For a reasonably thorough walk-through, see the Getting Started page in the documentation (well, once it exists). This Quickstart guide just covers the bare minimum.
 
-First, [download some data](http://neurosynth.org/data/current_data.tar.gz) from the Neurosynth website:
+NeuroSynth dataset resides in a git submodule under data/, so after obtaining this git repository, initialize and update that module:
+
+    > git submodule init
+    > git submodule update
+
+Alternatively, dataset files could be [downloaded](http://neurosynth.org/data/current_data.tar.gz) from the Neurosynth website:
 
 	> curl -O http://neurosynth.org/data/current_data.tar.gz
 
-Unpack the archive, which should contain 2 files: database.txt and features.txt.
+Unpack the archive, which should contain 2 files: database.txt and features.txt, and place them under data/.
 
 Now generate a new Dataset instance from the database.txt file:
 
 	> from neurosynth.base.dataset import Dataset
-	> dataset = Dataset('database.txt')
+	> dataset = Dataset('data/database.txt')
 
 This should take several minutes to process.
 
 Once initialized, the Dataset instance contains activation data from nearly 6,000 published neuroimaging articles. But it doesn't yet have any features attached to those data, so let's add some:
 
-	> dataset.add_features('features.txt')
+	> dataset.add_features('data/features.txt')
 
 Now our Dataset has both activation data and some features we can use to manipulate the data with. In this case, the features are just term-based tags--i.e., words that occur frequently in the articles from which the dataset is drawn (for details, see this [Nature Methods] paper, or the Neurosynth website).
 
