@@ -1,5 +1,6 @@
 from neurosynth.base.dataset import Dataset
 from neurosynth.analysis import meta
+import cPickle
 
 """ Load a Dataset and generate a full set of meta-analysis
 images--i.e., run a meta-analysis on every single feature.
