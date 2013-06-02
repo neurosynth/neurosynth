@@ -7,16 +7,18 @@ from matplotlib.projections.polar import PolarAxes
 from matplotlib.projections import register_projection
 
 # BORROWED FROM PYPLOT EXAMPLES
+
+
 def radar_factory(num_vars, frame='circle'):
     """Create a radar chart with `num_vars` axes."""
     # calculate evenly-spaced axis angles
-    theta = 2 * np.pi * np.linspace(0, 1-1./num_vars, num_vars)
+    theta = 2 * np.pi * np.linspace(0, 1 - 1. / num_vars, num_vars)
     # rotate theta such that the first axis is at the top
-    theta += np.pi/2
+    theta += np.pi / 2
 
     def draw_poly_frame(self, x0, y0, r):
         # TODO: use transforms to convert (x, y) to (r, theta)
-        verts = [(r*np.cos(t) + x0, r*np.sin(t) + y0) for t in theta]
+        verts = [(r * np.cos(t) + x0, r * np.sin(t) + y0) for t in theta]
         return plt.Polygon(verts, closed=True, edgecolor='k')
 
     def draw_circle_frame(self, x0, y0, r):
@@ -24,9 +26,10 @@ def radar_factory(num_vars, frame='circle'):
 
     frame_dict = {'polygon': draw_poly_frame, 'circle': draw_circle_frame}
     if frame not in frame_dict:
-        raise ValueError, 'unknown value for `frame`: %s' % frame
+        raise ValueError('unknown value for `frame`: %s' % frame)
 
     class RadarAxes(PolarAxes):
+
         """Class for creating a radar chart (a.k.a. a spider or star chart)
 
         http://en.wikipedia.org/wiki/Radar_chart
@@ -57,7 +60,7 @@ def radar_factory(num_vars, frame='circle'):
                 line.set_data(x, y)
 
         def set_varlabels(self, labels):
-            self.set_thetagrids(theta * 180/np.pi, labels)
+            self.set_thetagrids(theta * 180 / np.pi, labels)
 
         def _gen_axes_patch(self):
             x0, y0 = (0.5, 0.5)

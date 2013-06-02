@@ -16,10 +16,10 @@ try:
         else:
             lgr.setLevel(logging.INFO)
 
-
     class TestKrautTests(TestFromSPEC):
         __metaclass__ = TemplateTestCase
         search_dirs = [os.path.join(os.path.dirname(__file__), 'data')]
+
         @template_case(discover_specs([op.join(op.dirname(__file__),
                                                'kraut')]))
         def _run_spec_test(self, spec_filename):
@@ -27,5 +27,3 @@ try:
 
 except ImportError:
     pass
-
-

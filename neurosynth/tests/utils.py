@@ -9,10 +9,12 @@ __license__ = 'MIT'
 from os.path import dirname, join, sep as pathsep
 from neurosynth.base.dataset import Dataset
 
+
 def get_test_data_path():
     """Returns the path to test datasets, terminated with separator (/ vs \)"""
     # TODO: do not rely on __file__
     return join(dirname(__file__), 'data') + pathsep
+
 
 def get_test_dataset():
     test_data_path = get_test_data_path()
