@@ -73,12 +73,13 @@ def convolve_image(img, r=4, header=None, method='mean', save=None):
 #   pass
 
 
-def load_imgs(filenames, mask):
+def load_imgs(filenames, mask, nan_to_num = True):
   """ Load multiple images from file into an ndarray.
 
   Args:
     filenames: A list of filenames pointing to valid images.
     mask: A Mask instance.
+    nan_to_num: Optional boolean indicating whether to convert NaNs to zero.
 
   Returns:
     An m x n 2D numpy array, where m = number of voxels in mask and
@@ -86,7 +87,7 @@ def load_imgs(filenames, mask):
   """
   data = np.zeros((mask.num_vox_in_mask, len(filenames)))
   for i, f in enumerate(filenames):
-    data[:,i] = mask.mask(f)
+    data[:,i] = mask.mask(f, nan_to_num)
   return data
 
 

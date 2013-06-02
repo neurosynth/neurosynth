@@ -95,8 +95,9 @@ class Decoder(object):
   def load_features(self, features, image_type=None):
     """ Load features from current Dataset instance or a list of files. """
     from os import path
-    # Check if the first element in list is a valid file; if yes, assume
-    # we're dealing with image files, otherwise treat as names of features in
+    # If features is a string, assume it's a pointer to a numpy array on disk.
+    # If it's a list and the first element is a valid filename, assume
+    # we're dealing with image files. Otherwise treat as names of features in
     # the current Dataset.
     if isinstance(features, basestring):
       self._load_features_from_array(features)
@@ -108,7 +109,6 @@ class Decoder(object):
 
   def _load_features_from_array(self, features):
     self.feature_images = np.load(features)
-    print self.feature_images.shape
     self.feature_names = range(self.feature_images.shape[1])
 
 

@@ -25,13 +25,23 @@ class Mask(object):
     self.in_mask = np.where(self.full) # Indices of in-mask voxels within full volume
     self.num_vox_in_mask = np.shape(self.in_mask)[1]
 
-  def mask(self, img):
-    """ Vectorize an image and mask out all invalid voxels, returning
-    only the in-mask voxels as an array. Takes either a 3D ndarray or a filename
-    as input. """
+  def mask(self, img, nan_to_num = True):
+    """ Vectorize an image and mask out all invalid voxels.
+
+    Args:
+      img: The image to vectorize and mask. Can be either a filename or a SpatialImage 
+        previously loaded with NiBabel.
+      nan_to_num: boolean indicating whether to convert NaNs to 0.
+
+    Returns:
+      A 1D NumPy array of in-mask voxels.
+    """
     if isinstance(img, basestring):
       img = nb.load(img)
-    return img.get_data().ravel()[self.in_mask]
+    masked_data = img.get_data().ravel()[self.in_mask]
+    if nan_to_num:
+      masked_data = np.nan_to_num(masked_data)
+    return masked_data
 
   def unmask(self, data):
     """ Reconstruct a masked vector into the original 3D volume. """
