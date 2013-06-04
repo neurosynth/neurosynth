@@ -6,7 +6,7 @@ import numpy as np
 from neurosynth.base import imageutils
 
 
-class Decoder(object):
+class Decoder:
 
     def __init__(self, dataset=None, method='pearson', features=None, mask=None, image_type=None):
         """ Initialize a new Decoder instance.
@@ -220,3 +220,4 @@ class Decoder(object):
         plt.figtext(0.5, 0.965,  'Test radar plot',
                     ha='center', color='black', weight='bold', size='large')
         plt.show()
+

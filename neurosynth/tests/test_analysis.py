@@ -19,6 +19,11 @@ class TestAnalysis(unittest.TestCase):
     def test_decoder(self):
         pass
 
+    def test_region_classification(self):
+        result = decode.classify_regions(self.dataset, masks=[get_test_data_path() + 'sgacc_mask.nii.gz'])
+        self.assertEquals(len(result['features']), 525)
+        self.assertEquals(result['scores'].shape = (3,525))
+
     def test_coactivation(self):
         """ Test seed-based coactivation. """
         pass
