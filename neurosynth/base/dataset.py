@@ -393,10 +393,13 @@ class ImageTable(object):
         if ids is None and voxels is None:
             result = self.data
         else:
-            # ???
-            idxs = [i for i in range(len(self.ids)) if self.ids[i] in ids]
-            result = self.data[:, idxs]
-        return result.toarray() if dense else result
+            result = self.data
+            if ids is not None:
+                idxs = [i for i in range(len(self.ids)) if self.ids[i] in ids]
+                result = result[:, idxs]
+            if voxels is not None:
+                result = result.toarray()[voxels,:]
+        return result.toarray() if dense and voxels is None else result
 
     def trim(self, ids):
         """ Trim ImageTable to keep only the passed Mappables. This is a convenience
