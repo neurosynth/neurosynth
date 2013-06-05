@@ -1,4 +1,6 @@
 
+import numpy as np
+
 def classify_by_features(dataset, features, studies=None, method='SVM', scikit_classifier=None):
     pass
 
@@ -17,8 +19,6 @@ def decode_by_features():
 
 def decode_by_masks():
     pass
-
-
 
 
 
@@ -42,25 +42,47 @@ class Decoder:
         pass
 
 
-
 class Classifier:
 
-    def __init__(self, method='SVM', classifier=None):
-        # self.scikit_classifier = None
-        pass
+ 
+
+    def __init__(self, method='SVM', classifier=None, class_weight=None):
+        """ Initialize a new classifier instance """
+        if classifier:
+            self.sk_classifier = classifier
+        else:
+            if method == 'SVM':
+                from sklearn import svm
+                self.sk_classifier = svm.SVC(class_weight=class_weight)
+            else:
+                # Error handling?
+                self.sk_classifier = None
 
 
     def fit(self, X, y):
+        """ Fits X to outcomes y, using sk_classifier """
+        # Incorporate error checking such as :
         # if isinstance(self.classifier, ScikitClassifier):
         #     do one thingNone
         # otherwiseNone. 
-        pass
+
+        self.X = X
+        self.y = y
+        self.sk_classifier.fit(X, y)
 
     def cross_val_fit(self, X, y):
         pass
 
     def fit_dataset(self, dataset, y, features=None, feature_type='features'):
-        pass
+        """ Given a dataset, fits either features or voxels to y """
+
+        # Get data from dataset
+        if feature_type=='features':
+            X = np.rot90(dataset.feature_table.data.toarray())
+        elif feature_type=='voxels':
+            X = np.rot90(dataset.image_table.data.toarray())
+
+        self.sk_classifier.fit(X,y)
 
     def regularize(self, X, method='None'):
         # Nonewhat to give scikitNone or do it yourselfNone
