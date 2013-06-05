@@ -277,9 +277,13 @@ class Dataset(object):
         self.feature_table = FeatureTable(
             self, filename, description, validate)
 
-    def get_image_data(self, ids=None, dense=True):
+    def get_image_data(self, ids=None, dense=True, voxels=None):
         """ A convenience wrapper for ImageTable.get_image_data(). """
         return self.image_table.get_image_data(ids, dense=dense)
+
+    def get_feature_data(self, ids=None, dense=True):
+        """ A convenience wrapper for FeatureTable.get_image_data(). """
+        return self.feature_table.get_feature_data(ids, dense=dense, features=None)
 
     def get_feature_names(self):
         """ Returns a list of all current feature names. """
@@ -393,7 +397,7 @@ class ImageTable(object):
         if ids is None and voxels is None:
             result = self.data
         else:
-            # ???
+            # Filtering by voxels is not supported
             idxs = [i for i in range(len(self.ids)) if self.ids[i] in ids]
             result = self.data[:, idxs]
         return result.toarray() if dense else result
@@ -475,6 +479,28 @@ class FeatureTable(object):
                 self.data = self.data[valid_id_inds,:]
                 self.ids = self.ids[valid_id_inds]
         self.data = sparse.csr_matrix(self.data)
+
+    def get_feature_data(self, ids=None, features=None, dense=True):
+        """ Slices and returns a subset of feature data.
+
+        Args:
+          ids: A list or 1D numpy array of Mappable ids to return. If None, returns
+            data for all Mappables.
+          features: A list or 1D numpy array of feature indices (i.e., rows) to return.
+            If None, returns data for all voxels.
+          dense: Optional boolean. When True (default), convert the result to a dense
+            array before returning. When False, keep as sparse matrix.
+
+        Returns:
+          A 2D numpy array, with voxels in rows and mappables in columns.
+        """
+        if ids is None and features is None:
+            result = self.data
+        else:
+            # Filtering by features not supported
+            idxs = [i for i in range(len(self.ids)) if self.ids[i] in ids]
+            result = self.data[:, idxs]
+        return result.toarray() if dense else result        
 
     def get_ids(self, features, threshold=None, func='sum', get_weights=False):
         """ Returns a list of all Mappables in the table that meet the desired feature-based

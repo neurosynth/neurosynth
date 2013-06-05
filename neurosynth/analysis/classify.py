@@ -1,3 +1,4 @@
+""" Classification and decoding related tools """
 
 import numpy as np
 
@@ -5,14 +6,42 @@ def classify_by_features(dataset, features, studies=None, method='SVM', scikit_c
     pass
 
 def classify_regions(dataset, masks, remove_overlap=True, threshold=0.001, what_to_return=None, studies=None, method='SVM', classifier=None, regularization="Alejandro's expert judgment"):
-    # for m in masks:
-    #     - load the image from file
-    #     - select studies that activate within masks
-    # if remove_overlap:
-    #     remove overlap
-    # labels--assign class labels
+    import nibabel as nib
+    import os
+
+    # Get base file names for masks
+    mask_names = [os.path.splitext(os.path.splitext(os.path.basename(file))[0])[0] for file in masks]
+
+    # Load masks using NiBabel
+    try:
+        loaded_masks = [nib.load(os.path.relpath(m)) for m in masks]
+    except OSError:
+        print "Error loading masks. Check the path"
+
+    # Get a list of studies that activate for each mask file--i.e.,  a list of lists
+    all_ids = [dataset.get_ids_by_mask(m, threshold=threshold) for m in loaded_masks]
+
+    # Flattened ids
+    flat_ids = reduce(lambda a,b: a + b, all_ids) 
+
+    # Remove duplicates
+    if remove_overlap:
+        import collections
+        dups = [i for i in collections.Counter(flat_ids) if collections.Counter(flat_ids)[i]>1] # Find duplicates
+
+        all_ids[:] = [[x for x in m if x not in dups] for m in all_ids]  # Remove
+
+        flat_ids = reduce(lambda a,b: a + b, all_ids) # Remake flat_ids
+
+    # Loop over list of masksids and get features and create masklabel vector
+    y = [[mask_names[idx]]*len(ids) for idx,ids in enumerate(all_ids)]
+    y = reduce(lambda a,b: a + b, y)  # Flatten
+
+    # Extract feature set for only relevant ids
+    # X = dataset.get_feature_data(ids=flat_ids)
+
     # return classify(input=dataset, features='features', classes=labels, None)
-    pass
+    return y
 
 def decode_by_features():
     pass
@@ -92,6 +121,8 @@ class Classifier:
         # inputs: dataset, list of images
         # features: voxels, features
         # classes: vector of class assignments
+        # If isinstance(inputs, dataset):
+        # pull data out of it
         pass
 
 
