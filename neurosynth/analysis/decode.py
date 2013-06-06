@@ -4,6 +4,15 @@
 
 import numpy as np
 from neurosynth.base import imageutils
+from neurosynth.analysis import classify
+
+def decode_by_features():
+    pass
+
+
+def decode_by_masks():
+    pass
+
 
 
 class Decoder:
@@ -140,6 +149,13 @@ class Decoder:
         self.feature_names = names if names is not None else images
         self.feature_images = imageutils.load_imgs(images, self.mask)
 
+    def train_classifiers(self, features=None):
+        ''' Train a set of classifiers '''
+        # for f in features:
+        #     clf = Classifier(None)
+        #     self.classifiers.append(clf)
+        pass
+        
     def _pearson_correlation(self, imgs_to_decode):
         """ Decode images using Pearson's r.
 
@@ -159,65 +175,62 @@ class Decoder:
         x, y = x / np.sqrt((x ** 2).sum(0)), y / np.sqrt((y ** 2).sum(0))
         return x.T.dot(y).T
 
-    def _naive_bayes(self, imgs_to_decode):
-        """ Decode images using a Naive Bayes classifier. Unimplemented. """
-        pass
-
     def _pattern_expression(self, imgs_to_decode):
         """ Decode images using pattern expression. For explanation, see:
         http://wagerlab.colorado.edu/wiki/doku.php/help/fmri_help/pattern_expression_and_connectivity
         """
         return np.dot(imgs_to_decode.T, self.feature_images).T
 
-    def polar_plot(self, data, features=None, autoselect_features=0, autosort=True):
-        """ Create a polar plot of decoding results.
 
-        Args:
-          data: The data to plot. An m x n 2D numpy array, where images are in rows
-            and features are in columns.
-          features: Optional list of features to include in the plot. By default, uses
-            all features passed in data.
-          autoselect_features: Optional integer. If set to a value other than 0, will
-            select the top N features for each image and use those in the plot.
-          autosort: Boolean indicating whether to reorder features to as to maximize
-            separate in the plot.
+    # def polar_plot(self, data, features=None, autoselect_features=0, autosort=True):
+    #     """ Create a polar plot of decoding results.
 
-        """
-        from neurosynth.plotutils import radar_factory
+    #     Args:
+    #       data: The data to plot. An m x n 2D numpy array, where images are in rows
+    #         and features are in columns.
+    #       features: Optional list of features to include in the plot. By default, uses
+    #         all features passed in data.
+    #       autoselect_features: Optional integer. If set to a value other than 0, will
+    #         select the top N features for each image and use those in the plot.
+    #       autosort: Boolean indicating whether to reorder features to as to maximize
+    #         separate in the plot.
 
-        N_images, N_features = data.shape
+    #     """
+    #     from neurosynth.plotutils import radar_factory
 
-        # Sort images to maximize separation
-        if autosort:
-            from scipy.cluster import vq
-            whitened = vq.whiten(data)
-            res = vq.kmeans(whitened, N_images)
+    #     N_images, N_features = data.shape
 
-        theta = radar_factory(N_features)
-        spoke_labels = feature_names  # fix--need to make sure feature names are available
+    #     # Sort images to maximize separation
+    #     if autosort:
+    #         from scipy.cluster import vq
+    #         whitened = vq.whiten(data)
+    #         res = vq.kmeans(whitened, N_images)
 
-        fig = plt.figure(figsize=(9, 9))
-        fig.subplots_adjust(wspace=0.25, hspace=0.20, top=0.9, bottom=0.05)
+    #     theta = radar_factory(N_features)
+    #     spoke_labels = feature_names  # fix--need to make sure feature names are available
 
-        colors = ['b', 'r', 'g', 'm', 'y'][
-            0::N_images]  # TODO: generalize to N colors
-        radial_grid = [
-            0.2, 0.4, 0.6, 0.8]  # TODO: calculate sensible gridlines
+    #     fig = plt.figure(figsize=(9, 9))
+    #     fig.subplots_adjust(wspace=0.25, hspace=0.20, top=0.9, bottom=0.05)
 
-        ax = fig.add_subplot(111, projection='radar')
-        ax.set_varlabels(spoke_labels)
-        plt.rgrids(radial_grid)
+    #     colors = ['b', 'r', 'g', 'm', 'y'][
+    #         0::N_images]  # TODO: generalize to N colors
+    #     radial_grid = [
+    #         0.2, 0.4, 0.6, 0.8]  # TODO: calculate sensible gridlines
 
-        for d, color in zip(data, colors):
-            ax.plot(theta, d, color=color, lw=1)
-            ax.fill(theta, d, facecolor=color, alpha=0.25)
+    #     ax = fig.add_subplot(111, projection='radar')
+    #     ax.set_varlabels(spoke_labels)
+    #     plt.rgrids(radial_grid)
 
-        labels = image_names  # TODO: need to get this from user or instance
-        legend = plt.legend(labels, loc=(0.9, .95), labelspacing=0.1)
-        for l in legend.get_lines():
-            l.set_linewidth(2)
-        plt.setp(legend.get_texts(), fontsize='large')
-        plt.figtext(0.5, 0.965,  'Test radar plot',
-                    ha='center', color='black', weight='bold', size='large')
-        plt.show()
+    #     for d, color in zip(data, colors):
+    #         ax.plot(theta, d, color=color, lw=1)
+    #         ax.fill(theta, d, facecolor=color, alpha=0.25)
+
+    #     labels = image_names  # TODO: need to get this from user or instance
+    #     legend = plt.legend(labels, loc=(0.9, .95), labelspacing=0.1)
+    #     for l in legend.get_lines():
+    #         l.set_linewidth(2)
+    #     plt.setp(legend.get_texts(), fontsize='large')
+    #     plt.figtext(0.5, 0.965,  'Test radar plot',
+    #                 ha='center', color='black', weight='bold', size='large')
+    #     plt.show()
 
