@@ -36,12 +36,13 @@ def classify_regions(dataset, masks, remove_overlap=True, threshold=0.001, what_
     # Loop over list of masksids and get features and create masklabel vector
     y = [[mask_names[idx]]*len(ids) for idx,ids in enumerate(all_ids)]
     y = reduce(lambda a,b: a + b, y)  # Flatten
+    y = np.array(y)
 
     # Extract feature set for only relevant ids
-    # X = dataset.get_feature_data(ids=flat_ids)
+    X = dataset.get_feature_data(ids=flat_ids)
 
     # return classify(input=dataset, features='features', classes=labels, None)
-    return y
+    pass
 
 def decode_by_features():
     pass

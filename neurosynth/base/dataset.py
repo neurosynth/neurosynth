@@ -499,7 +499,7 @@ class FeatureTable(object):
         else:
             # Filtering by features not supported
             idxs = [i for i in range(len(self.ids)) if self.ids[i] in ids]
-            result = self.data[:, idxs]
+            result = self.data[idxs,:]
         return result.toarray() if dense else result        
 
     def get_ids(self, features, threshold=None, func='sum', get_weights=False):
