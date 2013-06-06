@@ -150,12 +150,19 @@ class TestBase(unittest.TestCase):
                                for col, feature in enumerate(self.dataset.feature_table.feature_names)])
         self.assertEqual(feature_counts, feature_counts_)
 
+    def test_get_feature_data(self):
+        """ Test retrieval of Mappable x feature data. """
+        feature_data = self.dataset.get_feature_data(ids=['study1', 'study3'])
+        self.assertEqual(feature_data.shape, (2,5))
+        feature_data = self.dataset.get_feature_data(features=['f1', 'f4', 'g1'], dense=True)
+        self.assertEqual(feature_data.shape, (5,3))
+
     def test_get_image_data(self):
-        """ Minimal test for case that ids==voxels==None """
-        image_table = ImageTable(dataset=self.dataset)
-        result = image_table.get_image_data()
-        self.assertEqual(
-            result.all(), image_table.data.toarray().all(), result)
+        """ Test retrieval of voxel x Mappable data. """
+        image_data = self.dataset.get_image_data(voxels=range(2000,3000))
+        self.assertEquals(image_data.shape, (1000,5))
+        image_data = self.dataset.get_image_data(ids=['study1','study2','study5'], dense=True)
+        self.assertEquals(image_data.shape, (228453,3))
 
     def test_either_dataset_or_manual_image_vars(self):
         with self.assertRaises(AssertionError):

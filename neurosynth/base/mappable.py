@@ -10,8 +10,8 @@ import logging
 import json
 import numpy as np
 
-from . import imageutils
-from . import transformations
+from neurosynth.base import imageutils
+from neurosynth.base import transformations
 
 logger = logging.getLogger('neurosynth.mappable')
 

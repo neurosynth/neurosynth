@@ -277,9 +277,13 @@ class Dataset(object):
         self.feature_table = FeatureTable(
             self, filename, description, validate)
 
-    def get_image_data(self, ids=None, dense=True):
+    def get_image_data(self, ids=None, voxels=None, dense=True):
         """ A convenience wrapper for ImageTable.get_image_data(). """
-        return self.image_table.get_image_data(ids, dense=dense)
+        return self.image_table.get_image_data(ids, voxels=voxels, dense=dense)
+
+    def get_feature_data(self, ids=None, features=None, dense=True):
+        """ A convenience wrapper for FeatureTable.get_image_data(). """
+        return self.feature_table.get_feature_data(ids, features=features, dense=dense)
 
     def get_feature_names(self):
         """ Returns a list of all current feature names. """
@@ -390,16 +394,13 @@ class ImageTable(object):
         Returns:
           A 2D numpy array, with voxels in rows and mappables in columns.
         """
-        if ids is None and voxels is None:
-            result = self.data
-        else:
-            result = self.data
-            if ids is not None:
-                idxs = [i for i in range(len(self.ids)) if self.ids[i] in ids]
-                result = result[:, idxs]
-            if voxels is not None:
-                result = result.toarray()[voxels,:]
-        return result.toarray() if dense and voxels is None else result
+        result = self.data
+        if ids is not None:
+            idxs = np.where(np.in1d(np.array(self.ids), np.array(ids)))[0]
+            result = result[:, idxs]
+        if voxels is not None:
+            result = result[voxels,:]
+        return result.toarray() if dense else result
 
     def trim(self, ids):
         """ Trim ImageTable to keep only the passed Mappables. This is a convenience
@@ -436,30 +437,29 @@ class FeatureTable(object):
         (2) A dense matrix stored as plaintext (see _parse_txt() for details)
         If validate == True, any mappable IDs in the input file that cannot be located
         in the root Dataset's ImageTable will be silently culled. """
+        # try:
+        #     self._features_from_json(filename, validate)
+        # except Exception as e:
         try:
-            self._features_from_json(filename, validate)
+            # logger.debug('Failed to load as JSON (Error: %s). Trying plain text' % (e,))
+            self._features_from_txt(filename, validate)
         except Exception as e:
-            try:
-                logger.debug(
-                    'Failed to load as JSON (Error: %s).  Trying plain text' % (e,))
-                self._features_from_txt(filename, validate)
-            except Exception as e:
-                logger.error("%s cannot be parsed: %s" % (filename, e))
+            logger.error("%s cannot be parsed: %s" % (filename, e))
 
-    def _features_from_json(self, filename, validate=False):
-        """ Parses FeatureTable from a sparse JSON representation, where keys are feature
-        names and values are dictionaries of mappable id: weight mappings. E.g.,
-          {'language': ['study1': 0.003, 'study2': 0.103]} """
-        import json
-        json_data = json.loads(open(filename))
-        # Find all unique mappable IDs
-        unique_ids = set()
-        unique_ids = [unique_ids.update(d) for d in json_data.itervalues()]
-        # Cull invalid IDs if validation is on
-        if validate:
-            unique_ids &= set(self.dataset.image_table.ids)
-        # ...
-        self.data = data
+    # def _features_from_json(self, filename, validate=False):
+    #     """ Parses FeatureTable from a sparse JSON representation, where keys are feature
+    #     names and values are dictionaries of mappable id: weight mappings. E.g.,
+    #       {'language': ['study1': 0.003, 'study2': 0.103]} """
+    #     import json
+    #     json_data = json.loads(open(filename))
+    #     # Find all unique mappable IDs
+    #     unique_ids = set()
+    #     unique_ids = [unique_ids.update(d) for d in json_data.itervalues()]
+    #     # Cull invalid IDs if validation is on
+    #     if validate:
+    #         unique_ids &= set(self.dataset.image_table.ids)
+    #     # ...
+    #     self.data = data
 
     def _features_from_txt(self, filename, validate=False):
         """ Parses FeatureTable from a plaintext file that represents a dense matrix,
@@ -474,10 +474,34 @@ class FeatureTable(object):
         if validate:
             valid_ids = set(self.ids) & set(self.dataset.image_table.ids)
             if len(valid_ids) < len(self.dataset.image_table.ids):
-                valid_id_inds = np.in1d(self.ids, list(valid_ids))
+                valid_id_inds = np.in1d(self.ids, np.array(valid_ids))
                 self.data = self.data[valid_id_inds,:]
                 self.ids = self.ids[valid_id_inds]
         self.data = sparse.csr_matrix(self.data)
+
+    def get_feature_data(self, ids=None, features=None, dense=True):
+        """ Slices and returns a subset of feature data.
+
+        Args:
+          ids: A list or 1D numpy array of Mappable ids to return rows for. 
+            If None, returns data for all Mappables (i.e., all rows in array). 
+          features: A list or 1D numpy array of named features to return. 
+            If None, returns data for all features (i.e., all columns in array).
+          dense: Optional boolean. When True (default), convert the result to a dense
+            array before returning. When False, keep as sparse matrix. Note that if 
+            ids is not None, the returned array will always be dense.
+
+        Returns:
+          A 2D numpy array, with mappable IDs in rows and features in columns.
+        """
+        result = self.data
+        if ids is not None:
+            idxs = np.where(np.in1d(np.array(self.ids), np.array(ids)))[0]
+            result = result[idxs,:]
+        if features is not None:
+            idxs = np.where(np.in1d(np.array(self.feature_names), np.array(features)))[0]
+            result = result[:,idxs]
+        return result.toarray() if dense else result
 
     def get_ids(self, features, threshold=None, func='sum', get_weights=False):
         """ Returns a list of all Mappables in the table that meet the desired feature-based
@@ -505,8 +529,7 @@ class FeatureTable(object):
         if isinstance(features, str):
             features = [features]
         features = self.search_features(features)  # Expand wild cards
-        feature_indices = np.in1d(np.array(
-            self.feature_names), np.array(features))
+        feature_indices = np.in1d(np.array(self.feature_names), np.array(features))
         data = self.data.toarray()
         feature_weights = data[:, feature_indices]
         weights = eval("np.%s(tw, 1)" % func, {}, {
