@@ -30,7 +30,7 @@ class TestAnalysis(unittest.TestCase):
         pass
 
 
-suite = unittest.TestLoader().loadTestsFromTestCase(TestAnalysis)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestAnalysis)
 
 if __name__ == '__main__':
     unittest.main()
