@@ -10,7 +10,7 @@ def classify_by_features(dataset, features, studies=None, method='SVM', scikit_c
 
 def classify_regions(dataset, masks, remove_overlap=True, features=None, threshold=0.001,
                      output='summary', studies=None, method='SVM', classifier=None,
-                     regularization="Alejandro's expert judgment", class_weight=None,
+                     regularization='scale', class_weight=None,
                      cross_val=None):
     '''
         Args:
@@ -33,24 +33,24 @@ def classify_regions(dataset, masks, remove_overlap=True, features=None, thresho
 
     # Get a list of studies that activate for each mask file--i.e.,  a list of
     # lists
-    all_ids = [dataset.get_ids_by_mask(m, threshold=threshold) for m in loaded_masks]
+    grouped_ids = [dataset.get_ids_by_mask(m, threshold=threshold) for m in loaded_masks]
 
     # Flattened ids
-    flat_ids = reduce(lambda a, b: a + b, all_ids)
+    flat_ids = reduce(lambda a, b: a + b, grouped_ids)
 
     # Remove duplicates
     if remove_overlap:
         import collections
-        unique_ids = [id for (id, count) in collections.Counter(flat_ids).items() if count == 1]
-        all_ids = [[x for x in m if x in unique_ids] for m in all_ids]  # Remove
+        flat_ids = [id for (id, count) in collections.Counter(flat_ids).items() if count == 1]
+        grouped_ids = [[x for x in m if x in flat_ids] for m in grouped_ids]  # Remove
 
-    # Loop over list of masksids and get features and create masklabel vector
-    y = [[mask_names[idx]] * len(ids) for idx, ids in enumerate(all_ids)]
+    # Create class label(y)
+    y = [[mask_names[idx]] * len(ids) for idx, ids in enumerate(grouped_ids)]
     y = reduce(lambda a, b: a + b, y)  # Flatten
     y = np.array(y)
 
     # Extract feature set for only relevant ids
-    X = dataset.get_feature_data(ids=unique_ids, features=features)
+    X = dataset.get_feature_data(ids=flat_ids, features=features)
 
     return classify(X, y, method, classifier, output, cross_val, class_weight,
                     regularization=regularization)
@@ -65,39 +65,40 @@ def classify(X, y, method='SVM', classifier=None, output='summary', cross_val=No
     # Regularize
     X = clf.regularize(X)
 
-    # Fit model with or without cross-validation
+    # Fit & test model with or without cross-validation
     if cross_val is not None:
-        clf.cross_val_fit(X, y)
+        score = clf.cross_val_fit(X, y, cross_val)
     else:
-        clf.fit(X, y)
+        score = clf.fit(X, y).score(X, y)
 
     # Return some stuff...
     if output == 'summary':
-        pass
-    elif output == 'scikit':
-        pass
+        return {'score' : score }
+    elif output == 'clf':
+        return clf
     else:
         pass
-
-    return
 
 
 class Classifier:
 
-    def __init__(self, method='SVM', classifier=None, class_weight=None):
+    def __init__(self, clf_method='SVM', classifier=None, class_weight=None):
         """ Initialize a new classifier instance """
+
+        # Set classifier
         if classifier:
-            self.sk_classifier = classifier
+            self.clf = clf
         else:
-            if method == 'SVM':
+            if clf_method == 'SVM':
                 from sklearn import svm
-                self.sk_classifier = svm.SVC(class_weight=class_weight)
+                self.clf = svm.SVC(class_weight=class_weight)
             else:
                 # Error handling?
-                self.sk_classifier = None
+                self.clf = None
+
 
     def fit(self, X, y):
-        """ Fits X to outcomes y, using sk_classifier """
+        """ Fits X to outcomes y, using clf """
         # Incorporate error checking such as :
         # if isinstance(self.classifier, ScikitClassifier):
         #     do one thingNone
@@ -105,10 +106,30 @@ class Classifier:
 
         self.X = X
         self.y = y
-        self.sk_classifier.fit(X, y)
+        self.clf = self.clf.fit(X, y)
 
-    def cross_val_fit(self, X, y):
-        pass
+        return self.clf
+
+    def cross_val_fit(self, X, y, cross_val='4-Fold'):
+        """ Fits X to outcomes y, using clf and cv_method """
+
+        from sklearn import cross_validation
+
+        self.X = X
+        self.y = y
+
+        # Set cross validator
+        if isinstance(cross_val, basestring):
+            if cross_val == '4-Fold':
+                self.cver = cross_validation.KFold(len(self.y),4,indices=False,shuffle=True)
+            else:
+                self.cver = None
+        else:
+            self.cver = cross_val
+
+        self.cvs = cross_validation.cross_val_score(self.clf,self.X,self.y,cv=self.cver,n_jobs=-1)
+
+        return self.cvs.mean()
 
     def fit_dataset(self, dataset, y, features=None, feature_type='features'):
         """ Given a dataset, fits either features or voxels to y """
@@ -121,7 +142,11 @@ class Classifier:
 
         self.sk_classifier.fit(X, y)
 
-    def regularize(self, X, method='None'):
-        # Nonewhat to give scikitNone or do it yourselfNone
-        return X
+    def regularize(self, X, method='scale'):
+
+        if method=='scale':
+            from sklearn import preprocessing
+            return preprocessing.scale(X,with_mean=False)
+        else:
+            return X
 
