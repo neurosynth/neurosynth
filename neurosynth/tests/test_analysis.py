@@ -19,6 +19,11 @@ class TestAnalysis(unittest.TestCase):
     def test_decoder(self):
         pass
 
+    # def test_region_classification(self):
+    #     result = decode.classify_regions(self.dataset, masks=[get_test_data_path() + 'sgacc_mask.nii.gz'])
+    #     self.assertEquals(len(result['features']), 525)
+    #     self.assertEquals(result['scores'].shape = (3,525))
+
     def test_coactivation(self):
         """ Test seed-based coactivation. """
         pass
@@ -29,8 +34,16 @@ class TestAnalysis(unittest.TestCase):
     def test_get_random_voxels(self):
         pass
 
+    def test_classify_regions(self):
+        # score = classify.classify_regions(self.dataset,['data/regions/medial_motor.nii.gz', 'data/regions/vmPFC.nii.gz'], cross_val='4-Fold')['score']
+        # self.assertEqual(score, 0.84600313479623823)
 
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestAnalysis)
+        # score = classify.classify_regions(self.dataset,['data/regions/medial_motor.nii.gz', 'data/regions/vmPFC.nii.gz'])['score']
+        # self.assertEqual(score, 0.87813479623824453)
+        pass
+
+
+suite = unittest.TestLoader().loadTestsFromTestCase(TestAnalysis)
 
 if __name__ == '__main__':
     unittest.main()
