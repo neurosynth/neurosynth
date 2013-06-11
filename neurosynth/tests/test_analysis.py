@@ -39,7 +39,7 @@ class TestAnalysis(unittest.TestCase):
 #     result = decode.classify_regions(self.dataset, masks=[get_test_data_path() + 'sgacc_mask.nii.gz'])
 #     self.assertEquals(len(result['features']), 525)
 #     self.assertEquals(result['scores'].shape = (3,525))
-
+        pass
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestAnalysis)
 
