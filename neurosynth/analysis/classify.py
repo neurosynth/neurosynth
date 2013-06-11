@@ -8,10 +8,10 @@ def classify_by_features(dataset, features, studies=None, method='SVM', scikit_c
     pass
 
 
-def classify_regions(dataset, masks, remove_overlap=True, features=None, threshold=0.001,
-                     output='summary', studies=None, method='SVM', classifier=None,
-                     regularization='scale', class_weight=None,
-                     cross_val=None):
+def classify_regions(dataset, masks, method='SVM', threshold=0.001, remove_overlap=True, 
+                     regularization='scale', output='summary', studies=None, features=None, 
+                     class_weight='auto', classifier=None, cross_val='4-fold'):
+                     
     '''
         Args:
             ...
@@ -57,13 +57,14 @@ def classify_regions(dataset, masks, remove_overlap=True, features=None, thresho
 
 
 def classify(X, y, method='SVM', classifier=None, output='summary', cross_val=None,
-             class_weight=None, regularization="Alejandro's expert judgment"):
+             class_weight=None, regularization=None):
 
     # Build classifier
     clf = Classifier(method, classifier, class_weight)
 
     # Regularize
-    X = clf.regularize(X)
+    if regularization:
+        X = clf.regularize(X, method=regularization)
 
     # Fit & test model with or without cross-validation
     if cross_val is not None:
@@ -73,7 +74,8 @@ def classify(X, y, method='SVM', classifier=None, output='summary', cross_val=No
 
     # Return some stuff...
     if output == 'summary':
-        return {'score' : score }
+        from collections import Counter
+        return {'score' : score, 'n' :  dict(Counter(y))}
     elif output == 'clf':
         return clf
     else:
