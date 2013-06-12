@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-from neurosynth.analysis import *
+from neurosynth.analysis import classify
 
 from neurosynth.tests.utils import get_test_dataset
 
@@ -19,11 +19,6 @@ class TestAnalysis(unittest.TestCase):
     def test_decoder(self):
         pass
 
-    # def test_region_classification(self):
-    #     result = decode.classify_regions(self.dataset, masks=[get_test_data_path() + 'sgacc_mask.nii.gz'])
-    #     self.assertEquals(len(result['features']), 525)
-    #     self.assertEquals(result['scores'].shape = (3,525))
-
     def test_coactivation(self):
         """ Test seed-based coactivation. """
         pass
@@ -40,8 +35,11 @@ class TestAnalysis(unittest.TestCase):
 
         # score = classify.classify_regions(self.dataset,['data/regions/medial_motor.nii.gz', 'data/regions/vmPFC.nii.gz'])['score']
         # self.assertEqual(score, 0.87813479623824453)
-        pass
 
+#     result = decode.classify_regions(self.dataset, masks=[get_test_data_path() + 'sgacc_mask.nii.gz'])
+#     self.assertEquals(len(result['features']), 525)
+#     self.assertEquals(result['scores'].shape = (3,525))
+        pass
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestAnalysis)
 
