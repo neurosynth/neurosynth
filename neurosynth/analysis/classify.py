@@ -10,7 +10,7 @@ def classify_by_features(dataset, features, studies=None, method='SVM', scikit_c
 
 def classify_regions(dataset, masks, method='SVM', threshold=0.001, remove_overlap=True, 
                      regularization='scale', output='summary', studies=None, features=None, 
-                     class_weight='auto', classifier=None, cross_val='4-fold'):
+                     class_weight='auto', classifier=None, cross_val='4-Fold'):
                      
     '''
         Args:
@@ -21,10 +21,6 @@ def classify_regions(dataset, masks, method='SVM', threshold=0.001, remove_overl
 
     import nibabel as nib
     import os
-
-    # Get base file names for masks
-    # Sci-kit learn does not support numbered masks
-    # mask_names = [os.path.basename(file).split('.')[0] for file in masks
 
     # Load masks using NiBabel
     try:
@@ -99,8 +95,7 @@ class Classifier:
                 from sklearn.dummy import DummyClassifier 
                 self.clf = DummyClassifier(strategy="stratified")
             else:
-                # Error handling?
-                self.clf = None
+                raise Exception("Unrecognized classification method")
 
 
     def fit(self, X, y):
@@ -129,7 +124,7 @@ class Classifier:
             if cross_val == '4-Fold':
                 self.cver = cross_validation.KFold(len(self.y),4,indices=False,shuffle=True)
             else:
-                self.cver = None
+                raise Exception("Unrecognized cross validation method")
         else:
             self.cver = cross_val
 
@@ -154,5 +149,5 @@ class Classifier:
             from sklearn import preprocessing
             return preprocessing.scale(X,with_mean=False)
         else:
-            return X
+            raise Exception("Unrecognized regularization method")
 
