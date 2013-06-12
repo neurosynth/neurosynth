@@ -23,7 +23,8 @@ def classify_regions(dataset, masks, method='SVM', threshold=0.001, remove_overl
     import os
 
     # Get base file names for masks
-    mask_names = [os.path.basename(file).split('.')[0] for file in masks]
+    # Sci-kit learn does not support numbered masks
+    # mask_names = [os.path.basename(file).split('.')[0] for file in masks
 
     # Load masks using NiBabel
     try:
@@ -45,7 +46,7 @@ def classify_regions(dataset, masks, method='SVM', threshold=0.001, remove_overl
         grouped_ids = [[x for x in m if x in flat_ids] for m in grouped_ids]  # Remove
 
     # Create class label(y)
-    y = [[mask_names[idx]] * len(ids) for idx, ids in enumerate(grouped_ids)]
+    y = [[idx] * len(ids) for idx, ids in enumerate(grouped_ids)]
     y = reduce(lambda a, b: a + b, y)  # Flatten
     y = np.array(y)
 
@@ -94,6 +95,9 @@ class Classifier:
             if clf_method == 'SVM':
                 from sklearn import svm
                 self.clf = svm.SVC(class_weight=class_weight)
+            elif clf_method == 'Dummy':
+                from sklearn.dummy import DummyClassifier 
+                self.clf = DummyClassifier(strategy="stratified")
             else:
                 # Error handling?
                 self.clf = None
