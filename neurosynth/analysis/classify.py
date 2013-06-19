@@ -86,7 +86,7 @@ class Classifier:
 
         # Set classifier
         if classifier:
-            self.clf = clf
+            self.clf = classifier
         else:
             if clf_method == 'SVM':
                 from sklearn import svm
