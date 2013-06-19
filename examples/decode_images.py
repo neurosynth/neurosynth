@@ -1,9 +1,9 @@
-import cPickle
+from neurosynth.base.dataset import Dataset
 from neurosynth.analysis import decode
 
-# Load a pickled Dataset instance. This example will work with the 
+# Load a saved Dataset file. This example will work with the 
 # file saved in the create_a_new_dataset_and_load_features example.
-dataset = cPickle.load(open('dataset.pkl', 'rb'))
+dataset = Dataset.load('dataset.pkl')
 
 # Initialize a new Decoder instance with a few features. Note that 
 # if you don't specify a subset of features, ALL features in the 
