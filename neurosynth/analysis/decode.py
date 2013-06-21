@@ -6,18 +6,18 @@ import numpy as np
 from neurosynth.base import imageutils
 from neurosynth.analysis import classify
 
-def decode_by_features():
-    pass
+# def decode_by_features():
+#     pass
 
 
-def decode_by_masks():
-    pass
+# def decode_by_masks():
+#     pass
 
 
 
 class Decoder:
 
-    def __init__(self, dataset=None, method='pearson', features=None, mask=None, image_type=None):
+    def __init__(self, dataset=None, method='pearson', features=None, mask=None, image_type='pFgA_z'):
         """ Initialize a new Decoder instance.
 
         Args:
@@ -31,7 +31,8 @@ class Decoder:
           mask: An optional mask to apply to features and input images. If None, will use
             the one in the current Dataset.
           image_type: An optional string indicating the type of image to use when constructing
-            feature-based images. See meta.analyze_features() for details.
+            feature-based images. See meta.analyze_features() for details. By default, uses 
+            reverse inference z-score images.
 
         """
 
