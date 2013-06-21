@@ -28,16 +28,16 @@ That's it! You should now be ready to roll.
 
 ## Usage
 
-Running analyses in Neurosynth is pretty straightforward. For a reasonably thorough walk-through, see the Getting Started page in the documentation (well, once it exists). This Quickstart guide just covers the bare minimum.
+Running analyses in Neurosynth is pretty straightforward. We're working on a user manual; in the meantime, you can take a look at the code in the /examples directory for an illustration of some common uses cases (some of the examples are in iPython Notebook format; you can view these online by entering the URL of the raw example on github into the online [iPython Notebook Viewer](http://nbviewer.ipython.org)). The rest of this Quickstart guide just covers the bare minimum.
 
 NeuroSynth dataset resides in a git submodule under data/, so after obtaining this git repository, initialize and update that module:
 
     > git submodule init
     > git submodule update
 
-Alternatively, dataset files could be [downloaded](http://neurosynth.org/data/current_data.tar.gz) from the Neurosynth website:
+This is the preferred way of obtaining the data,  as the files are kept current. Alternatively, you can also [download dataset files](http://old.neurosynth.org/data/current_data.tar.gz) from the old Neurosynth website:
 
-	> curl -O http://neurosynth.org/data/current_data.tar.gz
+	> curl -O http://old.neurosynth.org/data/current_data.tar.gz
 
 Unpack the archive, which should contain 2 files: database.txt and features.txt, and place them under data/.
 
@@ -77,3 +77,8 @@ Once we've got a set of studies we're happy with, we can run a simple meta-analy
 	> ma.save_results('some_directory/emotion')
 
 You should now have a set of Nifti-format brain images on your drive that display various meta-analytic results. The image names are somewhat cryptic; see the Documentation for details. It's important to note that the meta-analysis routines currently implemented in Neurosynth aren't very sophisticated; they're designed primarily for efficiency (most analyses should take just a few seconds), and take multiple shortcuts as compared to other packages like ALE or MKDA. But with that caveat in mind (and one that will hopefully be remedied in the near future), Neurosynth gives you a streamlined and quick way of running large-scale meta-analyses of fMRI data.
+
+
+## Getting help
+
+For bugs or feature requests, please [create a new issue](https://github.com/neurosynth/neurosynth/issues/new). If you run into problems installing or using the software, try posting to the [Neurosynth Google group](https://groups.google.com/forum/#!forum/neurosynthlist) or email [Tal Yarkoni](mailto:tyarkoni@gmail.com).
