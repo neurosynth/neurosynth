@@ -8,7 +8,7 @@ def classify_by_features(dataset, features, studies=None, method='SVM', scikit_c
     pass
 
 
-def classify_regions(dataset, masks, method='SVM', threshold=0.001, remove_overlap=True, 
+def classify_regions(dataset, masks, method='ERF', threshold=0.08, remove_overlap=True, 
                      regularization='scale', output='summary', studies=None, features=None, 
                      class_weight='auto', classifier=None, cross_val='4-Fold'):
                      
@@ -81,7 +81,7 @@ def classify(X, y, method='SVM', classifier=None, output='summary', cross_val=No
 
 class Classifier:
 
-    def __init__(self, clf_method='SVM', classifier=None, class_weight=None):
+    def __init__(self, clf_method='ERF', classifier=None, class_weight=None):
         """ Initialize a new classifier instance """
 
         # Set classifier
@@ -91,6 +91,10 @@ class Classifier:
             if clf_method == 'SVM':
                 from sklearn import svm
                 self.clf = svm.SVC(class_weight=class_weight)
+            elif clf_method =='ERF':
+                from sklearn.ensemble import ExtraTreesClassifier
+                self.clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
+                 min_samples_split=1, random_state=0, n_jobs=-1, compute_importances=True)
             elif clf_method == 'Dummy':
                 from sklearn.dummy import DummyClassifier 
                 self.clf = DummyClassifier(strategy="stratified")
