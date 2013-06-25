@@ -10,7 +10,7 @@ def classify_by_features(dataset, features, studies=None, method='SVM', scikit_c
 
 def classify_regions(dataset, masks, method='ERF', threshold=0.08, remove_overlap=True, 
                      regularization='scale', output='summary', studies=None, features=None, 
-                     class_weight='auto', classifier=None, cross_val='4-Fold'):
+                     class_weight='auto', classifier=None, cross_val='4-Fold', param_grid=None):
                      
     '''
         Args:
@@ -50,21 +50,21 @@ def classify_regions(dataset, masks, method='ERF', threshold=0.08, remove_overla
     X = dataset.get_feature_data(ids=flat_ids, features=features)
 
     return classify(X, y, method, classifier, output, cross_val, class_weight,
-                    regularization=regularization)
+                    regularization=regularization, param_grid=param_grid)
 
 
 def classify(X, y, method='SVM', classifier=None, output='summary', cross_val=None,
-             class_weight=None, regularization=None):
+             class_weight=None, regularization=None, param_grid=None):
 
     # Build classifier
-    clf = Classifier(method, classifier, class_weight)
+    clf = Classifier(method, classifier, class_weight, param_grid)
 
     # Regularize
     if regularization:
         X = clf.regularize(X, method=regularization)
 
     # Fit & test model with or without cross-validation
-    if cross_val is not None:
+    if cross_val:
         score = clf.cross_val_fit(X, y, cross_val)
     else:
         score = clf.fit(X, y).score(X, y)
@@ -81,7 +81,7 @@ def classify(X, y, method='SVM', classifier=None, output='summary', cross_val=No
 
 class Classifier:
 
-    def __init__(self, clf_method='ERF', classifier=None, class_weight=None):
+    def __init__(self, clf_method='ERF', classifier=None, class_weight=None, param_grid=None):
         """ Initialize a new classifier instance """
 
         # Set classifier
@@ -100,6 +100,10 @@ class Classifier:
                 self.clf = DummyClassifier(strategy="stratified")
             else:
                 raise Exception("Unrecognized classification method")
+
+        if isinstance(param_grid,dict):
+            from sklearn.grid_search import GridSearchCV
+            self.clf = GridSearchCV(estimator=self.clf, param_grid=param_grid, n_jobs=-1)
 
 
     def fit(self, X, y):
@@ -132,7 +136,12 @@ class Classifier:
         else:
             self.cver = cross_val
 
-        self.cvs = cross_validation.cross_val_score(self.clf,self.X,self.y,cv=self.cver,n_jobs=-1)
+        if isinstance(self.clf, GridSearchCV):
+            self.cvs.set_params(cv=self.cver)
+            self.clf = self.clf.fit(X, y)
+            self.cvs = self.clf.best_score_
+        else:
+            self.cvs = cross_validation.cross_val_score(self.clf,self.X,self.y,cv=self.cver,n_jobs=-1)
 
         return self.cvs.mean()
 
