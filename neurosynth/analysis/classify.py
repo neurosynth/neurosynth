@@ -13,17 +13,30 @@ def classify_by_features(dataset, features, studies=None, method='SVM',
     pass
 
 
-def classify_regions(dataset, masks, method='ERF', threshold=0.08,
-                     remove_overlap=True, regularization='scale',
-                     output='summary', studies=None, features=None,
-                     class_weight='auto', classifier=None,
-                     cross_val='4-Fold', param_grid=None):
-    '''
+def get_studies_by_regions(dataset, masks, threshold=0.08,
+                           remove_overlap=True, studies=None,
+                           features=None):
+    """ Set up data for a classification task given a set of masks
+    
+        Given a set of masks, this function retrieves studies associated with each 
+        mask at the specified threshold, optionally removes overlap and filters by studies 
+        and features, and returns studies by feature matrix (X) and class labels (y)
+
         Args:
-            ...
+            dataset: a Neurosynth dataset
+            maks: a list of paths to Nifti masks
+            threshold: percentage of voxels active within the mask for study to be included
+            remove_overlap: A boolean indicating if studies studies that appear in more than 
+                one mask should be excluded
+            studies: An optional list of study names used to constrain the set used in
+                classification. If None, will use all features in the dataset.
             features: An optional list of feature names used to constrain the set used in
                 classification. If None, will use all features in the dataset.
-    '''
+
+        Returns:
+            A tuple (X, y) of np arrays. 
+            X is a feature by studies matrix and y is a vector of class labels
+    """
 
     import nibabel as nib
     import os
@@ -63,6 +76,59 @@ def classify_regions(dataset, masks, method='ERF', threshold=0.08,
     # Extract feature set for only relevant ids
 
     X = dataset.get_feature_data(ids=flat_ids, features=features)
+
+    return (X, y)
+
+
+def classify_regions(dataset, masks, method='ERF', threshold=0.08,
+                     remove_overlap=True, regularization='scale',
+                     output='summary', studies=None, features=None,
+                     class_weight='auto', classifier=None,
+                     cross_val='4-Fold', param_grid=None):
+    """ Perform classification on specified regions
+
+        Given a set of masks, this function retrieves studies associated with each 
+        mask at the specified threshold, optionally removes overlap and filters by studies 
+        and features. Then it trains an algorithm to classify studies based on features
+        and tests performance. 
+
+        Args:
+            dataset: a Neurosynth dataset
+            maks: a list of paths to Nifti masks
+            method: a string indicating which method to used. 
+                'SVM': Support Vector Classifier with rbf kernel
+                'ERF': Extremely Randomized Forest classifier
+                'Dummy': A dummy classifier using stratified classes as predictor
+            threshold: percentage of voxels active within the mask for study to be included
+            remove_overlap: A boolean indicating if studies studies that appear in more than 
+                one mask should be excluded
+            regularization: A string indicating type of regularization to use. If None
+                performs no regularization.
+                'scale': Unit scale without demeaning
+            output: A string indicating output type
+                'summary': Dictionary with summary statistics including score and n
+                'summary_clf': Same as above but also includes classifier 
+                'clf': Only returns classifier
+                Warning: using cv without grid will return an untrained classifier
+            studies: An optional list of study names used to constrain the set used in
+                classification. If None, will use all features in the dataset.
+            features: An optional list of feature names used to constrain the set used in
+                classification. If None, will use all features in the dataset.
+            class_weight: Parameter to pass to classifier determining how to weight classes
+            classifier: An optional sci-kit learn classifier to use instead of pre-set up 
+                classifiers set up using 'method'
+            cross_val: A string indicating type of cross validation to use. Can also pass a 
+                scikit_classifier
+            param_grid: A dictionary indicating which parameters to optimize using GridSearchCV
+                If None, no GridSearch will be used
+
+        Returns:
+            A tuple (X, y) of np arrays. 
+            X is a feature by studies matrix and y is a vector of class labels
+    """
+
+    (X, y) = get_studies_by_regions(dataset, masks, threshold,
+                                    remove_overlap, studies, features)
 
     return classify(X, y, method, classifier, output, cross_val,
                     class_weight, regularization=regularization,
@@ -123,6 +189,10 @@ class Classifier:
                         max_depth=None, min_samples_split=1,
                         random_state=0, n_jobs=-1,
                         compute_importances=True)
+            elif clf_method == 'GBC':
+                from sklearn.ensemble import GradientBoostingClassifier
+                self.clf = GradientBoostingClassifier(n_estimators=10,
+                        max_depth=1)
             elif clf_method == 'Dummy':
                 from sklearn.dummy import DummyClassifier
                 self.clf = DummyClassifier(strategy='stratified')
