@@ -7,31 +7,17 @@ import numpy as np
 from functools import reduce
 
 
-def classify_by_features(
-    dataset,
-    features,
-    studies=None,
-    method='SVM',
-    scikit_classifier=None,
-    ):
+def classify_by_features(dataset, features, studies=None, method='SVM',
+                         scikit_classifier=None):
+
     pass
 
 
-def classify_regions(
-    dataset,
-    masks,
-    method='ERF',
-    threshold=0.08,
-    remove_overlap=True,
-    regularization='scale',
-    output='summary',
-    studies=None,
-    features=None,
-    class_weight='auto',
-    classifier=None,
-    cross_val='4-Fold',
-    param_grid=None,
-    ):
+def classify_regions(dataset, masks, method='ERF', threshold=0.08,
+                     remove_overlap=True, regularization='scale',
+                     output='summary', studies=None, features=None,
+                     class_weight='auto', classifier=None,
+                     cross_val='4-Fold', param_grid=None):
     '''
         Args:
             ...
@@ -78,30 +64,14 @@ def classify_regions(
 
     X = dataset.get_feature_data(ids=flat_ids, features=features)
 
-    return classify(
-        X,
-        y,
-        method,
-        classifier,
-        output,
-        cross_val,
-        class_weight,
-        regularization=regularization,
-        param_grid=param_grid,
-        )
+    return classify(X, y, method, classifier, output, cross_val,
+                    class_weight, regularization=regularization,
+                    param_grid=param_grid)
 
 
-def classify(
-    X,
-    y,
-    method='SVM',
-    classifier=None,
-    output='summary',
-    cross_val=None,
-    class_weight=None,
-    regularization=None,
-    param_grid=None,
-    ):
+def classify(X, y, method='SVM', classifier=None, output='summary',
+             cross_val=None, class_weight=None, regularization=None,
+             param_grid=None):
 
     # Build classifier
 
@@ -135,18 +105,13 @@ def classify(
 
 class Classifier:
 
-    def __init__(
-        self,
-        clf_method='ERF',
-        classifier=None,
-        class_weight=None,
-        param_grid=None,
-        ):
+    def __init__(self, clf_method='ERF', classifier=None,
+                 class_weight=None, param_grid=None):
         """ Initialize a new classifier instance """
 
         # Set classifier
 
-        if classifier:
+        if classifier is not None:
             self.clf = classifier
         else:
             if clf_method == 'SVM':
@@ -154,14 +119,10 @@ class Classifier:
                 self.clf = svm.SVC(class_weight=class_weight)
             elif clf_method == 'ERF':
                 from sklearn.ensemble import ExtraTreesClassifier
-                self.clf = ExtraTreesClassifier(
-                    n_estimators=10,
-                    max_depth=None,
-                    min_samples_split=1,
-                    random_state=0,
-                    n_jobs=-1,
-                    compute_importances=True,
-                    )
+                self.clf = ExtraTreesClassifier(n_estimators=10,
+                        max_depth=None, min_samples_split=1,
+                        random_state=0, n_jobs=-1,
+                        compute_importances=True)
             elif clf_method == 'Dummy':
                 from sklearn.dummy import DummyClassifier
                 self.clf = DummyClassifier(strategy='stratified')
@@ -187,12 +148,7 @@ class Classifier:
 
         return self.clf
 
-    def cross_val_fit(
-        self,
-        X,
-        y,
-        cross_val='4-Fold',
-        ):
+    def cross_val_fit(self, X, y, cross_val='4-Fold'):
         """ Fits X to outcomes y, using clf and cv_method """
 
         from sklearn import cross_validation
@@ -227,13 +183,8 @@ class Classifier:
 
         return self.cvs.mean()
 
-    def fit_dataset(
-        self,
-        dataset,
-        y,
-        features=None,
-        feature_type='features',
-        ):
+    def fit_dataset(self, dataset, y, features=None,
+                    feature_type='features'):
         """ Given a dataset, fits either features or voxels to y """
 
         # Get data from dataset
