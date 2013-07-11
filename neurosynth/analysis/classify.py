@@ -161,7 +161,6 @@ def classify(X, y, method='SVM', classifier=None, output='summary',
         from collections import Counter
         return {'score': score, 'n': dict(Counter(y))}
     elif output == 'summary_clf':
-        from collections import Counter
         return {'score': score, 'n': dict(Counter(y)), 'clf': clf}
     elif output == 'clf':
         return clf
@@ -248,6 +247,11 @@ class Classifier:
 
             self.cvs = self.clf.best_score_
         else:
+            # import warnings
+            # with warnings.catch_warnings():
+            #     warnings.simplefilter('ignore', category=UserWarning)
+            #     self.clf.fit(X, y)
+
             self.cvs = cross_validation.cross_val_score(self.clf,
                     self.X, self.y, cv=self.cver, n_jobs=-1)
 
