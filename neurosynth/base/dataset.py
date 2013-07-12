@@ -285,9 +285,15 @@ class Dataset(object):
         """ A convenience wrapper for FeatureTable.get_image_data(). """
         return self.feature_table.get_feature_data(ids, features=features, dense=dense)
 
-    def get_feature_names(self):
-        """ Returns a list of all current feature names. """
-        return self.feature_table.feature_names
+    def get_feature_names(self, features=None):
+        """ Returns a list of all current feature names.
+        Args:
+            features: If not none, retures orderd names only for those features
+         """
+        if features:
+            return self.feature_table.get_ordered_names(features)
+        else:
+            return self.feature_table.feature_names
 
     def get_feature_counts(self, threshold=0.001):
         """ Returns a dictionary, where the keys are the feature names
@@ -502,6 +508,20 @@ class FeatureTable(object):
             idxs = np.where(np.in1d(np.array(self.feature_names), np.array(features)))[0]
             result = result[:,idxs]
         return result.toarray() if dense else result
+
+    def get_ordered_names(self, features):
+        """ Given a list of featurs, returns features in order that they appear in database
+        Args:
+            features: A list or 1D numpy array of named features to return. 
+
+        Returns:
+            A list of features in order they appear in database
+        """
+
+        idxs = np.where(np.in1d(np.array(self.feature_names), np.array(features)))[0]
+        result = np.array(self.feature_names)[idxs]
+
+        return list(result)
 
     def get_ids(self, features, threshold=None, func='sum', get_weights=False):
         """ Returns a list of all Mappables in the table that meet the desired feature-based
