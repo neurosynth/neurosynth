@@ -157,8 +157,8 @@ def classify(X, y, method='SVM', classifier=None, output='summary',
 
     # Return some stuff...
 
+    from collections import Counter
     if output == 'summary':
-        from collections import Counter
         return {'score': score, 'n': dict(Counter(y))}
     elif output == 'summary_clf':
         return {'score': score, 'n': dict(Counter(y)), 'clf': clf}
