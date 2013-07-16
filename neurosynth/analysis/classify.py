@@ -13,9 +13,16 @@ def classify_by_features(dataset, features, studies=None, method='SVM',
     pass
 
 
+def regularize(X, method='scale'):
+    if method == 'scale':
+        from sklearn import preprocessing
+        return preprocessing.scale(X, with_mean=False)
+    else:
+        raise Exception('Unrecognized regularization method')
+
 def get_studies_by_regions(dataset, masks, threshold=0.08,
                            remove_overlap=True, studies=None,
-                           features=None):
+                           features=None, regularization="scale"):
     """ Set up data for a classification task given a set of masks
     
         Given a set of masks, this function retrieves studies associated with each 
@@ -32,6 +39,7 @@ def get_studies_by_regions(dataset, masks, threshold=0.08,
                 classification. If None, will use all features in the dataset.
             features: An optional list of feature names used to constrain the set used in
                 classification. If None, will use all features in the dataset.
+            regularize: Optional boolean indicating if X should be regularized
 
         Returns:
             A tuple (X, y) of np arrays. 
@@ -76,6 +84,9 @@ def get_studies_by_regions(dataset, masks, threshold=0.08,
     # Extract feature set for only relevant ids
 
     X = dataset.get_feature_data(ids=flat_ids, features=features)
+
+    if regularization:
+        X = regularize(X, method=regularization)
 
     return (X, y)
 
@@ -128,11 +139,10 @@ def classify_regions(dataset, masks, method='ERF', threshold=0.08,
     """
 
     (X, y) = get_studies_by_regions(dataset, masks, threshold,
-                                    remove_overlap, studies, features)
+                                    remove_overlap, studies, features, regularization=regularization)
 
     return classify(X, y, method, classifier, output, cross_val,
-                    class_weight, regularization=regularization,
-                    param_grid=param_grid)
+                    class_weight, param_grid=param_grid)
 
 
 def classify(X, y, method='SVM', classifier=None, output='summary',
@@ -142,11 +152,6 @@ def classify(X, y, method='SVM', classifier=None, output='summary',
     # Build classifier
 
     clf = Classifier(method, classifier, class_weight, param_grid)
-
-    # Regularize
-
-    if regularization:
-        X = clf.regularize(X, method=regularization)
 
     # Fit & test model with or without cross-validation
 
@@ -203,7 +208,7 @@ class Classifier:
             self.clf = GridSearchCV(estimator=self.clf,
                                     param_grid=param_grid, n_jobs=-1)
 
-    def fit(self, X, y):
+    def fit(self, X, y, cv=None):
         """ Fits X to outcomes y, using clf """
 
         # Incorporate error checking such as :
@@ -270,10 +275,3 @@ class Classifier:
 
         self.sk_classifier.fit(X, y)
 
-    def regularize(self, X, method='scale'):
-
-        if method == 'scale':
-            from sklearn import preprocessing
-            return preprocessing.scale(X, with_mean=False)
-        else:
-            raise Exception('Unrecognized regularization method')
