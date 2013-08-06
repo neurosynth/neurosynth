@@ -1,6 +1,5 @@
 from neurosynth.base.dataset import Dataset
 from neurosynth.analysis import meta
-import cPickle
 
 """ Load a Dataset and generate a full set of meta-analysis
 images--i.e., run a meta-analysis on every single feature.
@@ -8,7 +7,7 @@ images--i.e., run a meta-analysis on every single feature.
 
 # Load pickled Dataset--assumes you've previously saved it. If not,
 # follow the create_a_new_dataset_and_load_features example.
-dataset = cPickle.load(open('dataset.pkl', 'rb'))
+dataset = Dataset.load('dataset.pkl')
 
 # Get the full list of feature names
 feature_list = dataset.get_feature_names()
