@@ -54,7 +54,7 @@ class Decoder:
         if features is None:
             features = dataset.get_feature_names()
 
-        self.load_features(features, image_type=image_type)
+        self.load_features(features, image_type=image_type, threshold=threshold)
 
     def decode(self, filenames, method=None, save=None, round=4, names=None):
         """ Decodes a set of images.
@@ -107,7 +107,7 @@ class Decoder:
         """ Set decoding method. """
         self.method = method
 
-    def load_features(self, features, image_type=None):
+    def load_features(self, features, image_type=None, threshold=0.001):
         """ Load features from current Dataset instance or a list of files. """
         from os import path
         # If features is a string, assume it's a pointer to a numpy array on disk.
@@ -119,7 +119,7 @@ class Decoder:
         elif path.exists(features[0]):
             self._load_features_from_images(features)
         else:
-            self._load_features_from_dataset(features, image_type=image_type)
+            self._load_features_from_dataset(features, image_type=image_type, threshold=threshold)
 
     def _load_features_from_array(self, features):
         self.feature_images = np.load(features)
