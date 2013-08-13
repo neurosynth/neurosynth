@@ -5,6 +5,7 @@
 import numpy as np
 from neurosynth.base import imageutils
 from neurosynth.analysis import classify
+from neurosynth.analysis import plotutils #import radar_factory
 
 # def decode_by_features():
 #     pass
@@ -17,7 +18,7 @@ from neurosynth.analysis import classify
 
 class Decoder:
 
-    def __init__(self, dataset=None, method='pearson', features=None, mask=None, image_type='pFgA_z'):
+    def __init__(self, dataset=None, method='pearson', features=None, mask=None, image_type='pFgA_z', threshold=0.001):
         """ Initialize a new Decoder instance.
 
         Args:
@@ -33,6 +34,9 @@ class Decoder:
           image_type: An optional string indicating the type of image to use when constructing
             feature-based images. See meta.analyze_features() for details. By default, uses 
             reverse inference z-score images.
+          threshold: If decoding from a Dataset instance, this is the feature threshold to 
+            use to generate the feature maps used in the decoding.
+
 
         """
 
@@ -44,8 +48,8 @@ class Decoder:
         if mask is None:
             self.mask = dataset.volume
         else:
-            from neurosynth.base import mask
-            self.mask = mask.Mask(mask)
+            from neurosynth.base import mask as m
+            self.mask = m.Mask(mask)
 
         if features is None:
             features = dataset.get_feature_names()
@@ -121,7 +125,7 @@ class Decoder:
         self.feature_images = np.load(features)
         self.feature_names = range(self.feature_images.shape[1])
 
-    def _load_features_from_dataset(self, features=None, image_type=None):
+    def _load_features_from_dataset(self, features=None, image_type=None, threshold=0.001):
         """ Load feature image data from the current Dataset instance.
 
         Args:
@@ -134,7 +138,7 @@ class Decoder:
                 lambda x: x in self.feature_names, features)
         from neurosynth.analysis import meta
         self.feature_images = meta.analyze_features(
-            self.dataset, self.feature_names, image_type=image_type)
+            self.dataset, self.feature_names, image_type=image_type, threshold=threshold)
 
     def _load_features_from_images(self, images, names=None):
         """ Load feature image data from image files.
@@ -195,10 +199,9 @@ class Decoder:
     #         select the top N features for each image and use those in the plot.
     #       autosort: Boolean indicating whether to reorder features to as to maximize
     #         separate in the plot.
-
     #     """
-    #     from neurosynth.plotutils import radar_factory
 
+    #     import matplotlib.pyplot as plt
     #     N_images, N_features = data.shape
 
     #     # Sort images to maximize separation
@@ -207,8 +210,8 @@ class Decoder:
     #         whitened = vq.whiten(data)
     #         res = vq.kmeans(whitened, N_images)
 
-    #     theta = radar_factory(N_features)
-    #     spoke_labels = feature_names  # fix--need to make sure feature names are available
+    #     theta = plotutils.radar_factory(N_features)
+    #     spoke_labels = ['1', '2', '3', '4', '5'] #feature_names  # fix--need to make sure feature names are available
 
     #     fig = plt.figure(figsize=(9, 9))
     #     fig.subplots_adjust(wspace=0.25, hspace=0.20, top=0.9, bottom=0.05)
@@ -226,7 +229,7 @@ class Decoder:
     #         ax.plot(theta, d, color=color, lw=1)
     #         ax.fill(theta, d, facecolor=color, alpha=0.25)
 
-    #     labels = image_names  # TODO: need to get this from user or instance
+    #     labels = ['insula1', 'insula2', 'insula3'] #image_names  # TODO: need to get this from user or instance
     #     legend = plt.legend(labels, loc=(0.9, .95), labelspacing=0.1)
     #     for l in legend.get_lines():
     #         l.set_linewidth(2)

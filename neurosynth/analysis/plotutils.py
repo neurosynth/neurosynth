@@ -3,6 +3,7 @@
 """Miscellaneous plotting functions"""
 
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.projections.polar import PolarAxes
 from matplotlib.projections import register_projection
 

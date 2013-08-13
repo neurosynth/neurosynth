@@ -566,7 +566,7 @@ class FeatureTable(object):
         search = [s.replace('*', '.*') for s in search]
         results = []
         for s in search:
-            results.extend([f for f in self.feature_names if re.match(s, f)])
+            results.extend([f for f in self.feature_names if re.match(s + '$', f)])
         return results
 
     def get_ids_by_expression(self, expression, threshold=0.001, func='sum'):
