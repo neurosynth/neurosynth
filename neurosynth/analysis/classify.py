@@ -147,7 +147,7 @@ def classify_regions(dataset, masks, method='ERF', threshold=0.08,
 
 def classify(X, y, method='SVM', classifier=None, output='summary',
              cross_val=None, class_weight=None, regularization=None,
-             param_grid=None):
+             param_grid=None, scoring='accuracy'):
 
     # Build classifier
 
@@ -156,8 +156,9 @@ def classify(X, y, method='SVM', classifier=None, output='summary',
     # Fit & test model with or without cross-validation
 
     if cross_val:
-        score = clf.cross_val_fit(X, y, cross_val)
+        score = clf.cross_val_fit(X, y, cross_val, scoring=scoring)
     else:
+        # Does not support scoring function
         score = clf.fit(X, y).score(X, y)
 
     # Return some stuff...
@@ -222,7 +223,7 @@ class Classifier:
 
         return self.clf
 
-    def cross_val_fit(self, X, y, cross_val='4-Fold'):
+    def cross_val_fit(self, X, y, cross_val='4-Fold', scoring='accuracy'):
         """ Fits X to outcomes y, using clf and cv_method """
 
         from sklearn import cross_validation
@@ -243,7 +244,7 @@ class Classifier:
 
         from sklearn.grid_search import GridSearchCV
         if isinstance(self.clf, GridSearchCV):
-            self.clf.set_params(cv=self.cver)
+            self.clf.set_params(cv=self.cver, scoring=scoring)
 
             import warnings
             with warnings.catch_warnings():
@@ -258,7 +259,7 @@ class Classifier:
             #     self.clf.fit(X, y)
 
             self.cvs = cross_validation.cross_val_score(self.clf,
-                    self.X, self.y, cv=self.cver, n_jobs=-1)
+                    self.X, self.y, cv=self.cver, n_jobs=-1, scoring=scoring)
 
         return self.cvs.mean()
 
