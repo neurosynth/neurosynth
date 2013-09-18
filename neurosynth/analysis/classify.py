@@ -95,7 +95,7 @@ def classify_regions(dataset, masks, method='ERF', threshold=0.08,
                      remove_overlap=True, regularization='scale',
                      output='summary', studies=None, features=None,
                      class_weight='auto', classifier=None,
-                     cross_val='4-Fold', param_grid=None):
+                     cross_val='4-Fold', param_grid=None, scoring='accuracy'):
     """ Perform classification on specified regions
 
         Given a set of masks, this function retrieves studies associated with each 
@@ -142,7 +142,7 @@ def classify_regions(dataset, masks, method='ERF', threshold=0.08,
                                     remove_overlap, studies, features, regularization=regularization)
 
     return classify(X, y, method, classifier, output, cross_val,
-                    class_weight, param_grid=param_grid)
+                    class_weight, scoring=scoring, param_grid=param_grid)
 
 
 def classify(X, y, method='SVM', classifier=None, output='summary',
@@ -235,8 +235,12 @@ class Classifier:
 
         if isinstance(cross_val, basestring):
             if cross_val == '4-Fold':
-                self.cver = cross_validation.KFold(len(self.y), 4,
-                        indices=False, shuffle=True)
+                self.cver = cross_validation.StraifiedKFold(self.y, 4,
+                        indices=False)
+
+            elif cross_val == '3-Fold':
+                self.cver = cross_validation.StraifiedKFold(self.y, 3,
+                        indices=False)
             else:
                 raise Exception('Unrecognized cross validation method')
         else:
