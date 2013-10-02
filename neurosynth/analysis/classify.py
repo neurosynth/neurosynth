@@ -235,11 +235,11 @@ class Classifier:
 
         if isinstance(cross_val, basestring):
             if cross_val == '4-Fold':
-                self.cver = cross_validation.StraifiedKFold(self.y, 4,
+                self.cver = cross_validation.StratifiedKFold(self.y, 4,
                         indices=False)
 
             elif cross_val == '3-Fold':
-                self.cver = cross_validation.StraifiedKFold(self.y, 3,
+                self.cver = cross_validation.StratifiedKFold(self.y, 3,
                         indices=False)
             else:
                 raise Exception('Unrecognized cross validation method')
