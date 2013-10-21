@@ -8,6 +8,7 @@ import random
 import os
 
 import numpy as np
+import pandas as pd
 from scipy import sparse
 
 import mappable
@@ -473,11 +474,14 @@ class FeatureTable(object):
         with mappable objects in rows and features in columns. Values in cells reflect the
         weight of the intersecting feature for the intersecting study. Feature names and
         mappable IDs should be included as the first column and first row, respectively. """
-        data = np.genfromtxt(filename, names=True, dtype=None)
-        self.feature_names = list(data.dtype.names[1::])
-        self.ids = data[data.dtype.names[0]]
-        self.data = data[self.feature_names].view(
-            np.float).reshape(len(data), -1)
+
+        # Use pandas to read in data
+        data = pd.read_csv(filename, delim_whitespace=True, index_col=0)
+        self.feature_names = list(data.columns)
+        self.ids = data.index.values
+        self.data = data.values
+
+        # Remove mappables without any features
         if validate:
             valid_ids = set(self.ids) & set(self.dataset.image_table.ids)
             if len(valid_ids) < len(self.dataset.image_table.ids):
