@@ -415,6 +415,8 @@ class ImageTable(object):
         method, and should generally be avoided in favor of non-destructive alternatives
         that don't require slicing (e.g., matrix multiplication). """
         self.data = self.get_image_data(ids, dense=False)  # .tocoo()
+        idxs = np.where(np.in1d(np.array(self.ids), np.array(ids)))[0]
+        self.ids = [self.ids[i] for i in idxs]
 
     def save_images_to_file(self, ids, outroot='./'):
         """ Reconstructs vectorized images corresponding to the specified Mappable ids
