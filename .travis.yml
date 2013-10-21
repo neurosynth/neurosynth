@@ -15,6 +15,7 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-cache policy           # What is actually available?
   - sudo apt-get install -qq python-scipy python-nibabel
+  - sudo apt-get install -qq python-pandas
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then pip install -q coveralls; fi
 script:
