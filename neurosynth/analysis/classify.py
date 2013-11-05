@@ -184,6 +184,11 @@ class Classifier:
 
         if classifier is not None:
             self.clf = classifier
+
+            from sklearn.svm import LinearSVC
+            import random 
+            if isinstance(self.clf, LinearSVC):
+                self.clf.set_params().random_state = random.randint(0, 200)
         else:
             if clf_method == 'SVM':
                 from sklearn import svm
