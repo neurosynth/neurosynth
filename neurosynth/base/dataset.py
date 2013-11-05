@@ -8,6 +8,7 @@ import random
 import os
 
 import numpy as np
+import pandas as pd
 from scipy import sparse
 
 import mappable
@@ -246,6 +247,7 @@ class Dataset(object):
         indices = np.where(prop_mask_active > threshold)[0]
         return self.get_image_data(indices) if get_image_data else [self.image_table.ids[ind] for ind in indices]
 
+
     def get_ids_by_peaks(self, peaks, r=10, threshold=0.0, get_image_data=False):
         """ A wrapper for get_ids_by_mask. Takes a set of xyz coordinates and generates
         a new Nifti1Image to use as a mask.
@@ -413,6 +415,8 @@ class ImageTable(object):
         method, and should generally be avoided in favor of non-destructive alternatives
         that don't require slicing (e.g., matrix multiplication). """
         self.data = self.get_image_data(ids, dense=False)  # .tocoo()
+        idxs = np.where(np.in1d(np.array(self.ids), np.array(ids)))[0]
+        self.ids = [self.ids[i] for i in idxs]
 
     def save_images_to_file(self, ids, outroot='./'):
         """ Reconstructs vectorized images corresponding to the specified Mappable ids
@@ -472,11 +476,14 @@ class FeatureTable(object):
         with mappable objects in rows and features in columns. Values in cells reflect the
         weight of the intersecting feature for the intersecting study. Feature names and
         mappable IDs should be included as the first column and first row, respectively. """
-        data = np.genfromtxt(filename, names=True, dtype=None)
-        self.feature_names = list(data.dtype.names[1::])
-        self.ids = data[data.dtype.names[0]]
-        self.data = data[self.feature_names].view(
-            np.float).reshape(len(data), -1)
+
+        # Use pandas to read in data
+        data = pd.read_csv(filename, delim_whitespace=True, index_col=0)
+        self.feature_names = list(data.columns)
+        self.ids = data.index.values
+        self.data = data.values
+
+        # Remove mappables without any features
         if validate:
             valid_ids = set(self.ids) & set(self.dataset.image_table.ids)
             if len(valid_ids) < len(self.dataset.image_table.ids):
@@ -578,3 +585,15 @@ class FeatureTable(object):
             lexer, self.dataset, threshold=threshold, func='sum')
         parser.build()
         return parser.parse(expression).keys()
+
+    def get_features_by_ids(self, ids=None, threshold=0.0001, func='sum', get_weights=False):
+        ''' Returns features that mach to ids'''
+        id_indices = np.in1d(self.ids, ids)
+        data = self.data.toarray()
+        ids_weights = reduce(lambda x,y: x+y, data[id_indices,:])/len(id_indices)
+        above_thresh = (ids_weights >= threshold)
+        features_to_keep = np.array(self.feature_names)[np.where(above_thresh)]
+        if get_weights:
+            return dict(zip(features_to_keep, list(ids_weights[above_thresh])))
+        else:
+            return features_to_keep
