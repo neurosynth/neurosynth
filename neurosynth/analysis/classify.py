@@ -195,13 +195,13 @@ class Classifier:
                 self.clf = svm.SVC(class_weight=class_weight)
             elif clf_method == 'ERF':
                 from sklearn.ensemble import ExtraTreesClassifier
-                self.clf = ExtraTreesClassifier(n_estimators=10,
+                self.clf = ExtraTreesClassifier(n_estimators=100,
                         max_depth=None, min_samples_split=1,
                         random_state=0, n_jobs=-1,
                         compute_importances=True)
             elif clf_method == 'GBC':
                 from sklearn.ensemble import GradientBoostingClassifier
-                self.clf = GradientBoostingClassifier(n_estimators=10,
+                self.clf = GradientBoostingClassifier(n_estimators=100,
                         max_depth=1)
             elif clf_method == 'Dummy':
                 from sklearn.dummy import DummyClassifier
