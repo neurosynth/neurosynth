@@ -83,6 +83,8 @@ def load_imgs(filenames, mask, nan_to_num=True):
       An m x n 2D numpy array, where m = number of voxels in mask and
       n = number of images passed.
     """
+    if isinstance(filenames, basestring):
+        filenames = [filenames]
     data = np.zeros((mask.num_vox_in_mask, len(filenames)))
     for i, f in enumerate(filenames):
         data[:, i] = mask.mask(f, nan_to_num)
