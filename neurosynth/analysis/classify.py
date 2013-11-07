@@ -145,7 +145,7 @@ def classify_regions(dataset, masks, method='ERF', threshold=0.08,
                     class_weight, scoring=scoring, param_grid=param_grid)
 
 
-def classify(X, y, method='SVM', classifier=None, output='summary',
+def classify(X, y, method='ERF', classifier=None, output='summary',
              cross_val=None, class_weight=None, regularization=None,
              param_grid=None, scoring='accuracy'):
 
@@ -241,11 +241,11 @@ class Classifier:
         if isinstance(cross_val, basestring):
             if cross_val == '4-Fold':
                 self.cver = cross_validation.StratifiedKFold(self.y, 4,
-                        indices=True)
+                        indices=False)
 
             elif cross_val == '3-Fold':
                 self.cver = cross_validation.StratifiedKFold(self.y, 3,
-                        indices=True)
+                        indices=False)
             else:
                 raise Exception('Unrecognized cross validation method')
         else:
