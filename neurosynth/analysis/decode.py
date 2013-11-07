@@ -56,11 +56,14 @@ class Decoder:
 
         self.load_features(features, image_type=image_type, threshold=threshold)
 
-    def decode(self, filenames, method=None, save=None, round=4, names=None):
+    def decode(self, images, method=None, save=None, round=4, names=None):
         """ Decodes a set of images.
 
         Args:
-          files: A list of filenames of images to decode.
+          images: The images to decode. Can be:
+            - A single String specifying the filename of the image to decode
+            - A list of filenames
+            - A single NumPy array containing the image data
           method: Optional string indicating decoding method to use. If None, use
             the method set when the Decoder instance was initialized.
           save: Optional filename to save results to. If None (default), returns
@@ -79,7 +82,12 @@ class Decoder:
 
         if method is None:
             method = self.method
-        imgs_to_decode = imageutils.load_imgs(filenames, self.mask)
+
+        if isinstance(images, basestring) or isinstance(images, list):
+            imgs_to_decode = imageutils.load_imgs(images, self.mask)
+        else:
+            imgs_to_decode = images
+
         methods = {
             'pearson': self._pearson_correlation(imgs_to_decode),
             # 'nb': self._naive_bayes(imgs_to_decode),
@@ -91,7 +99,10 @@ class Decoder:
         if save is not None:
 
             if names is None:
-                names = filenames
+                if type(images).__module__ == np.__name__:
+                    names = ['image_%d' for i in range(images.shape[1])]
+                else:
+                    names = filenames
 
             rownames = np.array(
                 self.feature_names, dtype='|S32')[:, np.newaxis]

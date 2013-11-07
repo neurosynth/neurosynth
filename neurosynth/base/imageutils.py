@@ -75,7 +75,7 @@ def load_imgs(filenames, mask, nan_to_num=True):
     """ Load multiple images from file into an ndarray.
 
     Args:
-      filenames: A list of filenames pointing to valid images.
+      filenames: A single filename or list of filenames pointing to valid images.
       mask: A Mask instance.
       nan_to_num: Optional boolean indicating whether to convert NaNs to zero.
 
