@@ -182,6 +182,7 @@ class TestBase(unittest.TestCase):
         ids = dataset.get_ids_by_mask(
             get_test_data_path() + 'sgacc_mask.nii.gz')
         features = dataset.feature_table.get_features_by_ids(ids)
+        self.assertEquals(features.shape, (3,))
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
 
