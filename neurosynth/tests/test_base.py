@@ -177,6 +177,10 @@ class TestBase(unittest.TestCase):
         self.assertEqual(data['values'], [1.0])
         self.assertEqual(len(data['indices'][0]), 1142)
 
+    def test_get_features_by_ids(self):
+        dataset = self.dataset
+        features = dataset.feature_table.get_features_by_ids(['study1','study3'])
+        self.assertEquals(len(features), 5)
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
 
