@@ -58,6 +58,7 @@ def get_random_voxels(dataset, n_voxels):
     Returns:
       A 2D numpy array with (randomly-selected) voxels in rows and mappables in columns.
     """
-    voxels = np.range(dataset.volume.num_vox_in_mask)
-    selected = np.random.shuffle(voxels)[0:n_voxels]
+    voxels = np.arange(dataset.volume.num_vox_in_mask)
+    np.random.shuffle(voxels)
+    selected = voxels[0:n_voxels]
     return dataset.get_image_data(voxels=selected)

@@ -2,8 +2,9 @@ import unittest
 import numpy as np
 
 from neurosynth.analysis import classify
-
+from neurosynth.analysis import reduce
 from neurosynth.tests.utils import get_test_dataset
+
 
 
 class TestAnalysis(unittest.TestCase):
@@ -27,7 +28,10 @@ class TestAnalysis(unittest.TestCase):
         pass
 
     def test_get_random_voxels(self):
-        pass
+        n_vox = 100
+        rand_vox = reduce.get_random_voxels(self.dataset, n_vox)
+        n_studies = self.dataset.image_table.data.shape[1]
+        self.assertEqual(rand_vox.shape, (n_vox, n_studies))
 
     def test_classify_regions(self):
         # score = classify.classify_regions(self.dataset,['data/regions/medial_motor.nii.gz', 'data/regions/vmPFC.nii.gz'], cross_val='4-Fold')['score']
