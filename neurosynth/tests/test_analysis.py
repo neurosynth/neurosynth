@@ -3,7 +3,7 @@ import numpy as np
 
 from neurosynth.analysis import classify
 from neurosynth.analysis import reduce
-from neurosynth.tests.utils import get_test_dataset
+from neurosynth.tests.utils import get_test_dataset, get_test_data_path
 
 
 
@@ -25,9 +25,15 @@ class TestAnalysis(unittest.TestCase):
         pass
 
     def test_roi_averaging(self):
-        pass
+        """ Test averaging within region labels in a mask. """
+        filename = get_test_data_path() + 'sgacc_mask.nii.gz'
+        avg_vox = reduce.average_within_regions(self.dataset, filename)
+        n_studies = self.dataset.image_table.data.shape[1]
+        self.assertEqual(n_studies, avg_vox.shape[1])
+        self.assertGreater(avg_vox.sum(), 0.05)
 
     def test_get_random_voxels(self):
+        """ Test random voxel retrieval. """
         n_vox = 100
         rand_vox = reduce.get_random_voxels(self.dataset, n_vox)
         n_studies = self.dataset.image_table.data.shape[1]
