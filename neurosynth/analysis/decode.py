@@ -102,7 +102,7 @@ class Decoder:
                 if type(images).__module__ == np.__name__:
                     names = ['image_%d' for i in range(images.shape[1])]
                 else:
-                    names = filenames
+                    names = images
 
             rownames = np.array(
                 self.feature_names, dtype='|S32')[:, np.newaxis]
