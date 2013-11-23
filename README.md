@@ -5,7 +5,7 @@ Neurosynth is a Python package for large-scale synthesis of functional neuroimag
 
 ## Code status
 
-* [![tests status](https://secure.travis-ci.org/NeuroSynth/Neurosynth.png?branch=master)](https://travis-ci.org/NeuroSynth/Neurosynth) travis-ci.org (master branch)
+* [![tests status](https://secure.travis-ci.org/neurosynth/neurosynth.png?branch=master)](https://travis-ci.org/NeuroSynth/Neurosynth) travis-ci.org (master branch)
 
 * [![Coverage Status](https://coveralls.io/repos/NeuroSynth/Neurosynth/badge.png?branch=master)](https://coveralls.io/r/NeuroSynth/Neurosynth)
 
@@ -17,8 +17,13 @@ Dependencies:
 * pandas
 * NiBabel
 * [ply](http://www.dabeaz.com/ply/) (optional, for complex structured queries)
+* scikit-learn (optional, used in some classification functions)
 
-Assuming you have those packages in working order, download this package, then install it from source:
+Assuming you have those packages in working order, the easiest way to install Neurosynth is from the command line with pip:
+
+	> pip install neurosynth
+
+Alternatively (for the latest dev version), download or clone the package from github, then install it from source:
 
 	> python setup.py install
 
@@ -29,7 +34,7 @@ That's it! You should now be ready to roll.
 
 ## Usage
 
-Running analyses in Neurosynth is pretty straightforward. We're working on a user manual; in the meantime, you can take a look at the code in the /examples directory for an illustration of some common uses cases (some of the examples are in iPython Notebook format; you can view these online by entering the URL of the raw example on github into the online [iPython Notebook Viewer](http://nbviewer.ipython.org)). The rest of this Quickstart guide just covers the bare minimum.
+Running analyses in Neurosynth is pretty straightforward. We're working on a user manual; in the meantime, you can take a look at the code in the /examples directory for an illustration of some common uses cases (some of the examples are in iPython Notebook format; you can view these online by entering the URL of the raw example on github into the online [iPython Notebook Viewer](http://nbviewer.ipython.org)--for example [this tutorial](http://nbviewer.ipython.org/urls/raw.github.com/neurosynth/neurosynth/master/examples/neurosynth_demo.ipynb) provides a nice overview). The rest of this Quickstart guide just covers the bare minimum.
 
 NeuroSynth dataset resides in a git submodule under data/, so after obtaining this git repository, initialize and update that module:
 
