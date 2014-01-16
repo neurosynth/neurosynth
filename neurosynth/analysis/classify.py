@@ -9,9 +9,7 @@ from functools import reduce
 
 def classify_by_features(dataset, features, studies=None, method='SVM',
                          scikit_classifier=None):
-
     pass
-
 
 def regularize(X, method='scale'):
     if method == 'scale':
@@ -90,6 +88,16 @@ def get_studies_by_regions(dataset, masks, threshold=0.08,
 
     return (X, y)
 
+def get_feature_order(dataset, features):
+    """ Returns a list with the order that features requested appear in dataset """
+    all_features = dataset.get_feature_names()
+
+    i = [all_features.index(term) for term in features]
+    i = zip(i, range(0, len(i)))
+    i.sort()
+    i = list(zip(*i)[1])
+
+    return i
 
 def classify_regions(dataset, masks, method='ERF', threshold=0.08,
                      remove_overlap=True, regularization='scale',
