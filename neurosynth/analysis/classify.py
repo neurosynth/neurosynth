@@ -79,8 +79,11 @@ def get_studies_by_regions(dataset, masks, threshold=0.08,
     y = reduce(lambda a, b: a + b, y)  # Flatten
     y = np.array(y)
 
-    # Extract feature set for only relevant ids
+    # If all ids are ints as strings, convert to ints
+    if not False in [i.isdigit() for i in flat_ids]:
+        flat_ids = [int(s) for s in flat_ids]
 
+    # Extract feature set for only relevant ids
     X = dataset.get_feature_data(ids=flat_ids, features=features)
 
     if regularization:
@@ -92,11 +95,8 @@ def get_feature_order(dataset, features):
     """ Returns a list with the order that features requested appear in dataset """
     all_features = dataset.get_feature_names()
 
-    i = [all_features.index(term) for term in features]
-    i = zip(i, range(0, len(i)))
-    i.sort()
-    i = list(zip(*i)[1])
-
+    i = [all_features.index(f) for f in features]
+    
     return i
 
 def classify_regions(dataset, masks, method='ERF', threshold=0.08,
