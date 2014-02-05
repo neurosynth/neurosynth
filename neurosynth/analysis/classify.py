@@ -276,7 +276,7 @@ class Classifier:
             #     self.clf.fit(X, y)
 
             self.cvs = cross_validation.cross_val_score(self.clf,
-                    self.X, self.y, cv=self.cver, n_jobs=-1, scoring=scoring)
+                    self.X, self.y, cv=self.cver, scoring=scoring)
 
         return self.cvs.mean()
 
