@@ -163,7 +163,7 @@ def classify(X, y, method='ERF', classifier=None, output='summary',
 
     # Fit & test model with or without cross-validation
 
-    if cross_val:
+    if cross_val is not None:
         score = clf.cross_val_fit(X, y, cross_val, scoring=scoring)
     else:
         # Does not support scoring function
@@ -205,8 +205,7 @@ class Classifier:
                 from sklearn.ensemble import ExtraTreesClassifier
                 self.clf = ExtraTreesClassifier(n_estimators=100,
                         max_depth=None, min_samples_split=1,
-                        random_state=0, n_jobs=-1,
-                        compute_importances=True)
+                        random_state=0, compute_importances=True)
             elif clf_method == 'GBC':
                 from sklearn.ensemble import GradientBoostingClassifier
                 self.clf = GradientBoostingClassifier(n_estimators=100,
@@ -220,7 +219,7 @@ class Classifier:
         if isinstance(param_grid, dict):
             from sklearn.grid_search import GridSearchCV
             self.clf = GridSearchCV(estimator=self.clf,
-                                    param_grid=param_grid, n_jobs=-1)
+                                    param_grid=param_grid)
 
     def fit(self, X, y, cv=None):
         """ Fits X to outcomes y, using clf """
@@ -276,7 +275,7 @@ class Classifier:
             #     self.clf.fit(X, y)
 
             self.cvs = cross_validation.cross_val_score(self.clf,
-                    self.X, self.y, cv=self.cver, scoring=scoring)
+                    self.X, self.y, cv=self.cver, scoring=scoring, n_jobs=1)
 
         return self.cvs.mean()
 
