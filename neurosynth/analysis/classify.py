@@ -300,7 +300,7 @@ class Classifier:
 
         return self.cvs.mean()
 
-    def manual_cvs(self, scoring='accuracy', feat_select=None):
+    def feat_select_cvs(self, scoring='accuracy', feat_select=None):
         """ Returns cross validated scores (just like cross_val_score), 
         but includes feature selection as part of the cross validation loop """
 
@@ -311,7 +311,7 @@ class Classifier:
 
         for train, test in self.cver:
             X_train, X_test, y_train, y_test = self.X[
-                train], self.X[test], self.Y[train], self.Y[test]
+                train], self.X[test], self.y[train], self.y[test]
 
 
             if feat_select is not None:
@@ -334,7 +334,7 @@ class Classifier:
             scores.append(self.clf.score(X_test, y_test))
 
 
-        return scores
+        return np.array(scores)
 
     def fit_dataset(self, dataset, y, features=None,
                     feature_type='features'):
