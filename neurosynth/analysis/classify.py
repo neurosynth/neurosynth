@@ -261,7 +261,7 @@ class Classifier:
         from sklearn import cross_validation
 
         self.X = X
-        self.Y = y
+        self.y = y
 
         # Set cross validator
         if isinstance(cross_val, basestring):
