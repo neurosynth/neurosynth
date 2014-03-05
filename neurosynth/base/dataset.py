@@ -480,7 +480,7 @@ class FeatureTable(object):
         # Use pandas to read in data
         data = pd.read_csv(filename, delim_whitespace=True, index_col=0)
         self.feature_names = list(data.columns)
-        self.ids = data.index.values
+        self.ids = data.index.values.astype(str)  # Always represent IDs as strings
         self.data = data.values
 
         # Remove mappables without any features
