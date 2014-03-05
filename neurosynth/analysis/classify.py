@@ -5,11 +5,28 @@
 
 import numpy as np
 from functools import reduce
+from sklearn.feature_selection.univariate_selection import SelectKBest
+import re
+
+
+def feature_selection(feat_select, X, y):
+    """" Implements various kinds of feature selection """
+    # K-best
+    if re.match('.*-best', feat_select) is not None:
+        n = feat_select.split('-')[0]
+
+        selector = SelectKBest(k=int(n))
+
+        features_selected = np.where(
+            selector.fit(X, y).get_support() == True)[0]
+
+    return feature_selection
 
 
 def classify_by_features(dataset, features, studies=None, method='SVM',
                          scikit_classifier=None):
     pass
+
 
 def regularize(X, method='scale'):
     if method == 'scale':
@@ -17,6 +34,7 @@ def regularize(X, method='scale'):
         return preprocessing.scale(X, with_mean=False)
     else:
         raise Exception('Unrecognized regularization method')
+
 
 def get_studies_by_regions(dataset, masks, threshold=0.08,
                            remove_overlap=True, studies=None,
@@ -91,13 +109,15 @@ def get_studies_by_regions(dataset, masks, threshold=0.08,
 
     return (X, y)
 
+
 def get_feature_order(dataset, features):
     """ Returns a list with the order that features requested appear in dataset """
     all_features = dataset.get_feature_names()
 
     i = [all_features.index(f) for f in features]
-    
+
     return i
+
 
 def classify_regions(dataset, masks, method='ERF', threshold=0.08,
                      remove_overlap=True, regularization='scale',
@@ -155,22 +175,21 @@ def classify_regions(dataset, masks, method='ERF', threshold=0.08,
 
 def classify(X, y, method='ERF', classifier=None, output='summary',
              cross_val=None, class_weight=None, regularization=None,
-             param_grid=None, scoring='accuracy'):
+             param_grid=None, scoring='accuracy', refit_all=True, feat_select=None):
+    """ Wrapper for scikit-learn classification functions
+    Imlements various types of classification and cross validation """
 
     # Build classifier
-
     clf = Classifier(method, classifier, class_weight, param_grid)
 
     # Fit & test model with or without cross-validation
-
     if cross_val is not None:
-        score = clf.cross_val_fit(X, y, cross_val, scoring=scoring)
+        score = clf.cross_val_fit(X, y, cross_val, scoring=scoring, feat_select=feat_select)
     else:
         # Does not support scoring function
         score = clf.fit(X, y).score(X, y)
 
     # Return some stuff...
-
     from collections import Counter
     if output == 'summary':
         return {'score': score, 'n': dict(Counter(y))}
@@ -194,7 +213,7 @@ class Classifier:
             self.clf = classifier
 
             from sklearn.svm import LinearSVC
-            import random 
+            import random
             if isinstance(self.clf, LinearSVC):
                 self.clf.set_params().random_state = random.randint(0, 200)
         else:
@@ -204,12 +223,12 @@ class Classifier:
             elif clf_method == 'ERF':
                 from sklearn.ensemble import ExtraTreesClassifier
                 self.clf = ExtraTreesClassifier(n_estimators=100,
-                        max_depth=None, min_samples_split=1,
-                        random_state=0, compute_importances=True)
+                                                max_depth=None, min_samples_split=1,
+                                                random_state=0, compute_importances=True)
             elif clf_method == 'GBC':
                 from sklearn.ensemble import GradientBoostingClassifier
                 self.clf = GradientBoostingClassifier(n_estimators=100,
-                        max_depth=1)
+                                                      max_depth=1)
             elif clf_method == 'Dummy':
                 from sklearn.dummy import DummyClassifier
                 self.clf = DummyClassifier(strategy='stratified')
@@ -235,49 +254,78 @@ class Classifier:
 
         return self.clf
 
-    def cross_val_fit(self, X, y, cross_val='4-Fold', scoring='accuracy'):
+    def cross_val_fit(self, X, y, cross_val='4-Fold', scoring='accuracy', feat_select=None):
         """ Fits X to outcomes y, using clf and cv_method """
 
         from sklearn import cross_validation
 
         self.X = X
-        self.y = y
+        self.Y = Y
 
         # Set cross validator
-
         if isinstance(cross_val, basestring):
             if cross_val == '4-Fold':
                 self.cver = cross_validation.StratifiedKFold(self.y, 4,
-                        indices=False)
+                                                             indices=True)
 
             elif cross_val == '3-Fold':
                 self.cver = cross_validation.StratifiedKFold(self.y, 3,
-                        indices=False)
+                                                             indices=True)
             else:
                 raise Exception('Unrecognized cross validation method')
         else:
             self.cver = cross_val
 
+        # Perform cross-validated classification
         from sklearn.grid_search import GridSearchCV
         if isinstance(self.clf, GridSearchCV):
+            import warnings
+
+            if feat_select is not None:
+                warnings.warn(
+                    "Cross-validated feature selection not supported witih GridSearchCV")
             self.clf.set_params(cv=self.cver, scoring=scoring)
 
-            import warnings
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', category=UserWarning)
                 self.clf = self.clf.fit(X, y)
 
             self.cvs = self.clf.best_score_
         else:
-            # import warnings
-            # with warnings.catch_warnings():
-            #     warnings.simplefilter('ignore', category=UserWarning)
-            #     self.clf.fit(X, y)
+            self.cvs = self.feat_select_cvs(
+                scoring=scoring, feat_select=feat_select)
 
-            self.cvs = cross_validation.cross_val_score(self.clf,
-                    self.X, self.y, cv=self.cver, scoring=scoring, n_jobs=1)
+        self.clf.fit(X, y)
 
         return self.cvs.mean()
+
+    def manual_cvs(self, scoring='accuracy', feat_select=None):
+        """ Returns cross validated scores (just like cross_val_score), 
+        but includes feature selection as part of the cross validation loop """
+
+        scores = []
+        for train, test in self.cver:
+            X_train, X_test, y_train, y_test = X[
+                train], X[test], Y[train], Y[test]
+
+            if feat_select is not None:
+                # Get which features are kept
+                features_selected = feature_selection(
+                    feat_select, X_train, y_train)
+
+                # Filter X to only keep selected features
+                X_train, X_test = X_train[
+                    :, features_selected], X_test[:, features_selected]
+
+            # Set scoring (not implement as accuracy is default)
+
+            # Train classifier
+            self.clf.fit(X_train, y_train)
+
+            # Test classifier
+            scores.append(self.clf.score(X_test, y_test))
+
+        return scores
 
     def fit_dataset(self, dataset, y, features=None,
                     feature_type='features'):
@@ -291,4 +339,3 @@ class Classifier:
             X = np.rot90(dataset.image_table.data.toarray())
 
         self.sk_classifier.fit(X, y)
-
