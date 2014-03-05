@@ -20,7 +20,7 @@ def feature_selection(feat_select, X, y):
         features_selected = np.where(
             selector.fit(X, y).get_support() == True)[0]
 
-    return feature_selection
+    return features_selected
 
 
 def classify_by_features(dataset, features, studies=None, method='SVM',
@@ -191,15 +191,16 @@ def classify(X, y, method='ERF', classifier=None, output='summary',
 
     # Return some stuff...
     from collections import Counter
-    if output == 'summary':
-        return {'score': score, 'n': dict(Counter(y))}
-    elif output == 'summary_clf':
-        return {'score': score, 'n': dict(Counter(y)), 'clf': clf}
-    elif output == 'clf':
+
+    if output == 'clf':
         return clf
     else:
-        pass
+        if output == 'summary':
+            output = {'score': score, 'n': dict(Counter(y))}
+        elif output == 'summary_clf':
+            output = {'score': score, 'n': dict(Counter(y)), 'clf': clf}
 
+        return output
 
 class Classifier:
 
@@ -260,7 +261,7 @@ class Classifier:
         from sklearn import cross_validation
 
         self.X = X
-        self.Y = Y
+        self.Y = y
 
         # Set cross validator
         if isinstance(cross_val, basestring):
@@ -304,18 +305,25 @@ class Classifier:
         but includes feature selection as part of the cross validation loop """
 
         scores = []
+
+        if feat_select is not None:
+            self.features_selected = []
+
         for train, test in self.cver:
-            X_train, X_test, y_train, y_test = X[
-                train], X[test], Y[train], Y[test]
+            X_train, X_test, y_train, y_test = self.X[
+                train], self.X[test], self.Y[train], self.Y[test]
+
 
             if feat_select is not None:
                 # Get which features are kept
-                features_selected = feature_selection(
+                fs = feature_selection(
                     feat_select, X_train, y_train)
+
+                self.features_selected.append(fs)
 
                 # Filter X to only keep selected features
                 X_train, X_test = X_train[
-                    :, features_selected], X_test[:, features_selected]
+                    :, fs], X_test[:, fs]
 
             # Set scoring (not implement as accuracy is default)
 
@@ -324,6 +332,7 @@ class Classifier:
 
             # Test classifier
             scores.append(self.clf.score(X_test, y_test))
+
 
         return scores
 
