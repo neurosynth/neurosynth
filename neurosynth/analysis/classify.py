@@ -37,8 +37,8 @@ def regularize(X, method='scale'):
 
 
 def get_studies_by_regions(dataset, masks, threshold=0.08,
-                           remove_overlap=True, studies=None,
-                           features=None, regularization="scale"):
+    remove_overlap=True, studies=None,
+    features=None, regularization="scale"):
     """ Set up data for a classification task given a set of masks
     
         Given a set of masks, this function retrieves studies associated with each 
@@ -120,10 +120,10 @@ def get_feature_order(dataset, features):
 
 
 def classify_regions(dataset, masks, method='ERF', threshold=0.08,
-                     remove_overlap=True, regularization='scale',
-                     output='summary', studies=None, features=None,
-                     class_weight='auto', classifier=None,
-                     cross_val='4-Fold', param_grid=None, scoring='accuracy'):
+    remove_overlap=True, regularization='scale',
+    output='summary', studies=None, features=None,
+    class_weight='auto', classifier=None,
+    cross_val='4-Fold', param_grid=None, scoring='accuracy'):
     """ Perform classification on specified regions
 
         Given a set of masks, this function retrieves studies associated with each 
@@ -198,7 +198,7 @@ def classify(X, y, method='ERF', classifier=None, output='summary',
         if output == 'summary':
             output = {'score': score, 'n': dict(Counter(y))}
         elif output == 'summary_clf':
-            output = {'score': score, 'n': dict(Counter(y)), 'clf': clf}
+            output = {'score': score, 'n': dict(Counter(y)), 'clf': clf, 'features_selected': clf.features_selected}
 
         return output
 
@@ -209,6 +209,7 @@ class Classifier:
         """ Initialize a new classifier instance """
 
         # Set classifier
+        self.features_selected = None
 
         if classifier is not None:
             self.clf = classifier
@@ -277,6 +278,9 @@ class Classifier:
         else:
             self.cver = cross_val
 
+        if feat_select is not None:
+            self.features_selected = []
+
         # Perform cross-validated classification
         from sklearn.grid_search import GridSearchCV
         if isinstance(self.clf, GridSearchCV):
@@ -296,6 +300,13 @@ class Classifier:
             self.cvs = self.feat_select_cvs(
                 scoring=scoring, feat_select=feat_select)
 
+        if feat_select is not None:
+            fs = feature_selection(
+                    feat_select, X, y)
+            self.features_selected.append(fs)
+
+            X = X[:, fs]
+
         self.clf.fit(X, y)
 
         return self.cvs.mean()
@@ -306,13 +317,9 @@ class Classifier:
 
         scores = []
 
-        if feat_select is not None:
-            self.features_selected = []
-
         for train, test in self.cver:
             X_train, X_test, y_train, y_test = self.X[
                 train], self.X[test], self.y[train], self.y[test]
-
 
             if feat_select is not None:
                 # Get which features are kept
