@@ -45,7 +45,7 @@ def analyze_features(dataset, features, image_type='pFgA_z', threshold=0.001, q=
         if save is None:
             result[:, i] = ma.images[image_type]
         else:
-            ma.save_results('%s_%s' % (save, f))
+            ma.save_results('%s%s' % (save, f))
     return result
 
 
