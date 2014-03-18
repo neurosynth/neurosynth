@@ -180,14 +180,14 @@ def classify(X, y, method='ERF', classifier=None, output='summary',
     Imlements various types of classification and cross validation """
 
     # Build classifier
-    clf = Classifier(method, classifier, class_weight, param_grid)
+    clf = Classifier(clf_method, classifier, param_grid)
 
     # Fit & test model with or without cross-validation
     if cross_val is not None:
-        score = clf.cross_val_fit(X, y, cross_val, scoring=scoring, feat_select=feat_select)
+        score = clf.cross_val_fit(X, y, cross_val, scoring=scoring, feat_select=feat_select, class_weight=class_weight)
     else:
         # Does not support scoring function
-        score = clf.fit(X, y).score(X, y)
+        score = clf.fit(X, y, class_weight=class_weight).score(X, y)
 
     # Return some stuff...
     from collections import Counter
@@ -204,8 +204,7 @@ def classify(X, y, method='ERF', classifier=None, output='summary',
 
 class Classifier:
 
-    def __init__(self, clf_method='ERF', classifier=None,
-                 class_weight=None, param_grid=None):
+    def __init__(self, clf_method='ERF', classifier=None, param_grid=None):
         """ Initialize a new classifier instance """
 
         # Set classifier
@@ -221,12 +220,12 @@ class Classifier:
         else:
             if clf_method == 'SVM':
                 from sklearn import svm
-                self.clf = svm.SVC(class_weight=class_weight)
+                self.clf = svm.SVC()
             elif clf_method == 'ERF':
                 from sklearn.ensemble import ExtraTreesClassifier
                 self.clf = ExtraTreesClassifier(n_estimators=100,
                                                 max_depth=None, min_samples_split=1,
-                                                random_state=0, compute_importances=True)
+                                                random_state=0)
             elif clf_method == 'GBC':
                 from sklearn.ensemble import GradientBoostingClassifier
                 self.clf = GradientBoostingClassifier(n_estimators=100,
@@ -242,7 +241,7 @@ class Classifier:
             self.clf = GridSearchCV(estimator=self.clf,
                                     param_grid=param_grid)
 
-    def fit(self, X, y, cv=None):
+    def fit(self, X, y, cv=None, class_weight = 'auto'):
         """ Fits X to outcomes y, using clf """
 
         # Incorporate error checking such as :
@@ -252,17 +251,47 @@ class Classifier:
 
         self.X = X
         self.y = y
+
+        self.set_class_weight(class_weight=class_weight, y = y)
+
         self.clf = self.clf.fit(X, y)
 
         return self.clf
 
-    def cross_val_fit(self, X, y, cross_val='4-Fold', scoring='accuracy', feat_select=None):
+    def set_class_weight(self, class_weight='auto', y=None):
+        """ Sets the class_weight of the classifier to match X """
+
+        if class_weight == None:
+            cw = None
+
+            try:
+                self.clf.set_params(class_weight = cw)
+            except ValueError:
+                pass
+                
+        elif class_weight == 'auto':
+            c = np.bincount(y)
+            ii = np.nonzero(c)[0]
+            c = c / float(c.sum())
+            cw = dict(zip(ii[::-1],c[ii]))
+
+            try:
+                self.clf.set_params(class_weight = cw)
+            except ValueError:
+                import warnings
+                warnings.warn("Tried to set class_weight, but failed. The classifier probably doesn't support it")
+
+
+
+    def cross_val_fit(self, X, y, cross_val='4-Fold', scoring='accuracy', feat_select=None, class_weight = 'auto'):
         """ Fits X to outcomes y, using clf and cv_method """
 
         from sklearn import cross_validation
 
         self.X = X
         self.y = y
+
+        self.set_class_weight(class_weight=class_weight, y = y)
 
         # Set cross validator
         if isinstance(cross_val, basestring):
