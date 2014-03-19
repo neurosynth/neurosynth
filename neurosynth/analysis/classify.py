@@ -17,8 +17,12 @@ def feature_selection(feat_select, X, y):
 
         selector = SelectKBest(k=int(n))
 
-        features_selected = np.where(
-            selector.fit(X, y).get_support() == True)[0]
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=UserWarning)
+            features_selected = np.where(
+                selector.fit(X, y).get_support() == True)[0]
+
 
     return features_selected
 
