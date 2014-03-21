@@ -13,15 +13,24 @@ def feature_selection(feat_select, X, y):
     """" Implements various kinds of feature selection """
     # K-best
     if re.match('.*-best', feat_select) is not None:
-        n = feat_select.split('-')[0]
+        n = int(feat_select.split('-')[0])
 
-        selector = SelectKBest(k=int(n))
+        selector = SelectKBest(k=n)
 
         import warnings
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=UserWarning)
             features_selected = np.where(
                 selector.fit(X, y).get_support() == True)[0]
+
+    elif re.match('.*-randombest', feat_select) is not None:
+        n = int(feat_select.split('-')[0])
+
+        from random import shuffle
+        features = range(0, X.shape[1])
+        shuffle(features)
+
+        features_selected = features[:n]
 
 
     return features_selected
@@ -372,7 +381,6 @@ class Classifier:
 
             # Test classifier
             scores.append(self.clf.score(X_test, y_test))
-
 
         return np.array(scores)
 
