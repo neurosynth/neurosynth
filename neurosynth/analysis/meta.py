@@ -192,7 +192,7 @@ class MetaAnalysis(object):
         to all file names. Optionally, a restricted list of images to save can be passed; otherwise,
         all images currently stored in self.images will be saved. """
         logger.debug("Saving results...")
-        if image_list == None:
+        if image_list is None:
             image_list = self.images.keys()
         for suffix, img in self.images.items():
             if suffix in image_list:
