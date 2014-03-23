@@ -2,6 +2,7 @@
 Changelog.md
 LICENSE
 README.md
+setup.cfg
 setup.py
 examples/.DS_Store
 examples/classify_regions_using_features.ipynb
