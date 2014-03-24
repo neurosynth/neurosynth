@@ -35,6 +35,17 @@ def feature_selection(feat_select, X, y):
 
     return features_selected
 
+def get_score(X, y, clf, scoring = 'accuracy'):
+    from sklearn.preprocessing import binarize
+    from sklearn.metrics import accuracy_score
+
+    if scoring == 'accuracy':
+        score = accuracy_score(y, binarize(clf.predict(X), 0.5))
+    else:
+        score = clf.score(X, y)
+
+    return score
+
 
 def classify_by_features(dataset, features, studies=None, method='SVM',
                          scikit_classifier=None):
@@ -339,8 +350,7 @@ class Classifier:
 
             self.cvs = self.clf.best_score_
         else:
-            self.cvs = self.feat_select_cvs(
-                scoring=scoring, feat_select=feat_select)
+            self.cvs = self.feat_select_cvs(feat_select=feat_select, scoring=scoring)
 
         if feat_select is not None:
             fs = feature_selection(
@@ -353,7 +363,7 @@ class Classifier:
 
         return self.cvs.mean()
 
-    def feat_select_cvs(self, scoring='accuracy', feat_select=None):
+    def feat_select_cvs(self, scoring = None, feat_select=None):
         """ Returns cross validated scores (just like cross_val_score), 
         but includes feature selection as part of the cross validation loop """
 
@@ -380,7 +390,9 @@ class Classifier:
             self.clf.fit(X_train, y_train)
 
             # Test classifier
-            scores.append(self.clf.score(X_test, y_test))
+            s = get_score(X_test, y_test, self.clf, scoring = scoring)
+
+            scores.append(s)
 
         return np.array(scores)
 
