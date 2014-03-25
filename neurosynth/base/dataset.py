@@ -492,7 +492,7 @@ class FeatureTable(object):
                 self.ids = self.ids[valid_id_inds]
         self.data = sparse.csr_matrix(self.data)
 
-    def get_feature_data(self, ids=None, features=None, dense=True, reorder=False):
+    def get_feature_data(self, ids=None, features=None, dense=True, reorder=True):
         """ Slices and returns a subset of feature data.
 
         Args:
