@@ -492,28 +492,41 @@ class FeatureTable(object):
                 self.ids = self.ids[valid_id_inds]
         self.data = sparse.csr_matrix(self.data)
 
-    def get_feature_data(self, ids=None, features=None, dense=True):
+    def get_feature_data(self, ids=None, features=None, dense=True, reorder=False):
         """ Slices and returns a subset of feature data.
 
         Args:
-          ids: A list or 1D numpy array of Mappable ids to return rows for. 
-            If None, returns data for all Mappables (i.e., all rows in array). 
-          features: A list or 1D numpy array of named features to return. 
-            If None, returns data for all features (i.e., all columns in array).
-          dense: Optional boolean. When True (default), convert the result to a dense
-            array before returning. When False, keep as sparse matrix. Note that if 
-            ids is not None, the returned array will always be dense.
-
+            ids: A list or 1D numpy array of Mappable ids to return rows for. 
+                If None, returns data for all Mappables (i.e., all rows in array). 
+            features: A list or 1D numpy array of named features to return. 
+                If None, returns data for all features (i.e., all columns in array).
+            dense: Optional boolean. When True (default), convert the result to a dense
+                array before returning. When False, keep as sparse matrix. Note that if 
+                ids is not None, the returned array will always be dense.
+            reorder: Optional boolean indicating whether to reorder the returned 
+                data or not. When False (default), the returned array's rows and columns
+                are in the order found in the full data array. When True, rows are 
+                reordered to match the order in the passed ids and features lists (if 
+                provided).
         Returns:
           A 2D numpy array, with mappable IDs in rows and features in columns.
         """
         result = self.data
+
         if ids is not None:
-            idxs = np.where(np.in1d(np.array(self.ids), np.array(ids)))[0]
+            if reorder:
+                idxs = np.where(np.in1d(np.array(ids), np.array(self.ids)))[0]
+            else:
+                idxs = np.where(np.in1d(np.array(self.ids), np.array(ids)))[0]
             result = result[idxs,:]
+
         if features is not None:
-            idxs = np.where(np.in1d(np.array(self.feature_names), np.array(features)))[0]
+            if reorder:
+                idxs = np.where(np.in1d(np.array(features), np.array(self.feature_names)))[0]
+            else:  
+                idxs = np.where(np.in1d(np.array(self.feature_names), np.array(features)))[0]
             result = result[:,idxs]
+
         return result.toarray() if dense else result
 
     def get_ordered_names(self, features):
