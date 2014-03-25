@@ -52,8 +52,8 @@ class TestBase(unittest.TestCase):
         self.assertIsNotNone(tt)
         self.assertEqual(len(self.dataset.get_feature_names()), 5)
         self.assertEqual(tt.data.shape, (5, 5))
-        self.assertEqual(tt.feature_names[3], 'f4')
-        self.assertEqual(tt.data[0, 0], 0.0003)
+        self.assertEqual(tt.data.columns[3], 'f4')
+        self.assertEqual(tt.data.to_dense().iloc[0,0], 0.0003)
 
     def test_feature_search(self):
         """ Test feature-based Mappable search. Tests both the FeatureTable method
@@ -65,7 +65,7 @@ class TestBase(unittest.TestCase):
         ids = d.get_ids_by_features(['f*'], threshold=0.001)
         self.assertEqual(len(ids), 4)
         img_data = d.get_ids_by_features(
-            ['f1', 'f3', 'g1'], 0.001, func='max', get_image_data=True)
+            ['f1', 'f3', 'g1'], 0.001, func=np.max, get_image_data=True)
         self.assertEqual(img_data.shape, (228453, 5))
 
         # And some smoke-tests:
@@ -122,14 +122,6 @@ class TestBase(unittest.TestCase):
         self.assertEquals('study5', ids[0])
         # Repeat with list of lists
 
-    # def test_invalid_coordinates_ignored(self):
-        """ Test dataset contains 3 valid coordinates and one outside mask. But this won't work
-    right now because invalid voxels are only excluded at the image mapping stage, and are
-    not validated at the Mappable creation stage. Not sure whether it's a good idea to
-    implement that early filter... """
-        # ind = self.dataset.image_table.ids.index('study1')
-        # self.assertEqual(len(self.dataset.mappables[ind].peaks), 3)
-
     def test_get_feature_counts(self):
         # If we set threshold too high -- nothing should get through and
         # all should be 0s
@@ -140,19 +132,17 @@ class TestBase(unittest.TestCase):
         feature_counts = self.dataset.get_feature_counts()
         # all should have some non-0 loading with default threshold,
         # otherwise what is the point of having them?
-        for f, c in feature_counts.iteritems():
+        for f, c in feature_counts.items():
             self.assertGreater(c, 0, "feature %s has no hits" % f)
         # and should be equal to the ones computed directly (we do not do
         # any fancy queries atm), assumes default threshold of 0.001
-        feature_counts_ = dict([
-                               (feature, np.sum(self.dataset.feature_table.data[
-                                                :, col].todense() > 0.001))
+        feature_counts_ = dict([(feature, np.sum(self.dataset.feature_table.data.to_dense().ix[:, col] > 0.001))
                                for col, feature in enumerate(self.dataset.feature_table.feature_names)])
         self.assertEqual(feature_counts, feature_counts_)
 
     def test_get_feature_data(self):
         """ Test retrieval of Mappable x feature data. """
-        feature_data = self.dataset.get_feature_data(ids=['study1', 'study3'])
+        feature_data = self.dataset.get_feature_data(ids=['study3', 'study1'])
         self.assertEqual(feature_data.shape, (2,5))
         feature_data = self.dataset.get_feature_data(features=['f1', 'f4', 'g1'], dense=True)
         self.assertEqual(feature_data.shape, (5,3))
@@ -178,9 +168,12 @@ class TestBase(unittest.TestCase):
         self.assertEqual(len(data['indices'][0]), 1142)
 
     def test_get_features_by_ids(self):
-        dataset = self.dataset
-        features = dataset.feature_table.get_features_by_ids(['study1','study3'])
+        features = self.dataset.feature_table.get_features_by_ids(['study1','study3'], threshold=0.01)
+        self.assertEquals(len(features), 3)
+        features = self.dataset.feature_table.get_features_by_ids(['study2','study5'], func=np.sum, 
+            threshold=0.0, get_weights=True)
         self.assertEquals(len(features), 5)
+        self.assertEqual(features['f3'], 0.01)
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
 
