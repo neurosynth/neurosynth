@@ -36,7 +36,7 @@ class Lexer(object):
         return t
 
     def build(self, **kwargs):
-        self.lexer = lex.lex(module=self, **kwargs)
+        self.lexer = lex.lex(module=self, optimize=1, **kwargs)
 
     def t_error(self, t):
         logger.error("Illegal character %s!" % t.value[0])

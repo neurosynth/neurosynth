@@ -7,7 +7,7 @@ import shutil
 
 from neurosynth.tests.utils import get_test_dataset, get_test_data_path
 from neurosynth.analysis import meta
-from neurosynth.base.dataset import ImageTable
+from neurosynth.base.dataset import Dataset, ImageTable
 from neurosynth.base import imageutils
 import json
 
@@ -17,15 +17,29 @@ class TestBase(unittest.TestCase):
     def setUp(self):
         """ Create a new Dataset and add features. """
         self.dataset = get_test_dataset()
+        self.skipped_tests = []
 
-    def test_dataset_save(self):
-        # smoke test of save
+    def test_dataset_save_and_load(self):
+        # smoke test of saving and loading
         t = tempfile.mktemp()
-        self.dataset.save(t)
-        self.assertTrue(os.path.exists(t))
         self.dataset.save(t, keep_mappables=True)
         self.assertTrue(os.path.exists(t))
+        dataset = Dataset.load(t)
+        self.assertIsNotNone(dataset)
+        self.assertIsNotNone(dataset.mappables)
+        self.assertEqual(len(dataset.mappables), 5)
+        # Now with the mappables deleted
+        self.dataset.save(t)
+        self.assertTrue(os.path.exists(t))
+        dataset = Dataset.load(t)
+        self.assertEqual(len(dataset.mappables), 0)
         os.unlink(t)
+
+    def test_export_to_json(self):
+        js = self.dataset.to_json()
+        self.assertTrue(isinstance(js, basestring))
+        data = json.loads(js)
+        self.assertEqual(len(data['mappables']), 5)
 
     def test_dataset_initializes(self):
         """ Test whether dataset initializes properly. """
@@ -35,6 +49,12 @@ class TestBase(unittest.TestCase):
         self.assertIsNotNone(self.dataset.volume)
         self.assertIsNotNone(self.dataset.r)
         self.assertIsNotNone(self.dataset.mappables[0].data['extra_field'])
+
+    def test_get_mappables(self):
+        mappables = self.dataset.get_mappables(['study2', 'study5'])
+        self.assertEqual(len(mappables), 2)
+        mappables = self.dataset.get_mappables(['study3', 'study4', 'study5'], get_image_data=True)
+        self.assertEqual(mappables.shape, (228453, 3))
 
     def test_image_table_loads(self):
         """ Test ImageTable initialization. """
@@ -75,6 +95,17 @@ class TestBase(unittest.TestCase):
         tempdir = tempfile.mkdtemp()
         ma.save_results(tempdir + os.path.sep)
         shutil.rmtree(tempdir)
+
+    def test_selection_by_expression(self):
+        """ Tests the expression-based search using the lexer/parser. 
+        Note that this functionality is optional, so only run the test if 
+        ply is available. """
+        try:
+            import ply.lex as lex
+            ids = self.dataset.get_ids_by_expression("f*", func=np.mean, threshold=0.003)
+            self.assertEqual(list(ids), ['study1', 'study3', 'study4'])
+        except:
+            pass
 
     def test_selection_by_mask(self):
         """ Test mask-based Mappable selection.
@@ -153,6 +184,13 @@ class TestBase(unittest.TestCase):
         self.assertEquals(image_data.shape, (1000,5))
         image_data = self.dataset.get_image_data(ids=['study1','study2','study5'], dense=True)
         self.assertEquals(image_data.shape, (228453,3))
+        # Or directly through the image table
+        image_data = self.dataset.image_table.get_image_data(ids=['study1','study2','study5'], dense=False)
+        self.assertEquals(image_data.shape, (228453,3))
+
+    def test_trim_image_table(self):
+        self.dataset.image_table.trim(['study1', 'study2', 'study3'])
+        self.assertEqual(self.dataset.get_image_data().shape, (228453, 3))
 
     def test_either_dataset_or_manual_image_vars(self):
         with self.assertRaises(AssertionError):
@@ -174,6 +212,13 @@ class TestBase(unittest.TestCase):
             threshold=0.0, get_weights=True)
         self.assertEquals(len(features), 5)
         self.assertEqual(features['f3'], 0.01)
+
+    def test_get_feature_names(self):
+        features = self.dataset.get_feature_names()
+        self.assertEquals(len(features), 5)
+        self.assertEquals(features[2], 'f3')
+        features = self.dataset.get_feature_names(['g1', 'f4', 'f2'])
+        self.assertEquals(features, ['f2', 'f4', 'g1'])
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
 

@@ -218,8 +218,7 @@ class Dataset(object):
         return self.get_image_data(ids) if get_image_data else ids
 
     def get_ids_by_expression(self, expression, threshold=0.001, func=np.sum, get_image_data=False):
-        ids = self.feature_table.get_ids_by_expression(
-            expression, threshold, func)
+        ids = self.feature_table.get_ids_by_expression(expression, threshold, func)
         return self.get_image_data(ids) if get_image_data else ids
 
     def get_ids_by_mask(self, mask, threshold=0.0, get_image_data=False):
@@ -276,10 +275,8 @@ class Dataset(object):
         return self.feature_table.get_feature_data(ids, **kwargs)
 
     def get_feature_names(self, features=None):
-        """ Returns a list of all current feature names.
-        Args:
-            features: If not none, retures orderd names only for those features
-         """
+        """ Returns names of features. If features is None, returns all features.
+        Otherwise assumes the user is trying to find the order of the features.  """
         if features:
             return self.feature_table.get_ordered_names(features)
         else:
@@ -545,7 +542,7 @@ class FeatureTable(object):
         lexer = lp.Lexer()
         lexer.build()
         parser = lp.Parser(
-            lexer, self.dataset, threshold=threshold, func=np.sum)
+            lexer, self.dataset, threshold=threshold, func=func)
         parser.build()
         return parser.parse(expression).keys()
 
