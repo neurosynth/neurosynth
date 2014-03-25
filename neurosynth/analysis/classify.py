@@ -121,7 +121,7 @@ def get_studies_by_regions(dataset, masks, threshold=0.08,
     y = np.array(y)
 
     # Extract feature set for each class separately
-    X = [dataset.get_feature_data(ids=group_ids, features=None) for group_ids in grouped_ids]
+    X = [dataset.get_feature_data(ids=group_ids, features=features) for group_ids in grouped_ids]
 
     X = np.vstack(tuple(X))
 
