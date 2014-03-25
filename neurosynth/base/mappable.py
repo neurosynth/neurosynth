@@ -32,9 +32,10 @@ class Mappable(object):
             exit()
 
         # Loop through rows and set coordinates
-        peaks = np.zeros((len(data['peaks']), 3), dtype=int)
-        for i, f in enumerate(data['peaks']):
-            peaks[i,] = [float(j) for j in f[0:3]]
+        # peaks = np.zeros((len(data['peaks']), 3), dtype=int)
+        # for i, f in enumerate(data['peaks']):
+        #     peaks[i,] = [float(j) for j in f[0:3]]
+        peaks = data['peaks']
 
         # Convert between stereotactic spaces
         if transformer is not None and self.space != transformer.target:

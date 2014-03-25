@@ -104,43 +104,32 @@ class Dataset(object):
           filename: a string pointing to the location of the txt file to read from.
         """
         logger.info("Loading mappables from %s..." % filename)
-        data = {}
-        c = re.split('[\r\n]+', open(filename).read())
-        header = c.pop(0).lower().split('\t')
-        # Get indices of mandatory columns
-        mandatory_cols = ['x', 'y', 'z', 'id', 'space']
-        mc_inds = {}
-        try:
-            for mc in mandatory_cols:
-                mc_inds[mc] = header.index(mc)
-        except Exception as e:
+        
+        # Read in with pandas
+        contents = pd.read_csv(filename, sep='\t')
+        contents.columns = [col.lower() for col in list(contents.columns)]
+
+        # Make sure all mandatory columns exist
+        mc = ['x', 'y', 'z', 'id', 'space']
+        if (set(mc) - set(list(contents.columns))):
             logger.error(
-                "At least one of mandatory columns (x, y, z, id, and space) is missing: %s" % e)
+                "At least one of mandatory columns (x, y, z, id, and space) is missing from input file.")
             return
 
-        for l in c:
-            vals = l.split('\t')
-            row = {}
-            for i, v in enumerate(vals):
-                row[header[i]] = v
-            # Pop the mandatory fields off the row
-            id, space, x, y, z = [row.pop(k) for k in [
-                                          'id', 'space', 'x', 'y', 'z']]
-            if not id in data:
-                data[id] = {
-                  'id': id,
-                  'space': space,
-                  'peaks': []
-                }
-                # Save any other fields we don't recognize. Note that each row will
-                # overwrite any values that had the same key in previous rows.
-                for k, v in row.items():
-                    data[id][k] = v
-            data[id]['peaks'].append([x, y, z])
+        extra_fields = list(set(list(contents.columns)) - set(mc))  # save non-standard fields
+
+        def get_mappable_data(grp):
+            first = grp.iloc[0]
+            d = { 'peaks': grp[['x','y','z']].values }
+            for f in ['id', 'space'] + extra_fields:
+                d[f] = first[f]
+            return d
+
+        data = list(contents.groupby('id').apply(get_mappable_data))
 
         # Initialize all mappables--for now, assume Articles are passed
         logger.info("Converting text to mappables...")
-        return [mappable.Article(m, self.transformer) for m in data.values()]
+        return [mappable.Article(m, self.transformer) for m in data]
 
     def create_image_table(self, r=None):
         """ Create and store a new ImageTable instance based on the current Dataset.
@@ -225,8 +214,7 @@ class Dataset(object):
           get_image_data: An optional boolean. When True, returns a voxel x mappable matrix
             of image data rather than the Mappable instances themselves.
         """
-        ids = self.feature_table.get_ids(
-            features, threshold, func, get_weights)
+        ids = self.feature_table.get_ids(features, threshold, func, get_weights)
         return self.get_image_data(ids) if get_image_data else ids
 
     def get_ids_by_expression(self, expression, threshold=0.001, func=np.sum, get_image_data=False):
@@ -446,11 +434,7 @@ class FeatureTable(object):
         plaintext (see _parse_txt() for details).
         If validate == True, any mappable IDs in the input file that cannot be located
         in the root Dataset's ImageTable will be silently culled. """
-        # try:
-        #     self._features_from_json(filename, validate)
-        # except Exception as e:
         try:
-            # logger.debug('Failed to load as JSON (Error: %s). Trying plain text' % (e,))
             self._features_from_txt(filename, validate)
         except Exception as e:
             logger.error("%s cannot be parsed: %s" % (filename, e))
