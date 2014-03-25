@@ -7,14 +7,6 @@ from neurosynth.base import imageutils
 from neurosynth.analysis import classify
 from neurosynth.analysis import plotutils #import radar_factory
 
-# def decode_by_features():
-#     pass
-
-
-# def decode_by_masks():
-#     pass
-
-
 
 class Decoder:
 
@@ -197,55 +189,4 @@ class Decoder:
         """
         return np.dot(imgs_to_decode.T, self.feature_images).T
 
-
-    # def polar_plot(self, data, features=None, autoselect_features=0, autosort=True):
-    #     """ Create a polar plot of decoding results.
-
-    #     Args:
-    #       data: The data to plot. An m x n 2D numpy array, where images are in rows
-    #         and features are in columns.
-    #       features: Optional list of features to include in the plot. By default, uses
-    #         all features passed in data.
-    #       autoselect_features: Optional integer. If set to a value other than 0, will
-    #         select the top N features for each image and use those in the plot.
-    #       autosort: Boolean indicating whether to reorder features to as to maximize
-    #         separate in the plot.
-    #     """
-
-    #     import matplotlib.pyplot as plt
-    #     N_images, N_features = data.shape
-
-    #     # Sort images to maximize separation
-    #     if autosort:
-    #         from scipy.cluster import vq
-    #         whitened = vq.whiten(data)
-    #         res = vq.kmeans(whitened, N_images)
-
-    #     theta = plotutils.radar_factory(N_features)
-    #     spoke_labels = ['1', '2', '3', '4', '5'] #feature_names  # fix--need to make sure feature names are available
-
-    #     fig = plt.figure(figsize=(9, 9))
-    #     fig.subplots_adjust(wspace=0.25, hspace=0.20, top=0.9, bottom=0.05)
-
-    #     colors = ['b', 'r', 'g', 'm', 'y'][
-    #         0::N_images]  # TODO: generalize to N colors
-    #     radial_grid = [
-    #         0.2, 0.4, 0.6, 0.8]  # TODO: calculate sensible gridlines
-
-    #     ax = fig.add_subplot(111, projection='radar')
-    #     ax.set_varlabels(spoke_labels)
-    #     plt.rgrids(radial_grid)
-
-    #     for d, color in zip(data, colors):
-    #         ax.plot(theta, d, color=color, lw=1)
-    #         ax.fill(theta, d, facecolor=color, alpha=0.25)
-
-    #     labels = ['insula1', 'insula2', 'insula3'] #image_names  # TODO: need to get this from user or instance
-    #     legend = plt.legend(labels, loc=(0.9, .95), labelspacing=0.1)
-    #     for l in legend.get_lines():
-    #         l.set_linewidth(2)
-    #     plt.setp(legend.get_texts(), fontsize='large')
-    #     plt.figtext(0.5, 0.965,  'Test radar plot',
-    #                 ha='center', color='black', weight='bold', size='large')
-    #     plt.show()
 

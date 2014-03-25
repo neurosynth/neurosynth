@@ -5,9 +5,9 @@ Neurosynth is a Python package for large-scale synthesis of functional neuroimag
 
 ## Code status
 
-* [![tests status](https://secure.travis-ci.org/neurosynth/neurosynth.png?branch=master)](https://travis-ci.org/NeuroSynth/Neurosynth) travis-ci.org (master branch)
+* [![tests status](https://secure.travis-ci.org/neurosynth/neurosynth.png?branch=master)](https://travis-ci.org/neurosynth/neurosynth) travis-ci.org (master branch)
 
-* [![Coverage Status](https://coveralls.io/repos/NeuroSynth/Neurosynth/badge.png?branch=master)](https://coveralls.io/r/NeuroSynth/Neurosynth)
+* [![Coverage Status](https://coveralls.io/repos/NeuroSynth/Neurosynth/badge.png?branch=master)](https://coveralls.io/r/neurosynth/neurosynth)
 
 ## Installation
 

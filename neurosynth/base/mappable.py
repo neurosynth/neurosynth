@@ -31,10 +31,6 @@ class Mappable(object):
                          "Please check database file, caught: %s" % str(e))
             exit()
 
-        # Loop through rows and set coordinates
-        # peaks = np.zeros((len(data['peaks']), 3), dtype=int)
-        # for i, f in enumerate(data['peaks']):
-        #     peaks[i,] = [float(j) for j in f[0:3]]
         peaks = data['peaks']
 
         # Convert between stereotactic spaces
@@ -47,7 +43,6 @@ class Mappable(object):
 
     def map_peaks(self):
         """Map all Peaks to a new Nifti1Image."""
-        # if len(self.peaks) == 0: return
         return imageutils.map_peaks_to_image(self.peaks)
 
     def to_json(self, filename=None):

@@ -4,7 +4,9 @@
 
 import numpy as np
 from numpy import linalg
+import logging
 
+logger = logging.getLogger('neurosynth.transformations')
 
 def transform(foci, mat):
     """ Convert coordinates from one space to another using provided
@@ -60,6 +62,6 @@ class Transformer(object):
         if name in self.transformations:
             return transform(foci, self.transformations[name])
         else:
-            # logger.warning("No transformation named '%s' found; coordinates
-            # left untransformed." % name)
+            logger.warning("No transformation named '%s' found; coordinates \
+                left untransformed." % name)
             return foci
