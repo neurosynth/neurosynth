@@ -116,17 +116,14 @@ def get_studies_by_regions(dataset, masks, threshold=0.08,
                        grouped_ids]  # Remove
 
     # Create class label(y)
-
     y = [[idx] * len(ids) for (idx, ids) in enumerate(grouped_ids)]
     y = reduce(lambda a, b: a + b, y)  # Flatten
     y = np.array(y)
 
-    # If all ids are ints as strings, convert to ints
-    if not False in [i.isdigit() for i in flat_ids]:
-        flat_ids = [int(s) for s in flat_ids]
+    # Extract feature set for each class separately
+    X = [dataset.get_feature_data(ids=group_ids, features=None) for group_ids in grouped_ids]
 
-    # Extract feature set for only relevant ids
-    X = dataset.get_feature_data(ids=flat_ids, features=features)
+    X = np.vstack(tuple(X))
 
     if regularization:
         X = regularize(X, method=regularization)
