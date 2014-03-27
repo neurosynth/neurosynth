@@ -29,7 +29,7 @@ class TestBase(unittest.TestCase):
         self.assertIsNotNone(dataset.mappables)
         self.assertEqual(len(dataset.mappables), 5)
         # Now with the mappables deleted
-        self.dataset.save(t)
+        dataset.save(t)
         self.assertTrue(os.path.exists(t))
         dataset = Dataset.load(t)
         self.assertEqual(len(dataset.mappables), 0)

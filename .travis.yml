@@ -17,6 +17,7 @@ before_install:
   - sudo apt-get install -qq python-scipy python-nibabel
   - sudo apt-get install -qq python-pandas
   - sudo apt-get install -qq python-sklearn
+  - sudo apt-get install -qq python-ply
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then pip install -q coveralls; fi
 script:

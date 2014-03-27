@@ -294,7 +294,9 @@ class Dataset(object):
     def load(cls, filename):
         """ Load a pickled Dataset instance from file. """
         import cPickle
-        return cPickle.load(open(filename, 'rb'))
+        dataset = cPickle.load(open(filename, 'rb'))
+        dataset.feature_table._csr_to_sdf()
+        return dataset
 
     def save(self, filename, keep_mappables=False):
         """ Pickle the Dataset instance to the provided file.
@@ -306,6 +308,9 @@ class Dataset(object):
         """
         if not keep_mappables:
             self.mappables = []
+
+        self.feature_table._sdf_to_csr()
+
         import cPickle
         cPickle.dump(self, open(filename, 'wb'), -1)
 
@@ -552,3 +557,21 @@ class FeatureTable(object):
         weights = self.data.ix[ids].apply(func, 0)
         above_thresh = weights[weights >= threshold]
         return above_thresh if get_weights else list(above_thresh.index)
+
+    def _sdf_to_csr(self):
+        """ Convert FeatureTable to SciPy CSR matrix because pandas has a weird bug that 
+        crashes de-serializing when data are in SparseDataFrame. (Bonus: takes up 
+        less space.) Really need to fix this! """
+        data = self.data.to_dense()
+        self.data = {
+            'columns': list(data.columns),
+            'index': list(data.index),
+            'values': sparse.csr_matrix(data.values)
+        }
+
+    def _csr_to_sdf(self):
+        """ Inverse of _sdf_to_csr(). """
+        self.data = pd.DataFrame(self.data['values'].todense(), index=self.data['index'], 
+                            columns=self.data['columns']).to_sparse()
+
+
