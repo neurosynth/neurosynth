@@ -123,9 +123,6 @@ def get_studies_by_regions(dataset, masks, threshold=0.08,
     y = reduce(lambda a, b: a + b, y)  # Flatten
     y = np.array(y)
 
-    if not False in [i.isdigit() for i in flat_ids]:
-        flat_ids = [int(s) for s in flat_ids]
-
     # Extract feature set for each class separately
     X = [dataset.get_feature_data(ids=group_ids, features=features) for group_ids in grouped_ids]
 
