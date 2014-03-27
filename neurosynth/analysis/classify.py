@@ -286,7 +286,7 @@ class Classifier:
         return self.clf
 
     def set_class_weight(self, class_weight='auto', y=None):
-        """ Sets the class_weight of the classifier to match X """
+        """ Sets the class_weight of the classifier to match y """
 
         if class_weight == None:
             cw = None
