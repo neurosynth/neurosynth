@@ -37,10 +37,13 @@ def feature_selection(feat_select, X, y):
 
 def get_score(X, y, clf, scoring = 'accuracy'):
     from sklearn.preprocessing import binarize
-    from sklearn.metrics import accuracy_score
 
     if scoring == 'accuracy':
+        from sklearn.metrics import accuracy_score
         score = accuracy_score(y, binarize(clf.predict(X), 0.5))
+    elif scoring =='f1':
+        from sklearn.metrics import f1_score
+        score = f1_score(y, binarize(clf.predict(X), 0.5))
     else:
         score = clf.score(X, y)
 
