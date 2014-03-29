@@ -197,7 +197,7 @@ def classify_regions(dataset, masks, method='ERF', threshold=0.08,
                     class_weight, scoring=scoring, param_grid=param_grid)
 
 
-def classify(X, y, clf_method='ERF', classifier=None, output='summary',
+def classify(X, y, clf_method='ERF', classifier=None, output='summary_clf',
              cross_val=None, class_weight=None, regularization=None,
              param_grid=None, scoring='accuracy', refit_all=True, feat_select=None):
     """ Wrapper for scikit-learn classification functions
