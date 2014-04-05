@@ -1,7 +1,8 @@
 import unittest
 import numpy as np
-
+import os
 from neurosynth.analysis import classify
+from neurosynth.analysis import cluster
 from neurosynth.analysis import reduce
 from neurosynth.tests.utils import get_test_dataset, get_test_data_path
 
@@ -44,6 +45,14 @@ class TestAnalysis(unittest.TestCase):
         sums = np.sum(data, 0)
         self.assertGreater(sums[2], sums[3])
         self.assertGreater(sums[4], sums[0])
+
+    def test_clustering(self):
+        clstr = cluster.Clusterer(self.dataset, grid_scale=20)
+        clstr.cluster(algorithm='ward', n_clusters=3)
+        t = 'ClusterImages/Cluster_k3.nii.gz'
+        self.assertTrue(os.path.exists(t))
+        os.unlink(t)
+        os.rmdir('ClusterImages')
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestAnalysis)
