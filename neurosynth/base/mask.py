@@ -59,7 +59,6 @@ class Mask(object):
             assert(self.full.ndim == 1)
             # but we generate x,y,z,t volume
             img = np.zeros(self.full.shape + (n_volumes,))
-            # for t in xrange(n_volumes):
             img[self.in_mask, :] = data
             return np.reshape(img, self.volume.shape + (n_volumes,))
         else:

@@ -60,10 +60,6 @@ def average_within_regions(dataset, regions, mask=None, threshold=None, remove_z
         # Call dot() on the array itself as this will use sparse matrix 
         # multiplication if possible.
         result = dataset.T.dot(m).T
-        # try:
-        #     result = dataset.T.dot(m).T
-        # except:
-        #     result = np.dot(np.transpose(m), dataset)
 
         if threshold is not None:
                 result[result < threshold] = 0.0

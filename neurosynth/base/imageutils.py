@@ -35,7 +35,6 @@ def map_peaks_to_image(peaks, r=4, vox_dims=(2, 2, 2), dims=(91, 109, 91), heade
         valid = get_sphere(p, r, vox_dims, dims)
         valid = valid[:, ::-1]
         data[tuple(valid.T)] = 1
-    # affine = header.get_sform() if header else None
     return nifti1.Nifti1Image(data, None, header=header)
 
 
@@ -63,14 +62,6 @@ def convolve_image(img, r=4, header=None, method='mean', save=None):
         img.to_filename(save)
 
 
-# def disjunction(images):
-#   """ Returns a binary disjunction of all passed images, i.e., value=1
-#   at any voxel that's non-zero in at least one image."""
-#   pass
-# def conjunction(images):
-#   """ Returns a binary conjunction of all passed images, i.e., value=1
-#   at any voxel that's non-zero in at least one image."""
-#   pass
 def load_imgs(filenames, mask, nan_to_num=True):
     """ Load multiple images from file into an ndarray.
 

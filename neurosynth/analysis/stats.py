@@ -49,7 +49,6 @@ def one_way(data, n):
     (e.g., in-mask gray matter voxels) are included in the array, or results
     won't make any sense!
     """
-    # dt = data.dtype
     term = data.astype('float64')
     no_term = n - term
     t_exp = np.mean(term, 0)
@@ -58,7 +57,7 @@ def one_way(data, n):
     t_mss = (term - t_exp) ** 2 / t_exp
     nt_mss = (no_term - nt_exp) ** 2 / nt_exp
     chi2 = t_mss + nt_mss
-    return special.chdtrc(1, chi2)  # .astype(dt)
+    return special.chdtrc(1, chi2)
 
 
 def fdr(p, q=.05):
