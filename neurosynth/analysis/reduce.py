@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger('neurosynth.cluster')
 
-def average_within_regions(dataset, regions, mask=None, threshold=None, remove_zero=True):
+def average_within_regions(dataset, regions, threshold=None, remove_zero=True):
         """ Aggregates over all voxels within each ROI in the input image.
 
         Takes a Dataset and a Nifti image that defines distinct regions, and
@@ -67,15 +67,15 @@ def average_within_regions(dataset, regions, mask=None, threshold=None, remove_z
 
         return result
 
-def apply_grid(dataset, image=None, scale=4, threshold=None):
+def apply_grid(dataset, masker=None, scale=5, threshold=None):
     """ Imposes a 3D grid on the brain volume and averages across all voxels that 
     fall within each cell.
     Args:
         dataset: Data to apply grid to. Either a Dataset instance, or a numpy array
             with voxels in rows and features in columns.
-        image: Optional image to use to define the grid dimensions. If dataset is 
-            a Dataset instance and image is None, the default mask in the Dataset
-            wil be used. If dataset is a numpy array, image must be provided.
+        masker: Optional Mask instance used to map between the created grid and 
+            the dataset. This is only needed if dataset is a numpy array; if 
+            dataset is a Dataset instance, the Mask in the dataset will be used.
         threshold: Optional float to pass to reduce.average_within_regions().
     Returns:
         A tuple of length 2, where the first element is a numpy array of dimensions
@@ -83,15 +83,14 @@ def apply_grid(dataset, image=None, scale=4, threshold=None):
         dimensions as the Mask instance in the current Dataset, that maps voxel 
         identities onto cell IDs in the grid.
     """
-    if image is None:
+    if masker is None:
         if isinstance(dataset, Dataset):
-            image = dataset.volume.volume
+            masker = dataset.volume
         else:
-            raise ValueError("If dataset is a numpy array, a Nifti image defining " + 
-                "the grid dimensions must be provided.")
+            raise ValueError("If dataset is a numpy array, a masker must be provided.")
 
-    grid = imageutils.create_grid(image, scale)
-    data = average_within_regions(dataset, grid, threshold)
+    grid = imageutils.create_grid(masker.volume, scale)
+    data = average_within_regions(dataset, masker.mask(grid), threshold)
     return (data, grid)
 
 def get_random_voxels(dataset, n_voxels):
