@@ -449,7 +449,7 @@ class FeatureTable(object):
         mappable IDs should be included as the first column and first row, respectively. """
 
         # Use pandas to read in data
-        self.data = pd.read_csv(filename, delim_whitespace=True, index_col=0)
+        self.data = pd.read_csv(filename, delim_whitespace=True, index_col=0).to_sparse()
 
         # Remove mappables without any features
         # if validate:

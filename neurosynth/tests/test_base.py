@@ -104,6 +104,9 @@ class TestBase(unittest.TestCase):
             import ply.lex as lex
             ids = self.dataset.get_ids_by_expression("f*", func=np.mean, threshold=0.003)
             self.assertEqual(list(ids), ['study1', 'study3', 'study4'])
+            os.unlink('lextab.py')
+            os.unlink('parser.out')
+            os.unlink('parsetab.py')
         except:
             pass
 
