@@ -314,6 +314,8 @@ class Dataset(object):
         import cPickle
         cPickle.dump(self, open(filename, 'wb'), -1)
 
+        self.feature_table._csr_to_sdf()
+
     def to_json(self, filename=None):
         """ Save the Dataset to file in JSON format.
 
@@ -442,14 +444,14 @@ class FeatureTable(object):
             logger.error("%s cannot be parsed: %s" % (filename, e))
 
 
-    def _features_from_txt(self, filename, validate=False):
+    def _features_from_txt(self, filename):
         """ Parses FeatureTable from a plaintext file that represents a dense matrix,
         with mappable objects in rows and features in columns. Values in cells reflect the
         weight of the intersecting feature for the intersecting study. Feature names and
         mappable IDs should be included as the first column and first row, respectively. """
 
         # Use pandas to read in data
-        self.data = pd.read_csv(filename, delim_whitespace=True, index_col=0).to_sparse()
+        self.data = pd.read_csv(filename, delim_whitespace=True, index_col=0)
 
         # Remove mappables without any features
         # if validate:
@@ -486,7 +488,7 @@ class FeatureTable(object):
         if features is not None:
             result = result.ix[:,features]
 
-        return result.to_dense() if dense else result
+        return result#.to_dense() if dense else result
 
     def get_ordered_names(self, features):
         """ Given a list of features, returns features in order that they appear in database
