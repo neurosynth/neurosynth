@@ -220,6 +220,16 @@ class TestBase(unittest.TestCase):
         features = self.dataset.get_feature_names(['g1', 'f4', 'f2'])
         self.assertEquals(features, ['f2', 'f4', 'g1'])
 
+    def test_grid_creation(self):
+        mask = self.dataset.volume.volume
+        # Test with mask
+        grid = imageutils.create_grid(image=mask, scale=4, mask=mask)
+        self.assertEquals(grid.shape, (91, 109, 91))
+        self.assertEquals(len(np.unique(grid.get_data())), 4359)
+        # Test without mask
+        grid = imageutils.create_grid(image=mask, scale=4)
+        self.assertGreater(len(np.unique(grid.get_data())), 4359)
+
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
 
 if __name__ == '__main__':
