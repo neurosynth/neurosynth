@@ -19,7 +19,9 @@ class Mask(object):
 
         TODO: implement additional masking to allow more efficient small-volume analyses.
         """
-        self.volume = nb.load(volume)
+        if isinstance(volume, basestring):
+            volume = nb.load(volume)
+        self.volume = volume
         data = self.volume.get_data()
         self.dims = data.shape
         self.vox_dims = self.get_header().get_zooms()
