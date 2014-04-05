@@ -123,9 +123,6 @@ def get_studies_by_regions(dataset, masks, threshold=0.08,
     y = reduce(lambda a, b: a + b, y)  # Flatten
     y = np.array(y)
 
-    if not False in [i.isdigit() for i in flat_ids]:
-        flat_ids = [int(s) for s in flat_ids]
-
     # Extract feature set for each class separately
     X = [dataset.get_feature_data(ids=group_ids, features=features) for group_ids in grouped_ids]
 
@@ -200,7 +197,7 @@ def classify_regions(dataset, masks, method='ERF', threshold=0.08,
                     class_weight, scoring=scoring, param_grid=param_grid)
 
 
-def classify(X, y, clf_method='ERF', classifier=None, output='summary',
+def classify(X, y, clf_method='ERF', classifier=None, output='summary_clf',
              cross_val=None, class_weight=None, regularization=None,
              param_grid=None, scoring='accuracy', refit_all=True, feat_select=None):
     """ Wrapper for scikit-learn classification functions
