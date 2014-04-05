@@ -19,5 +19,5 @@ def get_test_data_path():
 def get_test_dataset():
     test_data_path = get_test_data_path()
     dataset = Dataset(test_data_path + 'test_dataset.txt')
-    dataset.add_features(test_data_path + 'test_features.txt', validate=True)
+    dataset.add_features(test_data_path + 'test_features.txt')
     return dataset

@@ -259,12 +259,11 @@ class Dataset(object):
             dims=self.volume.dims, header=self.volume.get_header())
         return self.get_ids_by_mask(img, threshold, get_image_data=get_image_data)
 
-    def add_features(self, filename, description='', validate=False):
+    def add_features(self, filename, description=''):
         """ Construct a new FeatureTable from file. Note: this is destructive, and will
         overwrite existing FeatureTable. Need to add merging operations that gracefully
         handle missing studies and conflicting feature names. """
-        self.feature_table = FeatureTable(
-            self, filename, description, validate)
+        self.feature_table = FeatureTable(self, filename, description)
 
     def get_image_data(self, ids=None, voxels=None, dense=True):
         """ A convenience wrapper for ImageTable.get_image_data(). """
@@ -430,16 +429,15 @@ class FeatureTable(object):
         the name of a file containing feature data. Optionally, can provide a description
         of the feature set. """
         self.dataset = dataset
-        self.load(filename, validate=validate)
+        self.load(filename)
         self.description = description
 
-    def load(self, filename, validate=False):
+    def load(self, filename):
         """ Loads FeatureTable data from file. Input must be a dense matrix stored as 
         plaintext (see _parse_txt() for details).
-        If validate == True, any mappable IDs in the input file that cannot be located
-        in the root Dataset's ImageTable will be silently culled. """
+        """
         try:
-            self._features_from_txt(filename, validate)
+            self._features_from_txt(filename)
         except Exception as e:
             logger.error("%s cannot be parsed: %s" % (filename, e))
 
