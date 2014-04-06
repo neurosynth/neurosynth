@@ -103,7 +103,7 @@ class Clusterer:
             self.masker = global_mask
 
         if grid_scale is not None:
-            self.data, self.grid = nsr.apply_grid(self.data, masker=self.masker, threshold=None)
+            self.data, self.grid = nsr.apply_grid(self.data, masker=self.masker, scale=grid_scale, threshold=None)
 
 
     def create_distance_matrix(self, distance_metric='jaccard', figure_file=None, save_distance=None):
