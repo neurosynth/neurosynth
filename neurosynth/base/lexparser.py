@@ -3,7 +3,7 @@
 
 import ply.lex as lex
 import ply.yacc as yacc
-
+import pandas as pd
 import logging
 
 logger = logging.getLogger('neurosynth.lexparser')
@@ -15,7 +15,7 @@ class Lexer(object):
         'FEATURE', 'FLOAT', 'ANDNOT', 'OR', 'AND', 'CONTRAST', 'LPAR', 'RPAR', 'LT', 'RT'
     )
 
-    t_FEATURE = r'[a-z\_\-\*]+'
+    t_FEATURE = r'[a-zA-Z\_\-\*]+'
     t_ANDNOT = r'\&\~'
     t_AND = r'\&'
     t_OR = r'\|'
@@ -64,29 +64,27 @@ class Parser(object):
 
     def p_list_andnot(self, p):
         'list : list ANDNOT list'
-        p[0] = {k: v for k, v in p[1].items() if k not in p[3]}
+        p[0] = p[1][set(p[1].index)-set(p[3].index)]
 
     def p_list_and(self, p):
         'list : list AND list'
-        p[0] = {k: v for k, v in p[1].items() if k in p[3]}
+        p[0] = p[1][set(p[1].index)&set(p[3].index)]
 
     def p_list_or(self, p):
         'list : list OR list'
-        p[1].update(p[3])
-        p[0] = p[1]
+        p[0] = pd.concat([p[1], p[3]], axis=1).fillna(0.0).apply(self.func, axis=1)
 
     def p_list_lt(self, p):
         'list : list LT freq'
-        p[0] = {k: v for k, v in p[1].items() if v < p[3]}
+        p[0] = p[1][p[1] < p[3]]
 
     def p_list_rt(self, p):
         'list : list RT freq'
-        p[0] = {k: v for k, v in p[1].items() if v >= p[3]}
+        p[0] = p[1][p[1] >= p[3]]
 
     def p_list_feature(self, p):
         'list : FEATURE'
-        p[0] = self.dataset.get_ids_by_features(p[
-                                                1], self.threshold, self.func, get_weights=True)
+        p[0] = self.dataset.get_ids_by_features(p[1], self.threshold, self.func, get_weights=True)
 
     def p_list_expr(self, p):
         'list : LPAR list RPAR'
