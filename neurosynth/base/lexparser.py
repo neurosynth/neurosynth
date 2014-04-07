@@ -68,7 +68,7 @@ class Parser(object):
 
     def p_list_and(self, p):
         'list : list AND list'
-        p[0] = p[1][set(p[1].index)&set(p[3].index)]
+        p[0] = pd.concat([p[1], p[3]], axis=1).dropna().apply(self.func, axis=1)
 
     def p_list_or(self, p):
         'list : list OR list'

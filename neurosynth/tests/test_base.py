@@ -109,10 +109,14 @@ class TestBase(unittest.TestCase):
         if have_ply:
             ids = self.dataset.get_ids_by_expression("* &~ (g*)", func=np.sum, threshold=0.003)
             self.assertEqual(list(ids), ['study3', 'study5'])
-            ids = self.dataset.get_ids_by_expression("f* > 0.002", func=np.mean, threshold=0.003)
-            self.assertEqual(list(ids), ['study1', 'study3', 'study4'])
+            ids = self.dataset.get_ids_by_expression("f* > 0.005", func=np.mean, threshold=0.0)
+            self.assertEqual(list(ids), ['study3'])
+            ids = self.dataset.get_ids_by_expression("f* < 0.05", func=np.sum, threshold=0.0)
+            self.assertEqual(list(ids), ['study1', 'study2', 'study3', 'study4', 'study5'])
             ids = self.dataset.get_ids_by_expression("f* | g*", func=np.mean, threshold=0.003)
             self.assertEqual(list(ids), ['study1', 'study2', 'study3', 'study4'])
+            ids = self.dataset.get_ids_by_expression("(f* & g*)", func=np.sum, threshold=0.001)
+            self.assertEqual(list(ids), ['study1', 'study4'])
             try:
                 os.unlink('lextab.py')
                 os.unlink('parser.out')
