@@ -62,5 +62,5 @@ class Transformer(object):
         if name in self.transformations:
             return transform(foci, self.transformations[name])
         else:
-            logger.warning("No transformation named '%s' found; coordinates left untransformed." % name)
+            logger.info("No transformation named '%s' found; coordinates left untransformed." % name)
             return foci
