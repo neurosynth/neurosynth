@@ -102,13 +102,22 @@ class TestBase(unittest.TestCase):
         ply is available. """
         try:
             import ply.lex as lex
-            ids = self.dataset.get_ids_by_expression("f*", func=np.mean, threshold=0.003)
-            self.assertEqual(list(ids), ['study1', 'study3', 'study4'])
-            os.unlink('lextab.py')
-            os.unlink('parser.out')
-            os.unlink('parsetab.py')
+            have_ply = True
         except:
-            pass
+            have_ply = False
+
+        if have_ply:
+            ids = self.dataset.get_ids_by_expression("* &~ (g*)", func=np.sum, threshold=0.003)
+            self.assertEqual(list(ids), ['study3', 'study5'])
+            ids = self.dataset.get_ids_by_expression("f* > 0.002", func=np.mean, threshold=0.003)
+            self.assertEqual(list(ids), ['study1', 'study3', 'study4'])
+            ids = self.dataset.get_ids_by_expression("f* | g*", func=np.mean, threshold=0.003)
+            self.assertEqual(list(ids), ['study1', 'study2', 'study3', 'study4'])
+            try:
+                os.unlink('lextab.py')
+                os.unlink('parser.out')
+                os.unlink('parsetab.py')
+            except: pass
 
     def test_selection_by_mask(self):
         """ Test mask-based Mappable selection.
