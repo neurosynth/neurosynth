@@ -239,13 +239,15 @@ class Clusterer:
     def plot_silhouette_scores(self):
         pass
 
-    def _create_cluster_images(self, labels):
+    def _create_cluster_images(self, labels, output_dir=None):
         ''' Creates a Nifti image of reconstructed cluster labels. 
         Args:
             dataset: A pickled neurosynth dataset
             grid_image: A .nii grid image created using create_grid_image()
             labels: A vector of cluster labels 
-            prefix: A string indicating path of output image 
+            output_dir: A string indicating folder to output images to. If None, 
+                creates a "ClusterImages" directory below the Clusterer instance's
+                output directory.
         Outputs:
             Cluster_k.nii.gz: Will output a nifti image with cluster labels
         '''
@@ -255,8 +257,9 @@ class Clusterer:
         m = np.zeros(regions.size)
         for i in range(n_regions):
             m[regions == unique_regions[i]] = labels[i] + 1
-        prefix = os.path.join(self.output_dir, 'ClusterImages')
-        if not os.path.isdir(prefix):
-            os.makedirs(prefix)
-        outfile = os.path.join(prefix,'Cluster_k%d.nii.gz' % len(np.unique(labels)))
+        if output_dir is None:
+             output_dir = os.path.join(self.output_dir, 'ClusterImages')
+        if not os.path.isdir(output_dir):
+            os.makedirs(output_dir)
+        outfile = os.path.join(output_dir,'Cluster_k%d.nii.gz' % len(np.unique(labels)))
         imageutils.save_img(m, outfile, self.masker)
