@@ -73,14 +73,14 @@ def apply_grid(dataset, masker=None, scale=5, threshold=None):
     Args:
         dataset: Data to apply grid to. Either a Dataset instance, or a numpy array
             with voxels in rows and features in columns.
-        masker: Optional Mask instance used to map between the created grid and 
+        masker: Optional Masker instance used to map between the created grid and 
             the dataset. This is only needed if dataset is a numpy array; if 
-            dataset is a Dataset instance, the Mask in the dataset will be used.
+            dataset is a Dataset instance, the Masker in the dataset will be used.
         threshold: Optional float to pass to reduce.average_within_regions().
     Returns:
         A tuple of length 2, where the first element is a numpy array of dimensions
         n_cubes x n_studies, and the second element is a numpy array, with the same 
-        dimensions as the Mask instance in the current Dataset, that maps voxel 
+        dimensions as the Masker instance in the current Dataset, that maps voxel 
         identities onto cell IDs in the grid.
     """
     if masker is None:

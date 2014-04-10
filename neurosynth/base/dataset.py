@@ -78,7 +78,7 @@ class Dataset(object):
         # Load mappables
         self.mappables = self._load_mappables_from_txt(filename)
 
-        # Load the volume into a new Mask
+        # Load the volume into a new Masker
         try:
             if volume is None:
                 resource_dir = os.path.join(os.path.dirname(__file__),
@@ -86,7 +86,7 @@ class Dataset(object):
                                             'resources')
                 volume = os.path.join(
                     resource_dir, 'MNI152_T1_2mm_brain.nii.gz')
-            self.volume = mask.Mask(volume)
+            self.volume = mask.Masker(volume)
         except Exception as e:
             logger.error("Error loading volume %s: %s" % (volume, e))
             # yoh: TODO -- IMHO should re-raise or not even swallow the exception here

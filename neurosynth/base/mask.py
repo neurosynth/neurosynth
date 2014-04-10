@@ -6,13 +6,13 @@ import nibabel as nb
 import os
 
 
-class Mask(object):
+class Masker(object):
 
     """ A lightweight wrapper around the NiBabel classes that
     handles vectorization/masking/unmasking of images. """
 
     def __init__(self, volume):
-        """ Initialize a new ImageMask. The volume passed to the constructor indicates
+        """ Initialize a new Masker. The volume passed to the constructor indicates
         both the space in which all subsequent images are represented as well as the
         mask to use for all analyses. Any voxel in the mask with a non-zero valid is
         considered valid for analyses.
@@ -26,8 +26,7 @@ class Mask(object):
         self.dims = data.shape
         self.vox_dims = self.get_header().get_zooms()
         self.full = np.float64(data.ravel())
-        self.in_mask = np.where(
-            self.full)  # Indices of in-mask voxels within full volume
+        self.in_mask = np.where(self.full)  # Indices of in-mask voxels within full volume
         self.num_vox_in_mask = np.shape(self.in_mask)[1]
 
     def mask(self, img, nan_to_num=True):

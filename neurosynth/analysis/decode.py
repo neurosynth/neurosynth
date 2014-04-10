@@ -41,7 +41,7 @@ class Decoder:
             self.mask = dataset.volume
         else:
             from neurosynth.base import mask as m
-            self.mask = m.Mask(mask)
+            self.mask = m.Masker(mask)
 
         if features is None:
             features = dataset.get_feature_names()

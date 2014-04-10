@@ -62,12 +62,12 @@ def convolve_image(img, r=4, header=None, method='mean', save=None):
         img.to_filename(save)
 
 
-def load_imgs(filenames, mask, nan_to_num=True):
+def load_imgs(filenames, masker, nan_to_num=True):
     """ Load multiple images from file into an ndarray.
 
     Args:
       filenames: A single filename or list of filenames pointing to valid images.
-      mask: A Mask instance.
+      masker: A Masker instance.
       nan_to_num: Optional boolean indicating whether to convert NaNs to zero.
 
     Returns:
@@ -76,9 +76,9 @@ def load_imgs(filenames, mask, nan_to_num=True):
     """
     if isinstance(filenames, basestring):
         filenames = [filenames]
-    data = np.zeros((mask.num_vox_in_mask, len(filenames)))
+    data = np.zeros((masker.num_vox_in_mask, len(filenames)))
     for i, f in enumerate(filenames):
-        data[:, i] = mask.mask(f, nan_to_num)
+        data[:, i] = masker.mask(f, nan_to_num)
     return data
 
 

@@ -134,7 +134,7 @@ class TestBase(unittest.TestCase):
     def test_unmask(self):
         """ Test unmasking on 1d and 2d vectors (going back to 3d and 4d)
 
-        TODO: test directly on Mask class and its functions, and on
+        TODO: test directly on Masker class and its functions, and on
         some smaller example data.  But then it should get into a separate
         TestCase to not 'reload' the same Dataset.
         So for now let's just reuse loaded Dataset and provide
