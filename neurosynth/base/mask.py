@@ -34,13 +34,22 @@ class Mask(object):
         """ Vectorize an image and mask out all invalid voxels.
 
         Args:
-          img: The image to vectorize and mask. Can be either a filename or a SpatialImage
-            previously loaded with NiBabel.
+          img: The image to vectorize and mask. Can be a filename, a SpatialImage
+            previously loaded with NiBabel, or an already-masked 1D array. The latter 
+            is included mainly for convenience (i.e., so callers don't have to check 
+            whether a given masking image has already been masked or not).
           nan_to_num: boolean indicating whether to convert NaNs to 0.
 
         Returns:
           A 1D NumPy array of in-mask voxels.
         """
+        # If the img is already masked, just return it
+        if type(img).__module__ == np.__name__:
+            if img.shape[0] == self.num_vox_in_mask:
+                return img
+            else:
+                raise ValueError("The image to mask already appears to be vectorized, " + 
+                    "but the dimensions don't match the Masker's dimensions.")
         if isinstance(img, basestring):
             img = nb.load(img)
         masked_data = img.get_data().ravel()[self.in_mask]
