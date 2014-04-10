@@ -4,7 +4,7 @@ import logging
 from time import time
 from neurosynth.base.dataset import Dataset
 from neurosynth.analysis import reduce as nsr
-from neurosynth.base.mask import Mask
+from neurosynth.base.mask import Masker
 from neurosynth.base import imageutils
 from sklearn import cluster
 import os
@@ -16,7 +16,7 @@ class Clusterer:
     def __init__(self, dataset=None, algorithm=None, output_dir='.',  grid_scale=None,
             features=None, feature_threshold=0.0, global_mask=None, roi_mask=None, 
             distance_mask=None, min_voxels_per_study=None, min_studies_per_voxel=None, 
-            **kwargs):
+            distance_metric=None, **kwargs):
         """ Initialize Clusterer.
         Args:
             dataset: The dataset to use for clustering. Either a Dataset instance or a numpy
@@ -36,7 +36,9 @@ class Clusterer:
                 if dataset is a numpy array.
             roi_mask: An image that determines which voxels to cluster. All non-zero voxels
                 will be included in the clustering analysis. When roi_mask is None, all 
-                voxels in the global_mask (i.e., the whole brain) will be clustered.
+                voxels in the global_mask (i.e., the whole brain) will be clustered. roi_mask
+                can be an image filename, a nibabel image, or an already-masked array with 
+                the same dimensions as the global_mask.
             distance_mask: An image defining the voxels to base the distance matrix 
                 computation on. All non-zero voxels will be used to compute the distance
                 matrix. For example, if the roi_mask contains voxels in only the insula, 
@@ -47,6 +49,9 @@ class Clusterer:
                 than this number of studies will be removed from analysis.
             min_studies_per_voxel: An optional integer. If provided, all studies with fewer 
                 than this number of active voxels will be removed from analysis.
+            distance_metric: Optional string providing the distance metric to use for 
+                computation of a distance matrix. When None, no distance matrix is computed
+                and we assume that clustering will be done on the raw data.
             **kwargs: Additional keyword arguments to pass to the clustering algorithm.
 
         """
@@ -60,7 +65,7 @@ class Clusterer:
             self.dataset = dataset
 
             if global_mask is None:
-                self.masker = dataset.volume
+                self.masker = dataset.masker
 
             if features is not None:
                 data = self.dataset.get_ids_by_features(features, threshold=feature_threshold, 
@@ -98,12 +103,26 @@ class Clusterer:
                 raise ValueError("If dataset is a numpy array, a valid global_mask (filename, " +
                     "Mask instance, or nibabel image) must be passed.")
 
-            if not isinstance(global_mask, Mask):
-                global_mask = Mask(global_mask)
+            if not isinstance(global_mask, Masker):
+                global_mask = Masker(global_mask)
             self.masker = global_mask
 
+        # Zero out any voxels not in the ROI mask. We don't remove them just yet because we may need to 
+        # reduce them to a grid and want to maintain the original image dimensions.
+        if roi_mask is not None:
+            self.roi_mask = self.masker.mask(roi_mask)
+            self.data[~self.roi_mask,:] = 0
+
+        # Downsample by applying grid
         if grid_scale is not None:
             self.data, self.grid = nsr.apply_grid(self.data, masker=self.masker, scale=grid_scale, threshold=None)
+
+        # Drop all voxels/regions with no variance (typically all zeros); not sensible to cluster these
+        self.valid_voxels = np.where(np.var(self.data, axis=1))
+        self.data = self.data[self.valid_voxels,:]
+
+        if distance_metric is not None:
+            self.create_distance_matrix(distance_metric=distance_metric)
 
 
     def create_distance_matrix(self, distance_metric='jaccard', figure_file=None, save_distance=None):
@@ -127,14 +146,20 @@ class Clusterer:
         self.distance_matrix = dist
 
 
-    def cluster(self, algorithm=None, n_clusters=10, save_images=True, **kwargs):
+    def cluster(self, algorithm=None, n_clusters=10, save_images=True, precomputed_distances=False, 
+            **kwargs):
         """
         Args:
             algorithm: Optional clustering algorithm to use (see _set_clustering_algorithm
                 for details). If None (default), use algorithm passed to the Clusterer
                 instance at initialization.
-            num_clusters: Number of clusters to extract. Can be an integer or a list
+            n_clusters: Number of clusters to extract. Can be an integer or a list
                 of integers to iterate.
+            save_images: Boolean indicating whether or not to save images to file.
+            precomputed_distances: Indicates whether or not to use precomputed distances in 
+                the clustering. If True, the distance_matrix stored in the instance will be 
+                used; when False (default), the raw data will be used.
+
         """
         if algorithm is not None:
             self._set_clustering_algorithm(algorithm, **kwargs)
@@ -152,12 +177,21 @@ class Clusterer:
                 clusterer.n_clusters = k
 
             # Now figure out if we need to pass in raw data or a distance matrix.
-            if False:
+            if precomputed_distances:
                 if not hasattr(self, 'distance_matrix'):
-                    self.create_distance_matrix()  # Fix
+                    raise ValueError("No precomputed distance matrix exists. Either set precomputed_distances to False, " +
+                                    "or call the create_distance_matrix method before trying to cluster.")
                 X = self.distance_matrix
+
+                # Tell clusterer not to compute a distance/affinity matrix
+                if hasattr(clusterer, 'affinity'):  # SpectralClustering and AffinityPropagation
+                    clusterer.affinity = 'precomputed'
+                elif hasattr(clusterer, 'metric'):  # DBSCAN
+                    clusterer.metric = 'precomputed'
+
             else:
                 X = self.data
+
             labels = clusterer.fit_predict(X)
 
             if save_images:
