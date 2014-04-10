@@ -35,7 +35,7 @@ def analyze_features(dataset, features, image_type='pFgA_z', threshold=0.001, q=
       If save is None, an n_voxels x n_features 2D numpy array.
     """
     if save is None:
-        result = np.zeros((dataset.volume.num_vox_in_mask, len(features)))
+        result = np.zeros((dataset.masker.num_vox_in_mask, len(features)))
     else:
         result = []
 
@@ -197,4 +197,4 @@ class MetaAnalysis(object):
         for suffix, img in self.images.items():
             if suffix in image_list:
                 imageutils.save_img(img, '%s_%s.nii.gz' % (
-                    outroot, suffix), self.dataset.volume)
+                    outroot, suffix), self.dataset.masker)

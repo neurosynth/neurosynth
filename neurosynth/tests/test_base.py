@@ -43,10 +43,10 @@ class TestBase(unittest.TestCase):
 
     def test_dataset_initializes(self):
         """ Test whether dataset initializes properly. """
-        self.assertIsNotNone(self.dataset.volume)
+        self.assertIsNotNone(self.dataset.masker)
         self.assertIsNotNone(self.dataset.image_table)
         self.assertEqual(len(self.dataset.mappables), 5)
-        self.assertIsNotNone(self.dataset.volume)
+        self.assertIsNotNone(self.dataset.masker)
         self.assertIsNotNone(self.dataset.r)
         self.assertIsNotNone(self.dataset.mappables[0].data['extra_field'])
 
@@ -61,7 +61,7 @@ class TestBase(unittest.TestCase):
         self.assertIsNotNone(self.dataset.image_table)
         it = self.dataset.image_table
         self.assertEqual(len(it.ids), 5)
-        self.assertIsNotNone(it.volume)
+        self.assertIsNotNone(it.masker)
         self.assertIsNotNone(it.r)
         self.assertEqual(it.data.shape, (228453, 5))
         # Add tests for values in table
@@ -143,14 +143,14 @@ class TestBase(unittest.TestCase):
         dataset = self.dataset
         ids = dataset.get_ids_by_mask(
             get_test_data_path() + 'sgacc_mask.nii.gz')
-        nvoxels = dataset.volume.in_mask[0].shape[0]
+        nvoxels = dataset.masker.in_mask[0].shape[0]
 
         nvols = 2
         data2d = np.arange(nvoxels * nvols).reshape((nvoxels, -1))
 
         data2d_unmasked_separately = [
-            dataset.volume.unmask(data2d[:, i]) for i in xrange(nvols)]
-        data2d_unmasked = dataset.volume.unmask(data2d)
+            dataset.masker.unmask(data2d[:, i]) for i in xrange(nvols)]
+        data2d_unmasked = dataset.masker.unmask(data2d)
         self.assertEqual(data2d_unmasked.shape,
                          data2d_unmasked_separately[0].shape + (nvols,))
         # and check corresponding volumes
@@ -237,7 +237,7 @@ class TestBase(unittest.TestCase):
         self.assertEquals(features, ['f2', 'f4', 'g1'])
 
     def test_grid_creation(self):
-        mask = self.dataset.volume.volume
+        mask = self.dataset.masker.volume
         # Test with mask
         grid = imageutils.create_grid(image=mask, scale=4, mask=mask)
         self.assertEquals(grid.shape, (91, 109, 91))

@@ -21,7 +21,7 @@ logger = logging.getLogger('neurosynth.dataset')
 class Dataset(object):
 
     def __init__(
-        self, filename, feature_filename=None, volume=None, r=6, transform=True,
+        self, filename, feature_filename=None, masker=None, r=6, transform=True,
                   target='MNI'):
         """ Initialize a new Dataset instance.
 
@@ -40,7 +40,7 @@ class Dataset(object):
         Args:
           filename: The name of a database file containing a list of activations.
           feature_filename: An optional filename to construct a FeatureTable from.
-          volume: An optional Nifti/Analyze image name defining the space to use for
+          masker: An optional Nifti/Analyze image name defining the space to use for
             all operations. If no image is passed, defaults to the MNI152 2 mm
             template packaged with FSL.
           r: An optional integer specifying the radius of the smoothing kernel, in mm.
@@ -80,15 +80,15 @@ class Dataset(object):
 
         # Load the volume into a new Masker
         try:
-            if volume is None:
+            if masker is None:
                 resource_dir = os.path.join(os.path.dirname(__file__),
                                             os.path.pardir,
                                             'resources')
-                volume = os.path.join(
+                masker = os.path.join(
                     resource_dir, 'MNI152_T1_2mm_brain.nii.gz')
-            self.volume = mask.Masker(volume)
+            self.masker = mask.Masker(masker)
         except Exception as e:
-            logger.error("Error loading volume %s: %s" % (volume, e))
+            logger.error("Error loading masker %s: %s" % (masker, e))
             # yoh: TODO -- IMHO should re-raise or not even swallow the exception here
             # raise e
 
@@ -227,7 +227,7 @@ class Dataset(object):
         the proportion of voxels within the mask that must be active to
         warrant inclusion. E.g., if threshold = 0.1, only mappables with
         > 10% of voxels activated in mask will be returned. """
-        mask = self.volume.mask(mask).astype(bool)
+        mask = self.masker.mask(mask).astype(bool)
         num_vox = np.sum(mask)
         prop_mask_active = self.image_table.data.T.dot(
             mask).astype(float) / num_vox
@@ -255,8 +255,8 @@ class Dataset(object):
         peaks = np.array(peaks)  # Make sure we have a numpy array
         peaks = transformations.xyz_to_mat(peaks)
         img = imageutils.map_peaks_to_image(
-            peaks, r, vox_dims=self.volume.vox_dims,
-            dims=self.volume.dims, header=self.volume.get_header())
+            peaks, r, vox_dims=self.masker.vox_dims,
+            dims=self.masker.dims, header=self.masker.get_header())
         return self.get_ids_by_mask(img, threshold, get_image_data=get_image_data)
 
     def add_features(self, filename, description=''):
@@ -332,26 +332,26 @@ class Dataset(object):
 
 class ImageTable(object):
 
-    def __init__(self, dataset=None, mappables=None, volume=None, r=6, use_sparse=True):
+    def __init__(self, dataset=None, mappables=None, masker=None, r=6, use_sparse=True):
         """ Initialize a new ImageTable.
 
         If a Dataset instance is passed, all inputs are taken from the Dataset.
         Alternatively, a user can manually pass the desired mappables
-        and volume (e.g., in cases where the ImageTable class is being used without a
+        and masker (e.g., in cases where the ImageTable class is being used without a
         Dataset). Can optionally specify the radius of the sphere used for smoothing (default:
         6 mm), as well as whether or not to represent the data as a sparse array
         (generally this should be left to True, as these data are quite sparse and
         computation can often be speeded up by an order of magnitude.)
         """
         if dataset is not None:
-            mappables, volume, r = dataset.mappables, dataset.volume, dataset.r
-        for var in [mappables, volume, r]:
+            mappables, masker, r = dataset.mappables, dataset.masker, dataset.r
+        for var in [mappables, masker, r]:
             assert var is not None
         self.ids = [m.id for m in mappables]
-        self.volume = volume
+        self.masker = masker
         self.r = r
 
-        data_shape = (self.volume.num_vox_in_mask, len(mappables))
+        data_shape = (self.masker.num_vox_in_mask, len(mappables))
         if use_sparse:
             # Fancy indexing assignment is not supported for sparse matrices, so
             # let's keep lists of values and their indices (rows, cols) to later
@@ -364,8 +364,8 @@ class ImageTable(object):
         for i, s in enumerate(mappables):
             logger.debug("%s/%s..." % (str(i + 1), str(len(mappables))))
             img = imageutils.map_peaks_to_image(
-                s.peaks, r=r, header=self.volume.get_header())
-            img_masked = self.volume.mask(img)
+                s.peaks, r=r, header=self.masker.get_header())
+            img_masked = self.masker.mask(img)
             if use_sparse:
                 nz = np.nonzero(img_masked)
                 assert(len(nz) == 1)

@@ -38,7 +38,7 @@ class Decoder:
 
         # If no mask is passed, use the dataset's.
         if mask is None:
-            self.mask = dataset.volume
+            self.mask = dataset.masker
         else:
             from neurosynth.base import mask as m
             self.mask = m.Masker(mask)
