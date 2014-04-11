@@ -6,9 +6,12 @@ __author__ = 'Yaroslav Halchenko'
 __copyright__ = 'Copyright (c) 2013 Yaroslav Halchenko'
 __license__ = 'MIT'
 
-from os.path import dirname, join, sep as pathsep
+from os.path import dirname, join, pardir, sep as pathsep
 from neurosynth.base.dataset import Dataset
 
+
+def get_resource_path():
+	return join(dirname(__file__), pardir, 'resources') + pathsep
 
 def get_test_data_path():
     """Returns the path to test datasets, terminated with separator (/ vs \)"""
