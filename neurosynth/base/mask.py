@@ -9,19 +9,24 @@ import os
 
 class Masker(object):
 
-    """ A lightweight wrapper around the NiBabel classes that
-    handles vectorization/masking/unmasking of images. """
+    """ Handles vectorization/masking/unmasking of images. """
 
 
     def __init__(self, volume, layers=None):
-        """ Initialize a new Masker. The volume passed to the constructor indicates
-        both the space in which all subsequent images are represented as well as the
-        mask to use for all analyses. Any voxel in the mask with a non-zero valid is
-        considered valid for analyses.
+        """ Initialize a new Masker.
+        Args:
+            volume: A volume indicating the global space within which all subsequent 
+                layers must reside. Any voxel in the mask with a non-zero valid is
+                considered valid for analyses. Can be either an image filename or a
+                NiBabel image.
+            layers: Optional masking layers to add; see documentation for add().
         """
 
         self.layers = {}
         self.stack = []
+
+        if layers is not None:
+            self.add(layers)
 
         if isinstance(volume, basestring):
             volume = nb.load(volume)
