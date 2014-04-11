@@ -5,10 +5,11 @@ import tempfile
 import os
 import shutil
 
-from neurosynth.tests.utils import get_test_dataset, get_test_data_path
+from neurosynth.tests.utils import get_test_dataset, get_test_data_path, get_resource_path
 from neurosynth.analysis import meta
 from neurosynth.base.dataset import Dataset, ImageTable
 from neurosynth.base import imageutils
+from neurosynth.base.mask import Masker
 import json
 
 
@@ -17,7 +18,6 @@ class TestBase(unittest.TestCase):
     def setUp(self):
         """ Create a new Dataset and add features. """
         self.dataset = get_test_dataset()
-        self.skipped_tests = []
 
     def test_dataset_save_and_load(self):
         # smoke test of saving and loading
@@ -245,6 +245,26 @@ class TestBase(unittest.TestCase):
         # Test without mask
         grid = imageutils.create_grid(image=mask, scale=4)
         self.assertGreater(len(np.unique(grid.get_data())), 4359)
+
+
+class TestMasker(unittest.TestCase):
+
+    def setUp(self):
+        """ Create a new Dataset and add features. """
+        maskfile = get_resource_path() + 'MNI152_T1_2mm_brain.nii.gz'
+        self.masker = Masker(maskfile)
+
+    def test_add_and_remove_masks(self):
+        self.masker.add(get_test_data_path() + 'sgacc_mask.nii.gz')
+        self.masker.add({'motor': get_test_data_path() + 'medial_motor.nii.gz'})
+        self.assertEqual(len(self.masker.layers), 2)
+        self.assertEqual(len(self.masker.stack), 2)
+        self.assertEqual(set(self.masker.layers.keys()), set(['layer_0', 'motor']))
+        self.assertEqual(np.sum(self.masker.layers['motor']), 1419)
+        self.masker.remove('motor')
+        self.assertEqual(len(self.masker.layers), 1)
+        self.assertEqual(len(self.masker.stack), 1)
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
 
