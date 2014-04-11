@@ -143,7 +143,7 @@ class TestBase(unittest.TestCase):
         dataset = self.dataset
         ids = dataset.get_ids_by_mask(
             get_test_data_path() + 'sgacc_mask.nii.gz')
-        nvoxels = dataset.masker.in_mask[0].shape[0]
+        nvoxels = dataset.masker.num_vox_in_mask
 
         nvols = 2
         data2d = np.arange(nvoxels * nvols).reshape((nvoxels, -1))
