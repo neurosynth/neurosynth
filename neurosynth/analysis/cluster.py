@@ -108,9 +108,9 @@ class Clusterer:
             self.masker = global_mask
 
         # Zero out any voxels not in the ROI mask. We don't remove them just yet because we may need to 
-        # reduce them to a grid and want to maintain the original image dimensions.
+        # reduce them to a grid and we want to maintain the original image dimensions.
         if roi_mask is not None:
-            self.roi_mask = self.masker.mask(roi_mask)
+            self.roi_mask = self.masker.mask(roi_mask).astype(bool)
             self.data[~self.roi_mask,:] = 0
 
         # Downsample by applying grid
@@ -118,7 +118,7 @@ class Clusterer:
             self.data, self.grid = nsr.apply_grid(self.data, masker=self.masker, scale=grid_scale, threshold=None)
 
         # Drop all voxels/regions with no variance (typically all zeros); not sensible to cluster these
-        self.valid_voxels = np.where(np.var(self.data, axis=1))
+        self.valid_voxels = np.var(self.data, axis=1)>0
         self.data = self.data[self.valid_voxels,:]
 
         if distance_metric is not None:
@@ -242,24 +242,42 @@ class Clusterer:
     def _create_cluster_images(self, labels, output_dir=None):
         ''' Creates a Nifti image of reconstructed cluster labels. 
         Args:
-            dataset: A pickled neurosynth dataset
-            grid_image: A .nii grid image created using create_grid_image()
-            labels: A vector of cluster labels 
+            labels: A vector of cluster labels
             output_dir: A string indicating folder to output images to. If None, 
                 creates a "ClusterImages" directory below the Clusterer instance's
                 output directory.
         Outputs:
             Cluster_k.nii.gz: Will output a nifti image with cluster labels
         '''
-        regions = self.masker.mask(self.grid)
-        unique_regions = np.unique(regions)
-        n_regions = unique_regions.size
-        m = np.zeros(regions.size)
-        for i in range(n_regions):
-            m[regions == unique_regions[i]] = labels[i] + 1
+
+        labels += 1
+
+        # Restore the voxels we've ignored
+        if hasattr(self, 'valid_voxels'):
+            img = np.zeros(self.valid_voxels.shape)
+            img[self.valid_voxels] = labels
+            labels = img
+
+        # Reconstruct grid into original space
+        if hasattr(self, 'grid'):
+            regions = self.masker.mask(self.grid)
+            unique_regions = np.unique(regions)
+            n_regions = unique_regions.size
+            m = np.zeros(regions.size)
+            for i in range(n_regions):
+                m[regions == unique_regions[i]] = labels[i] + 1
+
+            labels = m
+
+            # Tidy up ROI boundaries that fall within grid cells
+            if hasattr(self, 'roi_mask'):
+                labels[~self.roi_mask] = 0
+
         if output_dir is None:
              output_dir = os.path.join(self.output_dir, 'ClusterImages')
+
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)
-        outfile = os.path.join(output_dir,'Cluster_k%d.nii.gz' % len(np.unique(labels)))
-        imageutils.save_img(m, outfile, self.masker)
+
+        outfile = os.path.join(output_dir,'Cluster_k%d.nii.gz' % (len(np.unique(labels))-1))
+        imageutils.save_img(labels, outfile, self.masker)
