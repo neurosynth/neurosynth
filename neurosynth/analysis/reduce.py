@@ -39,8 +39,8 @@ def average_within_regions(dataset, regions, threshold=None, remove_zero=True):
         Returns:
             A 2D numpy array with ROIs in rows and mappables in columns.
         """
-        if type(regions).__module__ != np.__name__:
-            regions = dataset.masker.mask(regions)
+        # if not type(regions).__module__.startswith('numpy'):
+        #     regions = dataset.masker.mask(regions)
             
         if isinstance(dataset, Dataset):
             dataset = dataset.get_image_data(dense=False)
@@ -76,6 +76,7 @@ def apply_grid(dataset, masker=None, scale=5, threshold=None):
         masker: Optional Masker instance used to map between the created grid and 
             the dataset. This is only needed if dataset is a numpy array; if 
             dataset is a Dataset instance, the Masker in the dataset will be used.
+        scale: int; scaling factor (in mm) to pass onto create_grid().
         threshold: Optional float to pass to reduce.average_within_regions().
     Returns:
         A tuple of length 2, where the first element is a numpy array of dimensions
@@ -90,7 +91,8 @@ def apply_grid(dataset, masker=None, scale=5, threshold=None):
             raise ValueError("If dataset is a numpy array, a masker must be provided.")
 
     grid = imageutils.create_grid(masker.volume, scale)
-    data = average_within_regions(dataset, masker.mask(grid), threshold)
+    cm = masker.mask(grid, in_global_mask=True)
+    data = average_within_regions(dataset, cm, threshold)
     return (data, grid)
 
 def get_random_voxels(dataset, n_voxels):

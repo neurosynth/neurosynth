@@ -27,7 +27,8 @@ class TestAnalysis(unittest.TestCase):
     def test_roi_averaging(self):
         """ Test averaging within region labels in a mask. """
         filename = get_test_data_path() + 'sgacc_mask.nii.gz'
-        avg_vox = reduce.average_within_regions(self.dataset, filename)
+        regions = self.dataset.masker.mask(filename, in_global_mask=True)
+        avg_vox = reduce.average_within_regions(self.dataset, regions)
         n_studies = self.dataset.image_table.data.shape[1]
         self.assertEqual(n_studies, avg_vox.shape[1])
         self.assertGreater(avg_vox.sum(), 0.05)

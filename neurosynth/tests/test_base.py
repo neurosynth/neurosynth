@@ -239,11 +239,11 @@ class TestBase(unittest.TestCase):
     def test_grid_creation(self):
         mask = self.dataset.masker.volume
         # Test with mask
-        grid = imageutils.create_grid(image=mask, scale=4, mask=mask)
+        grid = imageutils.create_grid(image=mask, scale=4)
         self.assertEquals(grid.shape, (91, 109, 91))
         self.assertEquals(len(np.unique(grid.get_data())), 4359)
         # Test without mask
-        grid = imageutils.create_grid(image=mask, scale=4)
+        grid = imageutils.create_grid(image=mask, scale=4, apply_mask=False)
         self.assertGreater(len(np.unique(grid.get_data())), 4359)
 
 

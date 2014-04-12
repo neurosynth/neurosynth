@@ -108,15 +108,16 @@ def threshold_img(data, threshold, mask=None, mask_out='below'):
         data[data > threshold] = 0
     return data
 
-def create_grid(image, scale=4, mask=None, save_file=None):
+def create_grid(image, scale=4, apply_mask=True, save_file=None):
     """ Creates an image containing labeled cells in a 3D grid.
     Args:
         image: String or nibabel image. The image used to define the grid dimensions.
-        scale: The scaling factor which controls the grid size. Value reflects diameter of cube
-            in voxels.
-        mask: Optional string or nibabel image; a mask to apply to the grid. Only voxels with 
+            Also used to define the mask to apply to the grid. Only voxels with 
             non-zero values in the mask will be retained; all other voxels will be zeroed out 
             in the returned image.
+        scale: The scaling factor which controls the grid size. Value reflects diameter of cube
+            in voxels.
+        apply_mask: Boolean indicating whether or not to zero out voxels not in image.
         save_file: Optional string giving the path to save image to. Image written out is
             a standard Nifti image. If save_file is None, no image is written.
     Returns:
@@ -144,10 +145,13 @@ def create_grid(image, scale=4, mask=None, save_file=None):
                         grid[x+mov_x, y+mov_y, z+mov_z] = i+1
                     except: pass
 
-    if mask is not None:
+    if apply_mask:
+        mask = image
         if isinstance(mask, basestring):
             mask = nb.load(mask)
-        grid[~mask.get_data().astype(bool)] = 0.0
+        if type(mask).__module__ != np.__name__:
+            mask = mask.get_data()
+        grid[~mask.astype(bool)] = 0.0
 
     grid = nb.Nifti1Image(grid, image.get_affine(), image.get_header())
 

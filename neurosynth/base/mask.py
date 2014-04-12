@@ -21,13 +21,6 @@ class Masker(object):
                 NiBabel image.
             layers: Optional masking layers to add; see documentation for add().
         """
-
-        self.layers = {}
-        self.stack = []
-
-        if layers is not None:
-            self.add(layers)
-
         if isinstance(volume, basestring):
             volume = nb.load(volume)
         self.volume = volume
@@ -35,6 +28,17 @@ class Masker(object):
         self.dims = data.shape
         self.vox_dims = self.get_header().get_zooms()
         self.full = np.float64(data.ravel())
+        self.global_mask = np.where(self.full)
+
+        self.reset()
+        if layers is not None:
+            self.add(layers)
+
+
+    def reset(self):
+        """ Reset/remove all layers, keeping only the initial volume. """
+        self.layers = {}
+        self.stack = []
         self._set_mask()
         self.num_vox_in_mask = len(np.where(self.current_mask)[0])
 
@@ -127,7 +131,7 @@ class Masker(object):
         return nb.nifti1.Nifti1Image(image, None, self.get_header())
 
 
-    def mask(self, image, layers=None, nan_to_num=True, compute_mask=True):
+    def mask(self, image, layers=None, nan_to_num=True, compute_mask=True, in_global_mask=False):
         """ Vectorize an image and mask out all invalid voxels.
 
         Args:
@@ -139,16 +143,26 @@ class Masker(object):
             compute_mask: If True, will recompute the current mask from scratch. 
                 When False, reuses the existing current_mask. Mainly useful when 
                 iterating over input images and/or output formats.
-
+            in_global_mask: Whether to return the resulting masked vector in the globally 
+                masked space (i.e., n_voxels = len(self.global_mask)). If False (default),
+                returns in the full image space (i.e., n_voxels = len(self.volume)).
         Returns:
           A 1D NumPy array of in-mask voxels.
         """
         image = self.get_image(image, output='vector')
+
         if compute_mask:
             self._set_mask(layers)
-        masked_data = image[self.current_mask]
+
+        if in_global_mask:
+            masked_data = image[self.global_mask]
+            masked_data[~self.get_current_mask(in_global_mask=True)] = 0
+        else:
+            masked_data = image[self.current_mask]
+
         if nan_to_num:
             masked_data = np.nan_to_num(masked_data)
+
         return masked_data
 
 
@@ -206,6 +220,22 @@ class Masker(object):
             layers.append(self.full)  # Always include the original volume
         layers = np.vstack(layers).T.astype(bool)
         self.current_mask = layers.all(axis=1)
+
+
+    def get_current_mask(self, output='image', compute_mask=True, in_global_mask=False):
+        """ Convenience method for getting current mask.
+        Args:
+            output: Format of output.
+            compute_mask: Whether to refresh the current mask or not.
+            in_global_mask: If True, returns a vector with the same dimensionality as 
+                the global mask (i.e., self.volume).
+        """
+        if in_global_mask:
+            output = 'vector'
+        if compute_mask:
+            self._set_mask()
+        mask = self.get_image(self.current_mask, output)
+        return mask[self.global_mask] if in_global_mask else mask
 
 
     def get_header(self):

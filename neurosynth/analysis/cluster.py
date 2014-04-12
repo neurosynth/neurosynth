@@ -55,6 +55,7 @@ class Clusterer:
             **kwargs: Additional keyword arguments to pass to the clustering algorithm.
 
         """
+        
         self.output_dir = output_dir
 
         if algorithm is not None:
@@ -65,7 +66,7 @@ class Clusterer:
             self.dataset = dataset
 
             if global_mask is None:
-                self.masker = dataset.masker
+                global_mask = dataset.masker
 
             if features is not None:
                 data = self.dataset.get_ids_by_features(features, threshold=feature_threshold, 
@@ -73,26 +74,26 @@ class Clusterer:
             else:
                 data = self.dataset.get_image_data()
 
-            if min_studies_per_voxel is not None:
-                logger.info("Thresholding voxels based on number of studies.")
-                sum_vox = data.sum(1)
-                # Save the indices for later reconstruction
-                active_vox = np.where(sum_vox > min_studies_per_voxel)[0]  
-                n_active_vox = active_vox.shape[0]
+            # if min_studies_per_voxel is not None:
+            #     logger.info("Thresholding voxels based on number of studies.")
+            #     sum_vox = data.sum(1)
+            #     # Save the indices for later reconstruction
+            #     active_vox = np.where(sum_vox > min_studies_per_voxel)[0]  
+            #     n_active_vox = active_vox.shape[0]
 
-            if min_voxels_per_study is not None:
-                logger.info("Thresholding studies based on number of voxels.")
-                sum_studies = data.sum(0)
-                active_studies = np.where(sum_studies > min_voxels_per_study)[0]
-                n_active_studies = active_studies.shape[0]
+            # if min_voxels_per_study is not None:
+            #     logger.info("Thresholding studies based on number of voxels.")
+            #     sum_studies = data.sum(0)
+            #     active_studies = np.where(sum_studies > min_voxels_per_study)[0]
+            #     n_active_studies = active_studies.shape[0]
 
-            if min_studies_per_voxel is not None:
-                logger.info("Selecting voxels with more than %d studies." % min_studies_per_voxel)
-                data = data[active_vox, :]
+            # if min_studies_per_voxel is not None:
+            #     logger.info("Selecting voxels with more than %d studies." % min_studies_per_voxel)
+            #     data = data[active_vox, :]
 
-            if min_voxels_per_study is not None:
-                logger.info("Selecting studies with more than %d voxels." % min_voxels_per_study)
-                data = data[:, active_studies]
+            # if min_voxels_per_study is not None:
+            #     logger.info("Selecting studies with more than %d voxels." % min_voxels_per_study)
+            #     data = data[:, active_studies]
 
             self.data = data
 
@@ -103,46 +104,57 @@ class Clusterer:
                 raise ValueError("If dataset is a numpy array, a valid global_mask (filename, " +
                     "Mask instance, or nibabel image) must be passed.")
 
-            if not isinstance(global_mask, Masker):
-                global_mask = Masker(global_mask)
-            self.masker = global_mask
+        if not isinstance(global_mask, Masker):
+            global_mask = Masker(global_mask)
+        
+        self.masker = global_mask
 
-        # Zero out any voxels not in the ROI mask. We don't remove them just yet because we may need to 
-        # reduce them to a grid and we want to maintain the original image dimensions.
+        if distance_mask is not None:
+            self.masker.add(distance_mask)
+            if grid_scale is not None:
+                self.target_data, _ = nsr.apply_grid(self.data, masker=self.masker, scale=grid_scale, threshold=None)
+            else:
+                vox = self.masker.get_current_mask(in_global_mask=True)
+                self.target_data = self.data[vox,:]
+
+            self.masker.reset()
+
         if roi_mask is not None:
-            self.roi_mask = self.masker.mask(roi_mask).astype(bool)
-            self.data[~self.roi_mask,:] = 0
+            self.masker.add(roi_mask)
 
-        # Downsample by applying grid
         if grid_scale is not None:
             self.data, self.grid = nsr.apply_grid(self.data, masker=self.masker, scale=grid_scale, threshold=None)
-
-        # Drop all voxels/regions with no variance (typically all zeros); not sensible to cluster these
-        self.valid_voxels = np.var(self.data, axis=1)>0
-        self.data = self.data[self.valid_voxels,:]
-
+        else:
+            vox = self.masker.get_current_mask(in_global_mask=True)
+            self.data = self.data[vox,:]
+            
         if distance_metric is not None:
             self.create_distance_matrix(distance_metric=distance_metric)
 
 
-    def create_distance_matrix(self, distance_metric='jaccard', figure_file=None, save_distance=None):
+    def create_distance_matrix(self, distance_metric='jaccard', affinity=False, figure_file=None, 
+                                distance_file=None):
         """ Creates a distance matrix of each grid roi across studies in Neurosynth Dataset.
         Args:
             distance_metric: The distance metric to use; see scipy documentation for available 
                 metrics. Defaults to Jaccard Distance.
+            affinity: If True, converts distance to affinity matrix (1 - distance).
             figure_file: Filename for output image of the clustered data. If None, no image is written.
             distance_file: Filename for output of the distance matrix. If None, matrix is not saved.
         """
         from sklearn.metrics.pairwise import pairwise_distances
         t = time()
         logger.info('Creating distance matrix using ' + distance_metric)
-        dist = pairwise_distances(self.data, metric=distance_metric)
+        Y = self.target_data if hasattr(self, 'target_data') else None
+        dist = pairwise_distances(self.data, Y=Y, metric=distance_metric)
         logger.info('Distance matrix computation took %.1f seconds.' % (time()-t))
         if figure_file is not None:
             plt.imshow(dist,aspect='auto',interpolation='nearest')
             plt.savefig(figure_file)
         if distance_file is not None:
             np.savetxt(distance_file, dist)
+        if affinity:
+            dist = 1.0 - dist
         self.distance_matrix = dist
 
 
@@ -252,13 +264,8 @@ class Clusterer:
 
         labels += 1
 
-        # Restore the voxels we've ignored
-        if hasattr(self, 'valid_voxels'):
-            img = np.zeros(self.valid_voxels.shape)
-            img[self.valid_voxels] = labels
-            labels = img
-
         # Reconstruct grid into original space
+        # TODO: replace with masker.unmask()
         if hasattr(self, 'grid'):
             regions = self.masker.mask(self.grid)
             unique_regions = np.unique(regions)
@@ -269,15 +276,11 @@ class Clusterer:
 
             labels = m
 
-            # Tidy up ROI boundaries that fall within grid cells
-            if hasattr(self, 'roi_mask'):
-                labels[~self.roi_mask] = 0
-
         if output_dir is None:
              output_dir = os.path.join(self.output_dir, 'ClusterImages')
 
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)
 
-        outfile = os.path.join(output_dir,'Cluster_k%d.nii.gz' % (len(np.unique(labels))-1))
+        outfile = os.path.join(output_dir,'Cluster_k%d.nii.gz' % (len(np.unique(labels))))
         imageutils.save_img(labels, outfile, self.masker)
