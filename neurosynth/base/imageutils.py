@@ -76,7 +76,7 @@ def load_imgs(filenames, masker, nan_to_num=True):
     """
     if isinstance(filenames, basestring):
         filenames = [filenames]
-    data = np.zeros((masker.num_vox_in_mask, len(filenames)))
+    data = np.zeros((masker.n_vox_in_mask, len(filenames)))
     for i, f in enumerate(filenames):
         data[:, i] = masker.mask(f, nan_to_num)
     return data

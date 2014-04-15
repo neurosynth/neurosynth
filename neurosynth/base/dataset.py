@@ -351,7 +351,7 @@ class ImageTable(object):
         self.masker = masker
         self.r = r
 
-        data_shape = (self.masker.num_vox_in_mask, len(mappables))
+        data_shape = (self.masker.n_vox_in_vol, len(mappables))
         if use_sparse:
             # Fancy indexing assignment is not supported for sparse matrices, so
             # let's keep lists of values and their indices (rows, cols) to later

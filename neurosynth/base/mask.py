@@ -40,7 +40,7 @@ class Masker(object):
         self.layers = {}
         self.stack = []
         self._set_mask()
-        self.num_vox_in_mask = len(np.where(self.current_mask)[0])
+        self.n_vox_in_vol = len(np.where(self.current_mask)[0])
 
 
     def add(self, layers):
@@ -131,7 +131,7 @@ class Masker(object):
         return nb.nifti1.Nifti1Image(image, None, self.get_header())
 
 
-    def mask(self, image, layers=None, nan_to_num=True, compute_mask=True, in_global_mask=False):
+    def mask(self, image, nan_to_num=True, layers=None, compute_mask=True, in_global_mask=False):
         """ Vectorize an image and mask out all invalid voxels.
 
         Args:
@@ -188,7 +188,7 @@ class Masker(object):
         if data.ndim == 2:
             n_volumes = data.shape[1]
             # Assume 1st dimension is voxels, 2nd is time
-            assert(len(data) == self.num_vox_in_mask)
+            assert(len(data) == self.n_vox_in_vol)
             assert(self.full.ndim == 1)
             # but we generate x,y,z,t volume
             image = np.zeros(self.full.shape + (n_volumes,))
@@ -220,6 +220,7 @@ class Masker(object):
             layers.append(self.full)  # Always include the original volume
         layers = np.vstack(layers).T.astype(bool)
         self.current_mask = layers.all(axis=1)
+        self.n_vox_in_mask = len(np.where(self.current_mask)[0])
 
 
     def get_current_mask(self, output='image', compute_mask=True, in_global_mask=False):

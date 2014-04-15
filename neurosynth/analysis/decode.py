@@ -3,9 +3,11 @@
 """ Decoding-related methods """
 
 import numpy as np
+from neurosynth.base.mask import Masker
 from neurosynth.base import imageutils
 from neurosynth.analysis import classify
 from neurosynth.analysis import plotutils #import radar_factory
+from os import path
 
 
 class Decoder:
@@ -32,23 +34,25 @@ class Decoder:
 
         """
 
+        self.dataset = dataset
+
         if dataset is not None:
-            self.dataset = dataset
-        self.method = method.lower()
-
-        # If no mask is passed, use the dataset's.
-        if mask is None:
-            self.mask = dataset.masker
+            self.masker = self.dataset.masker
+            if features is None:
+                features = dataset.get_feature_names()
+            if mask is not None:
+                self.masker.add(mask)
+        elif mask is not None:
+                self.masker = Masker(mask)
         else:
-            from neurosynth.base import mask as m
-            self.mask = m.Masker(mask)
+            self.masker = None
 
-        if features is None:
-            features = dataset.get_feature_names()
+        self.method = method.lower()
 
         self.load_features(features, image_type=image_type, threshold=threshold)
 
-    def decode(self, images, method=None, save=None, round=4, names=None):
+
+    def decode(self, images, save=None, round=4, names=None):
         """ Decodes a set of images.
 
         Args:
@@ -56,8 +60,6 @@ class Decoder:
             - A single String specifying the filename of the image to decode
             - A list of filenames
             - A single NumPy array containing the image data
-          method: Optional string indicating decoding method to use. If None, use
-            the method set when the Decoder instance was initialized.
           save: Optional filename to save results to. If None (default), returns
             all results as an array.
           round: Optional integer indicating number of decimals to round result
@@ -72,11 +74,8 @@ class Decoder:
           each image is a column. The meaning of the values depends on the
           decoding method used. """
 
-        if method is None:
-            method = self.method
-
         if isinstance(images, basestring) or isinstance(images, list):
-            imgs_to_decode = imageutils.load_imgs(images, self.mask)
+            imgs_to_decode = imageutils.load_imgs(images, self.masker)
         else:
             imgs_to_decode = images
 
@@ -86,7 +85,7 @@ class Decoder:
             'pattern': self._pattern_expression(imgs_to_decode)
         }
 
-        result = np.around(methods[method], round)
+        result = np.around(methods[self.method], round)
 
         if save is not None:
 
@@ -104,20 +103,32 @@ class Decoder:
             np.savetxt(f, np.hstack((
                 rownames, result)), fmt='%s', delimiter='\t')
         else:
-            return methods[method]
+            return result
 
     def set_method(self, method):
         """ Set decoding method. """
         self.method = method
 
-    def load_features(self, features, image_type=None, threshold=0.001):
-        """ Load features from current Dataset instance or a list of files. """
-        from os import path
-        # If features is a string, assume it's a pointer to a numpy array on disk.
-        # If it's a list and the first element is a valid filename, assume
-        # we're dealing with image files. Otherwise treat as names of features in
-        # the current Dataset.
-        if isinstance(features, basestring):
+    def load_features(self, features, image_type=None, from_array=False, threshold=0.001):
+        """ Load features from current Dataset instance or a list of files. 
+        Args:
+            features: List containing paths to, or names of, features to extract. 
+                Each element in the list must be a string containing either a path to an
+                image, or the name of a feature (as named in the current Dataset).
+                Mixing of paths and feature names within the list is not allowed.
+            image_type: Optional suffix indicating which kind of image to use for analysis.
+                Only used if features are taken from the Dataset; if features is a list 
+                of filenames, image_type is ignored.
+            from_array: If True, the features argument is interpreted as a string pointing 
+                to the location of a 2D ndarray on disk containing feature data, where
+                rows are voxels and columns are individual features.
+            threshold: If features are taken from the dataset, this is the threshold 
+                passed to the meta-analysis module to generate fresh images.
+
+        """
+        if from_array:
+            if isinstance(features, list):
+                features = features[0]
             self._load_features_from_array(features)
         elif path.exists(features[0]):
             self._load_features_from_images(features)
@@ -125,23 +136,24 @@ class Decoder:
             self._load_features_from_dataset(features, image_type=image_type, threshold=threshold)
 
     def _load_features_from_array(self, features):
+        """ Load feature data from a 2D ndarray on disk. """
         self.feature_images = np.load(features)
         self.feature_names = range(self.feature_images.shape[1])
 
     def _load_features_from_dataset(self, features=None, image_type=None, threshold=0.001):
-        """ Load feature image data from the current Dataset instance.
-
-        Args:
-          features: Optional list of features to use. If None, all features in the
-            current Dataset instance will be used.
+        """ Load feature image data from the current Dataset instance. See load_features()
+        for documentation.
         """
         self.feature_names = self.dataset.feature_table.feature_names
         if features is not None:
-            self.feature_names = filter(
-                lambda x: x in self.feature_names, features)
+            self.feature_names = filter(lambda x: x in self.feature_names, features)
         from neurosynth.analysis import meta
         self.feature_images = meta.analyze_features(
             self.dataset, self.feature_names, image_type=image_type, threshold=threshold)
+        # Apply a mask if one was originally passed
+        if self.masker.layers:
+            in_mask = self.masker.get_current_mask(in_global_mask=True)
+            self.feature_images = self.feature_images[in_mask,:]
 
     def _load_features_from_images(self, images, names=None):
         """ Load feature image data from image files.
@@ -152,10 +164,9 @@ class Decoder:
             in the same order as the images.
         """
         if names is not None and len(names) != len(images):
-            raise Exception(
-                "Lists of feature names and image files must be of same length!")
+            raise Exception( "Lists of feature names and image files must be of same length!")
         self.feature_names = names if names is not None else images
-        self.feature_images = imageutils.load_imgs(images, self.mask)
+        self.feature_images = imageutils.load_imgs(images, self.masker)
 
     def train_classifiers(self, features=None):
         ''' Train a set of classifiers '''
