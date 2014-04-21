@@ -38,16 +38,18 @@ def feature_selection(feat_select, X, y):
 def get_score(X, y, clf, scoring = 'accuracy'):
     from sklearn.preprocessing import binarize
 
+    prediction = binarize(clf.predict(X), 0.5)
+
     if scoring == 'accuracy':
         from sklearn.metrics import accuracy_score
-        score = accuracy_score(y, binarize(clf.predict(X), 0.5))
+        score = accuracy_score(y, prediction)
     elif scoring =='f1':
         from sklearn.metrics import f1_score
-        score = f1_score(y, binarize(clf.predict(X), 0.5))
+        score = f1_score(y, prediction)
     else:
         score = clf.score(X, y)
 
-    return score
+    return prediction, score
 
 
 def classify_by_features(dataset, features, studies=None, method='SVM',
@@ -222,7 +224,7 @@ def classify(X, y, clf_method='ERF', classifier=None, output='summary_clf',
         if output == 'summary':
             output = {'score': score, 'n': dict(Counter(y))}
         elif output == 'summary_clf':
-            output = {'score': score, 'n': dict(Counter(y)), 'clf': clf, 'features_selected': clf.features_selected}
+            output = {'score': score, 'n': dict(Counter(y)), 'clf': clf, 'features_selected': clf.features_selected, 'predictions': clf.predictions}
 
         return output
 
@@ -233,6 +235,7 @@ class Classifier:
 
         # Set classifier
         self.features_selected = None
+        self.predictions = None
 
         if classifier is not None:
             self.clf = classifier
@@ -368,6 +371,7 @@ class Classifier:
         but includes feature selection as part of the cross validation loop """
 
         scores = []
+        self.predictions = []
 
         for train, test in self.cver:
             X_train, X_test, y_train, y_test = self.X[
@@ -390,9 +394,10 @@ class Classifier:
             self.clf.fit(X_train, y_train)
 
             # Test classifier
-            s = get_score(X_test, y_test, self.clf, scoring = scoring)
+            predicition, s = get_score(X_test, y_test, self.clf, scoring = scoring)
 
             scores.append(s)
+            self.predictions.append((y_test, predicition))
 
         return np.array(scores)
 
