@@ -39,8 +39,8 @@ def average_within_regions(dataset, regions, threshold=None, remove_zero=True):
         Returns:
             A 2D numpy array with ROIs in rows and mappables in columns.
         """
-        # if not type(regions).__module__.startswith('numpy'):
-        #     regions = dataset.masker.mask(regions)
+        if not type(regions).__module__.startswith('numpy'):
+            regions = dataset.masker.mask(regions)
             
         if isinstance(dataset, Dataset):
             dataset = dataset.get_image_data(dense=False)
