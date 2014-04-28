@@ -47,7 +47,7 @@ def get_score(X, y, clf, scoring = 'accuracy'):
         from sklearn.metrics import f1_score
         score = f1_score(y, prediction)
     else:
-        score = clf.score(X, y)
+        score = scoring(y, prediction)
 
     return prediction, score
 
