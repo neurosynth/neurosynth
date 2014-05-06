@@ -451,6 +451,19 @@ class FeatureTable(object):
         # Use pandas to read in data
         self.data = pd.read_csv(filename, delim_whitespace=True, index_col=0).to_sparse()
 
+        # Warn user if no/few IDs match between the FeatureTable and the Dataset.
+        # This most commonly happens because older database.txt files used doi's as 
+        # IDs whereas we now use PMIDs throughout.
+        n_studies = len(self.data)
+        n_common = len(set(self.data.index) & set(self.dataset.image_table.ids))
+        if float(n_common)/n_studies < 0.01: # Minimum 1% overlap
+            msg = "Only %d" % n_common if n_common else "None of the" 
+            logger.warning(msg + " studies in the feature file matched studies currently in " + 
+                "the Dataset. The most likely cause for this is that you're pairing a newer " +
+                "feature set with an older, incompatible database file. You may want to try " +
+                "regenerating the Dataset instance from a newer database file that uses PMIDs " +
+                "rather than doi's as the study identifiers in the first column.")
+
         # Remove mappables without any features
         # if validate:
         #     valid_ids = set(self.ids) & set(self.dataset.image_table.ids)
