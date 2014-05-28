@@ -439,6 +439,8 @@ class FeatureTable(object):
         """ Loads FeatureTable data from file. Input must be a dense matrix stored as 
         plaintext (see _parse_txt() for details).
         """
+        if not os.path.exists(filename):
+            raise ValueError("%s cannot be found." % filename)
         try:
             self._features_from_txt(filename)
         except Exception as e:
