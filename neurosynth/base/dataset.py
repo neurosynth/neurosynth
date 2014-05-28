@@ -294,7 +294,8 @@ class Dataset(object):
         """ Load a pickled Dataset instance from file. """
         import cPickle
         dataset = cPickle.load(open(filename, 'rb'))
-        dataset.feature_table._csr_to_sdf()
+        if hasattr(dataset, 'feature_table'):
+            dataset.feature_table._csr_to_sdf()
         return dataset
 
     def save(self, filename, keep_mappables=False):
@@ -308,12 +309,14 @@ class Dataset(object):
         if not keep_mappables:
             self.mappables = []
 
-        self.feature_table._sdf_to_csr()
+        if hasattr(self, 'feature_table'):
+            self.feature_table._sdf_to_csr()
 
         import cPickle
         cPickle.dump(self, open(filename, 'wb'), -1)
 
-        self.feature_table._csr_to_sdf()
+        if hasattr(self, 'feature_table'):
+            self.feature_table._csr_to_sdf()
 
     def to_json(self, filename=None):
         """ Save the Dataset to file in JSON format.
