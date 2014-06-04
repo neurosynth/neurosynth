@@ -20,18 +20,17 @@ class Mappable(object):
 
     def __init__(self, data, transformer=None):
         try:
-            self.data = data
-            self.id = data['id']
+            self.data = data.copy()
+            self.id = data['id'].values[0]
             # If space is not explicitly set, assume the coordinates are already in
             # the target space.
-            self.space = data[
-                'space'] if 'space' in data else transformer.target
+            self.space = data['space'].values[0] if 'space' in data.columns else transformer.target
         except Exception as e:
             logger.error("Missing ID and/or space fields. "
                          "Please check database file, caught: %s" % str(e))
             exit()
 
-        peaks = data['peaks']
+        peaks = data[['x','y','z']].values
 
         # Convert between stereotactic spaces
         if transformer is not None and self.space != transformer.target:

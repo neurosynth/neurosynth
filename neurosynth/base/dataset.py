@@ -97,6 +97,7 @@ class Dataset(object):
         if feature_filename is not None:
             self.feature_table = FeatureTable(self, feature_filename)
 
+
     def _load_mappables_from_txt(self, filename):
         """ Load mappables from a text file.
 
@@ -116,20 +117,11 @@ class Dataset(object):
                 "At least one of mandatory columns (x, y, z, id, and space) is missing from input file.")
             return
 
-        extra_fields = list(set(list(contents.columns)) - set(mc))  # save non-standard fields
-
-        def get_mappable_data(grp):
-            first = grp.iloc[0]
-            d = { 'peaks': grp[['x','y','z']].values }
-            for f in ['id', 'space'] + extra_fields:
-                d[f] = first[f]
-            return d
-
-        data = list(contents.groupby('id').apply(get_mappable_data))
-
         # Initialize all mappables--for now, assume Articles are passed
-        logger.info("Converting text to mappables...")
-        return [mappable.Article(m, self.transformer) for m in data]
+        logger.info("Loading study data from database file...")
+        return list(contents.groupby('id', as_index=False).apply(lambda x: 
+                mappable.Article(x, self.transformer)))
+
 
     def create_image_table(self, r=None):
         """ Create and store a new ImageTable instance based on the current Dataset.
@@ -494,7 +486,7 @@ class FeatureTable(object):
                 array before returning. When False, keep as sparse matrix. Note that if 
                 ids is not None, the returned array will always be dense.
         Returns:
-          A 2D numpy array, with mappable IDs in rows and features in columns.
+          A pandas DataFrame, with mappable IDs in rows and features in columns.
         """
         result = self.data
 

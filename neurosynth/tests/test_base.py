@@ -47,7 +47,7 @@ class TestBase(unittest.TestCase):
         self.assertEqual(len(self.dataset.mappables), 5)
         self.assertIsNotNone(self.dataset.masker)
         self.assertIsNotNone(self.dataset.r)
-        self.assertIsNotNone(self.dataset.mappables[0].data['extra_field'])
+        self.assertEquals(self.dataset.mappables[0].data['extra_field'].values[2], 'field')
 
     def test_get_mappables(self):
         mappables = self.dataset.get_mappables(['study2', 'study5'])
