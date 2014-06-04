@@ -79,18 +79,13 @@ class Dataset(object):
         self.mappables = self._load_mappables_from_txt(filename)
 
         # Load the volume into a new Masker
-        try:
-            if masker is None:
-                resource_dir = os.path.join(os.path.dirname(__file__),
-                                            os.path.pardir,
-                                            'resources')
-                masker = os.path.join(
-                    resource_dir, 'MNI152_T1_2mm_brain.nii.gz')
-            self.masker = mask.Masker(masker)
-        except Exception as e:
-            logger.error("Error loading masker %s: %s" % (masker, e))
-            # yoh: TODO -- IMHO should re-raise or not even swallow the exception here
-            # raise e
+        if masker is None:
+            resource_dir = os.path.join(os.path.dirname(__file__),
+                                        os.path.pardir,
+                                        'resources')
+            masker = os.path.join(
+                resource_dir, 'MNI152_T1_2mm_brain.nii.gz')
+        self.masker = mask.Masker(masker)
 
         # Create supporting tables for images and features
         self.create_image_table()
