@@ -6,7 +6,6 @@ import os
 import shutil
 
 from neurosynth.tests.utils import get_test_dataset, get_test_data_path, get_resource_path
-from neurosynth.analysis import meta
 from neurosynth.base.dataset import Dataset, ImageTable
 from neurosynth.base import imageutils
 from neurosynth.base.mask import Masker
@@ -87,14 +86,6 @@ class TestBase(unittest.TestCase):
         img_data = d.get_ids_by_features(
             ['f1', 'f3', 'g1'], 0.001, func=np.max, get_image_data=True)
         self.assertEqual(img_data.shape, (228453, 5))
-
-        # And some smoke-tests:
-        # run a meta-analysis
-        ma = meta.MetaAnalysis(d, ids)
-        # save the results
-        tempdir = tempfile.mkdtemp()
-        ma.save_results(tempdir + os.path.sep)
-        shutil.rmtree(tempdir)
 
     def test_selection_by_expression(self):
         """ Tests the expression-based search using the lexer/parser. 

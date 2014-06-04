@@ -1,9 +1,12 @@
 import unittest
 import numpy as np
+import tempfile
 import os
+import shutil
 from neurosynth.analysis import classify
 from neurosynth.analysis import cluster
 from neurosynth.analysis import reduce
+from neurosynth.analysis import meta
 from neurosynth.tests.utils import get_test_dataset, get_test_data_path
 
 
@@ -15,7 +18,16 @@ class TestAnalysis(unittest.TestCase):
 
     def test_meta_analysis(self):
         """ Test full meta-analysis stream. """
-        pass
+        # run a meta-analysis
+        ids = ['study1', 'study3']
+        ma = meta.MetaAnalysis(self.dataset, ids)
+        # save the results
+        tempdir = tempfile.mkdtemp()
+        ma.save_results(tempdir + os.path.sep, prefix='test')
+        from glob import glob
+        files = glob(tempdir + os.path.sep + "test_*.nii.gz")
+        self.assertEquals(len(files), 9)
+        shutil.rmtree(tempdir)
 
     def test_decoder(self):
         pass
