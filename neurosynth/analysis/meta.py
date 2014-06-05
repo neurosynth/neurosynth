@@ -27,10 +27,9 @@ def analyze_features(dataset, features, image_type='pFgA_z', threshold=0.001, q=
         a feature. By default, this is 0.001, which is only sensible in the
         case of term-based features (so be sure to specify it for other kinds).
       q: The FDR rate to use for multiple comparisons correction (default = 0.05).
-      save: An optional path to save all meta-analysis images to. Images will be
-        prepended with the entire path plus the feature name; e.g., passing
-        save='test' would result in images called "test_feature1_*" for
-        a feature named feature1. If none, returns all the data as a matrix.
+      save: Directory to save all meta-analysis images to. Images will be 
+        created in this directory and prepended with the feature name.
+        If none, returns all the data as a matrix.
 
     Returns:
       If save is None, an n_voxels x n_features 2D numpy array.
@@ -46,8 +45,7 @@ def analyze_features(dataset, features, image_type='pFgA_z', threshold=0.001, q=
         if save is None:
             result[:, i] = ma.images[image_type]
         else:
-            outroot = os.path.join(save, f)
-            ma.save_results(outroot)
+            ma.save_results(output_dir=save, prefix=f)
     return result
 
 class MetaAnalysis(object):
