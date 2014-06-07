@@ -210,14 +210,19 @@ class Dataset(object):
 
     def get_ids_by_mask(self, mask, threshold=0.0, get_image_data=False):
         """ Return all mappable objects that activate within the bounds
-        defined by the mask image. Optional threshold parameter specifies
-        the proportion of voxels within the mask that must be active to
-        warrant inclusion. E.g., if threshold = 0.1, only mappables with
-        > 10% of voxels activated in mask will be returned. """
+        defined by the mask image. 
+        Args:
+            mask: the mask image (see Masker documentation for valid data types).
+            threshold: an integer or float. If an integer, the absolute number of 
+                voxels that must be active within the mask for a study to be retained.
+                When a float, proportion of voxels that must be active.
+            get_image_data: if True, returns the image data rather than the study IDs.
+        """
         mask = self.masker.mask(mask).astype(bool)
         num_vox = np.sum(mask)
-        prop_mask_active = self.image_table.data.T.dot(
-            mask).astype(float) / num_vox
+        prop_mask_active = self.image_table.data.T.dot(mask).astype(float)
+        if isinstance(threshold, float):
+            prop_mask_active /= num_vox
         indices = np.where(prop_mask_active > threshold)[0]
         return self.get_image_data(indices) if get_image_data else [self.image_table.ids[ind] for ind in indices]
 
