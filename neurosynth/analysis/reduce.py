@@ -28,13 +28,14 @@ def average_within_regions(dataset, regions, threshold=None, remove_zero=True):
                 2) A NiBabel SpatialImage
                 3) A 1D numpy array of the same length as the mask vector in the Dataset's
                      current Masker.
-            threshold: An optional float in the range of 0 - 1. If passed, the array
+            threshold: An optional float in the range of 0 - 1 or integer. If passed, the array
                 will be binarized, with ROI values above the threshold assigned to True
                 and values below the threshold assigned to False. (E.g., if threshold =
                 0.05, only ROIs in which more than 5% of voxels are active will be
-                considered active.).
+                considered active.) If threshold is integer, studies will only be considered 
+                active if they activate more than that number of voxels in the ROI.
             remove_zero: An optional boolean; when True, assume that voxels with value
-            of 0 should not be considered as a separate ROI, and will be ignored.
+                of 0 should not be considered as a separate ROI, and will be ignored.
 
         Returns:
             A 2D numpy array with ROIs in rows and mappables in columns.
@@ -55,7 +56,10 @@ def average_within_regions(dataset, regions, threshold=None, remove_zero=True):
         # Create the ROI-coding matrix
         m = np.zeros((regions.size, n_regions))
         for i in range(n_regions):
-                m[regions == labels[i], i] = 1.0 / np.sum(regions == labels[i])
+                if isinstance(threshold, int):
+                    m[regions == labels[i], i] = 1.0
+                else:
+                    m[regions == labels[i], i] = 1.0 / np.sum(regions == labels[i])
 
         # Call dot() on the array itself as this will use sparse matrix 
         # multiplication if possible.
