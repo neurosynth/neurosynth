@@ -121,7 +121,7 @@ class Masker(object):
                 image = image.ravel()
         
         if output == 'vector':
-            return image
+            return image.ravel()
         
         image = np.reshape(image, self.volume.shape)
 
