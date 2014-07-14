@@ -20,7 +20,7 @@ class Mappable(object):
 
     def __init__(self, data, transformer=None):
         try:
-            self.data = data.copy()
+            self.data = data.copy().reset_index()
             self.id = data['id'].values[0]
             # If space is not explicitly set, assume the coordinates are already in
             # the target space.
