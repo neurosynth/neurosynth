@@ -87,6 +87,9 @@ def save_img(data, filename, mask, header=None):
     if not header:
         header = mask.get_header()
     header.set_data_dtype(data.dtype)  # Avoids loss of precision
+    # Update min/max -- this should happen on save, but doesn't seem to
+    header['cal_max'] = data.max()
+    header['cal_min'] = data.min()
     img = nifti1.Nifti1Image(mask.unmask(data), None, header)
     img.to_filename(filename)
 
