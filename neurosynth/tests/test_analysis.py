@@ -7,7 +7,9 @@ from neurosynth.analysis import classify
 from neurosynth.analysis import cluster
 from neurosynth.analysis import reduce
 from neurosynth.analysis import meta
+from neurosynth.analysis import stats
 from neurosynth.tests.utils import get_test_dataset, get_test_data_path
+from numpy.testing import assert_array_almost_equal
 
 
 class TestAnalysis(unittest.TestCase):
@@ -58,6 +60,11 @@ class TestAnalysis(unittest.TestCase):
         sums = np.sum(data, 0)
         self.assertGreater(sums[2], sums[3])
         self.assertGreater(sums[4], sums[0])
+
+    def test_two_way_chi_sq(self):
+        p = stats.two_way(np.array([[42, 32], [60, 81]])[None,:,:])
+        # Test value verified using several different packages
+        assert_array_almost_equal(p, 0.04753082)
 
     # def test_clustering(self):
     #     clstr = cluster.Clusterer(self.dataset, grid_scale=20)
