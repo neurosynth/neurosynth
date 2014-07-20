@@ -251,7 +251,8 @@ class Dataset(object):
             dims=self.masker.dims, header=self.masker.get_header())
         return self.get_ids_by_mask(img, threshold, get_image_data=get_image_data)
 
-    def add_features(self, features, append=True, merge='outer', duplicates='ignore'):
+    def add_features(self, features, append=True, merge='outer', duplicates='ignore',
+            min_studies=0.0, threshold=0.001):
         """ Construct a new FeatureTable from file.
         Args:
             features: Feature data to add. Can be:
@@ -262,12 +263,13 @@ class Dataset(object):
                 in columns, and the index provides the study IDs.
             append: If True, adds new features to existing ones incrementally.
                 If False, replaces old features.
-            merge, duplicates: Additional arguments passed to 
+            merge, duplicates, min_studies, threshold: Additional arguments passed to 
                 FeatureTable.add_features().
          """
         if (not append) or not hasattr(self, 'feature_table'):
             self.feature_table = FeatureTable(self)
-        self.feature_table.add_features(features, merge=merge, duplicates=duplicates)
+        self.feature_table.add_features(features, merge=merge, duplicates=duplicates,
+            min_studies=min_studies, threshold=threshold)
 
     def get_image_data(self, ids=None, voxels=None, dense=True):
         """ A convenience wrapper for ImageTable.get_image_data(). """
@@ -431,15 +433,16 @@ class FeatureTable(object):
     """ A FeatureTable instance stores a matrix of mappables x features, along with
     associated manipulation methods. """
 
-    def __init__(self, dataset, features=None):
+    def __init__(self, dataset, **kwargs):
         """ Initialize a new FeatureTable. Takes as input a parent DataSet instance and
         feature data (if provided). """
         self.dataset = dataset
         self.data = pd.DataFrame()
-        if features is not None:
-            self.add_features(features)
+        if kwargs:
+            self.add_features(features, **kwargs)
 
-    def add_features(self, features, merge='outer', duplicates='ignore'):
+    def add_features(self, features, merge='outer', duplicates='ignore', min_studies=0,
+                    threshold=0.0001):
         """ Add new features to FeatureTable.
         Args:
             features: A filename to load data from, or a pandas DataFrame. In either case, 
@@ -455,6 +458,8 @@ class FeatureTable(object):
                 'ignore' (default): ignores the new feature, keeps old data
                 'replace': replace the old feature's data with the new data
                 'merge': keeps both features, renaming them so they're different
+            min_studies: minimum number of studies that pass threshold in order to add feature
+            threshold: minimum threshold to use for applying min_studies
         """
         if isinstance(features, basestring):
             if not os.path.exists(features):
@@ -463,6 +468,10 @@ class FeatureTable(object):
                 features = pd.read_csv(features, delim_whitespace=True, index_col=0)#.to_sparse()
             except Exception as e:
                 logger.error("%s cannot be parsed: %s" % (features, e))
+
+        if min_studies:
+            valid = np.where((features.values>=threshold).sum(0) >= min_studies)[0]
+            features = features.iloc[:,valid]
 
         # Warn user if no/few IDs match between the FeatureTable and the Dataset.
         # This most commonly happens because older database.txt files used doi's as 

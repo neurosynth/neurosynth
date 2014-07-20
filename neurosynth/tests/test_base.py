@@ -103,6 +103,10 @@ class TestBase(unittest.TestCase):
         d.add_features(new_data, merge='left', duplicates='merge')
         self.assertEqual(d.feature_table.data.shape, (5, 8))
         self.assertEqual(d.feature_table.data['g1_y']['study1'], 0.001)
+        # Apply threshold
+        d = get_test_dataset()
+        d.add_features(new_data, min_studies=2, threshold=0.003)
+        self.assertEqual(d.feature_table.data.shape, (6,6))
 
     def test_feature_search(self):
         """ Test feature-based Mappable search. Tests both the FeatureTable method
