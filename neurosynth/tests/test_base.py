@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-
+import pandas as pd
 import tempfile
 import os
 import shutil
@@ -9,6 +9,7 @@ from neurosynth.tests.utils import get_test_dataset, get_test_data_path, get_res
 from neurosynth.base.dataset import Dataset, ImageTable
 from neurosynth.base import imageutils
 from neurosynth.base.mask import Masker
+from numpy.testing import assert_almost_equal
 import json
 
 
@@ -73,6 +74,35 @@ class TestBase(unittest.TestCase):
         self.assertEqual(tt.data.shape, (5, 5))
         self.assertEqual(tt.data.columns[3], 'f4')
         self.assertEqual(tt.data.to_dense().iloc[0,0], 0.0003)
+
+    def test_feature_addition(self):
+        """ Add feature data from multiple sources to FeatureTable. """
+        d = self.dataset
+        new_data = pd.DataFrame(np.array([
+            [0.001, 0.1, 0.003], 
+            [0.02, 0.0008, 0.0003],
+            [0.001, 0.002, 0.05]]), 
+            index=['study1', 'study4', 'study6'], columns=['g1', 'g2', 'g3'])
+        # Replace all features
+        d.add_features(new_data, append=False)
+        self.assertEqual(d.feature_table.data.shape, (3, 3))
+        self.assertAlmostEqual(d.feature_table.data['g2']['study4'], 0.0008)
+        # Outer merge and ignore duplicate features
+        d = get_test_dataset()
+        d.add_features(new_data)
+        self.assertEqual(d.feature_table.data.shape, (6, 7))
+        self.assertEqual(d.feature_table.data['g2']['study2'], 0.0)
+        self.assertEqual(d.feature_table.data['g1']['study1'], 0.02)
+        # Outer merge but overwrite old features with new ones
+        d = get_test_dataset()
+        d.add_features(new_data, duplicates='replace')
+        self.assertEqual(d.feature_table.data.shape, (6, 7))
+        self.assertEqual(d.feature_table.data['g1']['study1'], 0.001)
+        # Left join (i.e., keep only old rows) and rename conflicting features
+        d = get_test_dataset()
+        d.add_features(new_data, merge='left', duplicates='merge')
+        self.assertEqual(d.feature_table.data.shape, (5, 8))
+        self.assertEqual(d.feature_table.data['g1_y']['study1'], 0.001)
 
     def test_feature_search(self):
         """ Test feature-based Mappable search. Tests both the FeatureTable method
@@ -180,10 +210,15 @@ class TestBase(unittest.TestCase):
 
     def test_get_feature_data(self):
         """ Test retrieval of Mappable x feature data. """
-        feature_data = self.dataset.get_feature_data(ids=['study3', 'study1'])
-        self.assertEqual(feature_data.shape, (2,5))
-        feature_data = self.dataset.get_feature_data(features=['f1', 'f4', 'g1'], dense=True)
+        # Retrieve dense
+        feature_data = self.dataset.get_feature_data(features=['f1', 'f4', 'g1'])
         self.assertEqual(feature_data.shape, (5,3))
+        # Retrieve sparse
+        feature_data = self.dataset.get_feature_data(ids=['study3', 'study1'], dense=False)
+        self.assertEqual(feature_data.shape, (2,5))
+        with self.assertRaises(IndexError):
+            feature_data.iloc[0,2]
+        self.assertEqual(feature_data['f3']['study1'], 0.012)
 
     def test_get_image_data(self):
         """ Test retrieval of voxel x Mappable data. """
