@@ -251,11 +251,23 @@ class Dataset(object):
             dims=self.masker.dims, header=self.masker.get_header())
         return self.get_ids_by_mask(img, threshold, get_image_data=get_image_data)
 
-    def add_features(self, filename, description=''):
-        """ Construct a new FeatureTable from file. Note: this is destructive, and will
-        overwrite existing FeatureTable. Need to add merging operations that gracefully
-        handle missing studies and conflicting feature names. """
-        self.feature_table = FeatureTable(self, filename, description)
+    def add_features(self, features, append=True, merge='outer', duplicates='ignore'):
+        """ Construct a new FeatureTable from file.
+        Args:
+            features: Feature data to add. Can be:
+                (a) A text file containing the feature data, where each row is a 
+                study in the database, with features in columns. The first column 
+                must contain the IDs of the studies to match up with the image data.
+                (b) A pandas DataFrame, where studies are in rows, features are 
+                in columns, and the index provides the study IDs.
+            append: If True, adds new features to existing ones incrementally.
+                If False, replaces old features.
+            merge, duplicates: Additional arguments passed to 
+                FeatureTable.add_features().
+         """
+        if (not append) or not hasattr(self, 'feature_table'):
+            self.feature_table = FeatureTable(self)
+        self.feature_table.add_features(features, merge=merge, duplicates=duplicates)
 
     def get_image_data(self, ids=None, voxels=None, dense=True):
         """ A convenience wrapper for ImageTable.get_image_data(). """
@@ -419,56 +431,62 @@ class FeatureTable(object):
     """ A FeatureTable instance stores a matrix of mappables x features, along with
     associated manipulation methods. """
 
-    def __init__(self, dataset, filename, description=None, validate=False):
+    def __init__(self, dataset, features=None):
         """ Initialize a new FeatureTable. Takes as input a parent DataSet instance and
-        the name of a file containing feature data. Optionally, can provide a description
-        of the feature set. """
+        feature data (if provided). """
         self.dataset = dataset
-        self.load(filename)
-        self.description = description
+        self.data = pd.DataFrame()
+        if features is not None:
+            self.add_features(features)
 
-    def load(self, filename):
-        """ Loads FeatureTable data from file. Input must be a dense matrix stored as 
-        plaintext (see _parse_txt() for details).
+    def add_features(self, features, merge='outer', duplicates='ignore'):
+        """ Add new features to FeatureTable.
+        Args:
+            features: A filename to load data from, or a pandas DataFrame. In either case, 
+                studies are in rows and features are in columns. Values in cells reflect the
+                weight of the intersecting feature for the intersecting study. Feature names and
+                mappable IDs should be included as the first column and first row, respectively.
+            merge: The merge strategy to use when merging new features with old. This is passed 
+                to pandas.merge, so can be 'left', 'right', 'outer', or 'inner'. Defaults to 
+                outer (i.e., all data in both new and old will be kept, and missing values 
+                will be assigned zeros.)
+            duplicates: string indicating how to handle features whose name matches an existing
+                feature. Valid options:
+                'ignore' (default): ignores the new feature, keeps old data
+                'replace': replace the old feature's data with the new data
+                'merge': keeps both features, renaming them so they're different
         """
-        if not os.path.exists(filename):
-            raise ValueError("%s cannot be found." % filename)
-        try:
-            self._features_from_txt(filename)
-        except Exception as e:
-            logger.error("%s cannot be parsed: %s" % (filename, e))
-
-
-    def _features_from_txt(self, filename):
-        """ Parses FeatureTable from a plaintext file that represents a dense matrix,
-        with mappable objects in rows and features in columns. Values in cells reflect the
-        weight of the intersecting feature for the intersecting study. Feature names and
-        mappable IDs should be included as the first column and first row, respectively. """
-
-        # Use pandas to read in data
-        self.data = pd.read_csv(filename, delim_whitespace=True, index_col=0).to_sparse()
+        if isinstance(features, basestring):
+            if not os.path.exists(features):
+                raise ValueError("%s cannot be found." % features)
+            try:
+                features = pd.read_csv(features, delim_whitespace=True, index_col=0)#.to_sparse()
+            except Exception as e:
+                logger.error("%s cannot be parsed: %s" % (features, e))
 
         # Warn user if no/few IDs match between the FeatureTable and the Dataset.
         # This most commonly happens because older database.txt files used doi's as 
         # IDs whereas we now use PMIDs throughout.
-        n_studies = len(self.data)
-        n_common = len(set(self.data.index) & set(self.dataset.image_table.ids))
-        if float(n_common)/n_studies < 0.01: # Minimum 1% overlap
-            msg = "Only %d" % n_common if n_common else "None of the" 
+        n_studies = len(features)
+        n_common_ids = len(set(features.index) & set(self.dataset.image_table.ids))
+        if float(n_common_ids)/n_studies < 0.01: # Minimum 1% overlap
+            msg = "Only %d" % n_common_ids if n_common_ids else "None of the" 
             logger.warning(msg + " studies in the feature file matched studies currently in " + 
                 "the Dataset. The most likely cause for this is that you're pairing a newer " +
                 "feature set with an older, incompatible database file. You may want to try " +
                 "regenerating the Dataset instance from a newer database file that uses PMIDs " +
                 "rather than doi's as the study identifiers in the first column.")
 
-        # Remove mappables without any features
-        # if validate:
-        #     valid_ids = set(self.ids) & set(self.dataset.image_table.ids)
-        #     if len(valid_ids) < len(self.dataset.image_table.ids):
-        #         valid_id_inds = np.in1d(self.ids, np.array(valid_ids))
-        #         self.data = self.data[valid_id_inds,:]
-        #         self.ids = self.ids[valid_id_inds]
-        # self.data = sparse.csr_matrix(self.data)
+        old_data = self.data.to_dense()
+        # Handle features with duplicate names
+        common_features = list(set(old_data.columns) & set(features.columns))
+        if duplicates == 'ignore':
+            features = features.drop(common_features, axis=1)
+        elif duplicates == 'replace':
+            old_data = old_data.drop(common_features, axis=1)
+
+        data = old_data.merge(features, how=merge, left_index=True, right_index=True)
+        self.data = data.fillna(0.0).to_sparse()
 
     @property
     def feature_names(self):
@@ -496,7 +514,7 @@ class FeatureTable(object):
         if features is not None:
             result = result.ix[:,features]
 
-        return result#.to_dense() if dense else result
+        return result.to_dense() if dense else result
 
     def get_ordered_names(self, features):
         """ Given a list of features, returns features in order that they appear in database
