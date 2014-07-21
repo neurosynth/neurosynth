@@ -268,6 +268,7 @@ class Dataset(object):
          """
         if (not append) or not hasattr(self, 'feature_table'):
             self.feature_table = FeatureTable(self)
+
         self.feature_table.add_features(features, merge=merge, duplicates=duplicates,
             min_studies=min_studies, threshold=threshold)
 
@@ -465,7 +466,7 @@ class FeatureTable(object):
             if not os.path.exists(features):
                 raise ValueError("%s cannot be found." % features)
             try:
-                features = pd.read_csv(features, delim_whitespace=True, index_col=0)#.to_sparse()
+                features = pd.read_csv(features, sep='\t', index_col=0)
             except Exception as e:
                 logger.error("%s cannot be parsed: %s" % (features, e))
 

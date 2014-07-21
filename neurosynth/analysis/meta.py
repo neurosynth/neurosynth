@@ -44,7 +44,9 @@ def analyze_features(dataset, features, image_type='pFgA_z', threshold=0.001, q=
             result[:, i] = ma.images[image_type]
         else:
             ma.save_results(output_dir=save, prefix=f)
-    return result
+
+    if save is None:
+        return result
 
 class MetaAnalysis(object):
 
@@ -128,7 +130,7 @@ class MetaAnalysis(object):
         # Conditional probabilities
         logger.debug("Calculating conditional probabilities...")
         pAgF = n_selected_active_voxels * 1.0 / n_selected
-        pAgU = n_unselected_active_voxels * 1.0 / n_selected
+        pAgU = n_unselected_active_voxels * 1.0 / n_unselected
         pFgA = pAgF * pF / pA
 
         # Recompute conditionals with uniform prior
@@ -141,7 +143,7 @@ class MetaAnalysis(object):
             # prevent underflow
             p[p < 1e-240] = 1e-240
             # Convert to z and assign tail
-            z = norm.ppf(p) * -sign
+            z = np.abs(norm.ppf(p)) * sign
             # Set invalid voxels to 0
             z[np.isinf(z)] = 0.0
             return z
