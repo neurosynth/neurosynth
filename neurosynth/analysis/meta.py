@@ -13,7 +13,7 @@ import os
 logger = logging.getLogger('neurosynth.meta')
 
 
-def analyze_features(dataset, features, image_type='pFgA_z', threshold=0.001, q=0.05, save=None):
+def analyze_features(dataset, features, image_type='pFgA_z', threshold=0.001, q=0.01, save=None):
     """ Generate meta-analysis images for a set of features.
     Args:
         dataset: A Dataset instance containing feature and activation data.
@@ -61,7 +61,7 @@ class MetaAnalysis(object):
 
     # DESPERATELY NEEDS REFACTORING!!!
 
-    def __init__(self, dataset, ids, ids2=None, **kwargs):
+    def __init__(self, dataset, ids, ids2=None, q=0.01, prior=0.5, min_studies=1):
         """ Initialize a new MetaAnalysis instance and run an analysis.
         Args:
             dataset: A Dataset instance.
@@ -71,7 +71,6 @@ class MetaAnalysis(object):
                 This is useful for meta-analytic contrasts, as the resulting images will in
                 effect identify regions that are reported/activated more frequently in one
                 list than in the other.
-            kwargs: Additional optional arguments. Currently implemented:
             q: The FDR threshold to use when correcting for multiple comparisons. Set to
                 .01 by default.
             prior: The prior to use when calculating conditional probabilities. This is the
@@ -92,14 +91,6 @@ class MetaAnalysis(object):
                 dataset). Defaults to 1, meaning all voxels that activate at least one study
                 will be kept.
         """
-
-        # Set optional parameter defaults ###
-        # voxel-wise FDR rate
-        q = kwargs.get('q', 0.01)
-        # prior probability of feature being present
-        prior_pF = kwargs.get('prior', 0.5)
-        # min. number of studies for voxel inclusion
-        min_studies = kwargs.get('min_studies', 1)
 
         self.dataset = dataset
         mt = dataset.image_table
@@ -135,8 +126,8 @@ class MetaAnalysis(object):
 
         # Recompute conditionals with uniform prior
         logger.debug("Recomputing with uniform priors...")
-        pAgF_prior = prior_pF * pAgF + (1 - prior_pF) * pAgU
-        pFgA_prior = pAgF * prior_pF / pAgF_prior
+        pAgF_prior = prior * pAgF + (1 - prior) * pAgU
+        pFgA_prior = pAgF * prior / pAgF_prior
 
         def p_to_z(p, sign):
             p = p/2  # convert to two-tailed
@@ -170,8 +161,8 @@ class MetaAnalysis(object):
             'pA': pA,
             'pAgF': pAgF,
             'pFgA': pFgA,
-            ('pAgF_given_pF=%0.2f' % prior_pF): pAgF_prior,
-            ('pFgA_given_pF=%0.2f' % prior_pF): pFgA_prior,
+            ('pAgF_given_pF=%0.2f' % prior): pAgF_prior,
+            ('pFgA_given_pF=%0.2f' % prior): pFgA_prior,
             'pAgF_z': pAgF_z,
             'pFgA_z': pFgA_z,
             ('pAgF_z_FDR_%s' % q): pAgF_z_FDR,
