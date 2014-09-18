@@ -403,6 +403,13 @@ class ImageTable(object):
         Returns:
           A 2D numpy array, with voxels in rows and mappables in columns.
         """
+        if dense and ids is None and voxels is None:
+            logger.warning("Warning: get_image_data() is being called without specifying a " +
+                "subset of studies or voxels to retrieve. This will result in a very large " +
+                "amount of data (several GB) being read into memory. If you experience any " +
+                "problems, consider returning a sparse matrix by passing dense=False, or " +
+                "pass in a list of ids of voxels to retrieve only a portion of the data.")
+
         result = self.data
         if ids is not None:
             idxs = np.where(np.in1d(np.array(self.ids), np.array(ids)))[0]
