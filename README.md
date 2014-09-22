@@ -36,29 +36,29 @@ That's it! You should now be ready to roll.
 
 Running analyses in Neurosynth is pretty straightforward. We're working on a user manual; in the meantime, you can take a look at the code in the /examples directory for an illustration of some common uses cases (some of the examples are in IPython Notebook format; you can view these online by entering the URL of the raw example on github into the online [IPython Notebook Viewer](http://nbviewer.ipython.org)--for example [this tutorial](http://nbviewer.ipython.org/urls/raw.github.com/neurosynth/neurosynth/master/examples/neurosynth_demo.ipynb) provides a nice overview). The rest of this Quickstart guide just covers the bare minimum.
 
-NeuroSynth dataset resides in a git submodule under data/, so after obtaining this git repository, initialize and update that module:
+The NeuroSynth dataset resides in a separate submodule. If you installed Neurosynth directly from PyPI (i.e., with pip install), and don't want to muck around with git or any source code, you can manually download the data files from the [neurosynth-data repository](http://github.com/neurosynth/neurosynth-data). The latest dataset is always stored in current_data.tar.gz in the root folder. Older datasets are also available in the archive folder.
+
+Alternatively, if you cloned Neurosynth from GitHub, you can initialize the data repo as a submodule under data/ like so:
 
     > git submodule init
     > git submodule update
 
-This is the preferred way of obtaining the data,  as the files are kept current. Alternatively, you can also [download dataset files](http://old.neurosynth.org/data/current_data.tar.gz) from the old Neurosynth website:
+You now have (among other things) a current_data.tar.gz file sitting under /data.
 
-	> curl -O http://old.neurosynth.org/data/current_data.tar.gz
+The dataset archive contained 2 files: database.txt and features.txt. These contain the activations and meta-analysis tags for Neurosynth, respectively.
 
-Unpack the archive, which should contain 2 files: database.txt and features.txt, and place them under data/.
-
-Now generate a new Dataset instance from the database.txt file:
+Once you have the data in place, you can generate a new Dataset instance from the database.txt file:
 
 	> from neurosynth.base.dataset import Dataset
 	> dataset = Dataset('data/database.txt')
 
-This should take several minutes to process.
+This should take several minutes to process. Note that this is a memory-intensive operation, and may be very slow on machines with less than 8 GB of RAM.
 
-Once initialized, the Dataset instance contains activation data from nearly 6,000 published neuroimaging articles. But it doesn't yet have any features attached to those data, so let's add some:
+Once initialized, the Dataset instance contains activation data from nearly 10,000 published neuroimaging articles. But it doesn't yet have any features attached to those data, so let's add some:
 
 	> dataset.add_features('data/features.txt')
 
-Now our Dataset has both activation data and some features we can use to manipulate the data with. In this case, the features are just term-based tags--i.e., words that occur frequently in the articles from which the dataset is drawn (for details, see this [Nature Methods] paper, or the Neurosynth website).
+Now our Dataset has both activation data and some features we can use to manipulate the data with. In this case, the features are just term-based tags--i.e., words that occur in the abstracts of the articles from which the dataset is drawn (for details, see this [Nature Methods] paper, or the Neurosynth website).
 
 We can now do various kinds of analyses with the data. For example, we can use the features we just added to perform automated large-scale meta-analyses. Let's see what features we have:
 
@@ -86,5 +86,7 @@ You should now have a set of Nifti-format brain images on your drive that displa
 
 
 ## Getting help
+
+For a more comprehensive set of examples, see [this tutorial](http://nbviewer.ipython.org/urls/raw.github.com/neurosynth/neurosynth/master/examples/neurosynth_demo.ipynb)--also included in IPython Notebook form in the examples/ folder (along with several other simpler examples).
 
 For bugs or feature requests, please [create a new issue](https://github.com/neurosynth/neurosynth/issues/new). If you run into problems installing or using the software, try posting to the [Neurosynth Google group](https://groups.google.com/forum/#!forum/neurosynthlist) or email [Tal Yarkoni](mailto:tyarkoni@gmail.com).
