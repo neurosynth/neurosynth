@@ -43,6 +43,7 @@ class TestBase(unittest.TestCase):
 
     def test_dataset_initializes(self):
         """ Test whether dataset initializes properly. """
+        Dataset(get_test_data_path() + 'test_dataset.txt', get_test_data_path() + 'test_features.txt')
         self.assertIsNotNone(self.dataset.masker)
         self.assertIsNotNone(self.dataset.image_table)
         self.assertEqual(len(self.dataset.mappables), 5)

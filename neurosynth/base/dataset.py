@@ -22,7 +22,7 @@ class Dataset(object):
 
     def __init__(
         self, filename, feature_filename=None, masker=None, r=6, transform=True,
-                  target='MNI'):
+                  target='MNI', **kwargs):
         """ Initialize a new Dataset instance.
 
         Creates a new Dataset instance from a text file containing activation data.
@@ -38,24 +38,26 @@ class Dataset(object):
         Lancaster et al transform.
 
         Args:
-          filename: The name of a database file containing a list of activations.
-          feature_filename: An optional filename to construct a FeatureTable from.
-          masker: An optional Nifti/Analyze image name defining the space to use for
-            all operations. If no image is passed, defaults to the MNI152 2 mm
-            template packaged with FSL.
-          r: An optional integer specifying the radius of the smoothing kernel, in mm.
-            Defaults to 6 mm.
-          transform: Optional argument specifying how to handle transformation between
-            coordinates reported in different stereotactic spaces. When True (default),
-            activations in Talairach (T88) space will be converted to MNI space using
-            the Lancaster et al (2007) transform; no other transformations will be
-            applied. When False, no transformation will be applied. Alternatively,
-            the user can pass their own dictionary of named transformations to apply,
-            in which case each activation will be checked against the dictionary
-            as it is read in and the specified transformation will be applied if
-            found (for further explanation, see transformations.Transformer).
-          target: The name of the target space within which activation coordinates
-            are represented. By default, MNI.
+            filename: The name of a database file containing a list of activations.
+            feature_filename: An optional filename to construct a FeatureTable from.
+            masker: An optional Nifti/Analyze image name defining the space to use for
+                all operations. If no image is passed, defaults to the MNI152 2 mm
+                template packaged with FSL.
+            r: An optional integer specifying the radius of the smoothing kernel, in mm.
+                Defaults to 6 mm.
+            transform: Optional argument specifying how to handle transformation between
+                coordinates reported in different stereotactic spaces. When True (default),
+                activations in Talairach (T88) space will be converted to MNI space using
+                the Lancaster et al (2007) transform; no other transformations will be
+                applied. When False, no transformation will be applied. Alternatively,
+                the user can pass their own dictionary of named transformations to apply,
+                in which case each activation will be checked against the dictionary
+                as it is read in and the specified transformation will be applied if
+                found (for further explanation, see transformations.Transformer).
+            target: The name of the target space within which activation coordinates
+                are represented. By default, MNI.
+            kwargs: Additional optional arguments passed to add_features().
+
 
         Returns:
           A Dataset instance.
@@ -90,7 +92,7 @@ class Dataset(object):
         # Create supporting tables for images and features
         self.create_image_table()
         if feature_filename is not None:
-            self.feature_table = FeatureTable(self, feature_filename)
+            self.add_features(feature_filename, **kwargs)
 
 
     def _load_mappables_from_txt(self, filename):
