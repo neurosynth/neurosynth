@@ -221,8 +221,7 @@ class TestBase(unittest.TestCase):
         # Retrieve sparse
         feature_data = self.dataset.get_feature_data(ids=['study3', 'study1'], dense=False)
         self.assertEqual(feature_data.shape, (2,5))
-        with self.assertRaises(IndexError):
-            feature_data.iloc[0,2]
+        self.assertEqual(feature_data.iloc[0,1], 0.02)
         self.assertEqual(feature_data['f3']['study1'], 0.012)
 
     def test_get_image_data(self):
