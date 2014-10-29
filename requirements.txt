@@ -1,5 +1,5 @@
-numpy>=1.8
+numpy>=1.9
 scipy
-pandas>=0.13
+pandas>=0.15
 ply
 scikit-learn
