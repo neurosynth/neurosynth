@@ -56,7 +56,7 @@ class Masker(object):
                 self._add_named_layer(name, image)
 
         else:
-            if not isinstance(layers, (list, dict)):
+            if not isinstance(layers, list):
                 layers = [layers]
             for image in layers:
                 name = 'layer_%d' % len(self.stack)

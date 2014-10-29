@@ -4,12 +4,13 @@ import logging
 from time import time
 from neurosynth.base.dataset import Dataset
 from neurosynth.analysis import reduce as nsr
+from neurosynth.analysis import meta
 from neurosynth.base.mask import Masker
 from neurosynth.base import imageutils
 from sklearn import cluster
 import os
 import re
-from os.path import join, basename
+from os.path import join, basename, isdir
 from copy import deepcopy
 from shutil import copyfile
 import simplejson as json
@@ -69,8 +70,7 @@ class Clusterer:
                     'min_studies_per_voxel', 'distance_metric'] + kwargs.keys()):
             self.args[a] = locals()[a]
 
-        if algorithm is not None:
-            self._set_clustering_algorithm(algorithm, **kwargs)
+        self._set_clustering_algorithm(algorithm, **kwargs)
 
         if isinstance(dataset, Dataset):
 
@@ -170,7 +170,7 @@ class Clusterer:
 
 
     def cluster(self, n_clusters=10, save_images=True, precomputed_distances=False,
-            output_bundle=True):
+            bundle=False, coactivation_maps=False):
         """
         Args:
             n_clusters: Number of clusters to extract. Can be an integer or a list
@@ -179,8 +179,6 @@ class Clusterer:
             precomputed_distances: Indicates whether or not to use precomputed distances in 
                 the clustering. If True, the distance_matrix stored in the instance will be 
                 used; when False (default), the raw data will be used.
-            output_bundle: If True, will write out all images used to produce the clustering,
-                as well as a JSON metadata file.
         """
         if isinstance(n_clusters, int):
             n_clusters = [n_clusters]
@@ -211,9 +209,9 @@ class Clusterer:
             labels = clusterer.fit_predict(X)
 
             if save_images:
-                self._create_cluster_images(labels)
+                self._create_cluster_images(labels, coactivation_maps)
 
-            if output_bundle:
+            if bundle:
                 # Generate metadata
                 metadata = deepcopy(self.args)
                 metadata.update({
@@ -232,6 +230,7 @@ class Clusterer:
                 json.dump(metadata, open(join(self.output_dir, 'metadata.json'), 'w'))
 
 
+
     def _set_clustering_algorithm(self, algorithm, **kwargs):
         """ Set the algorithm to use in subsequent cluster analyses.
         Args:
@@ -239,6 +238,9 @@ class Clusterer:
                 scikit-learn clustering object. If string, must be one of 'ward', 'spectral', 
                 'kmeans', or 'minik'.
         """
+
+        self.algorithm = algorithm
+
         if isinstance(algorithm, basestring):
 
             algs = {
@@ -270,21 +272,18 @@ class Clusterer:
         plt.imshow(orderedc,aspect='auto',interpolation='nearest')
         plt.savefig(figname)
 
-    def plot_silhouette_scores(self):
-        pass
+    # def plot_silhouette_scores(self):
+    #     pass
 
-    def _create_cluster_images(self, labels, output_dir=None):
+    def _create_cluster_images(self, labels, coactivation_maps):
         ''' Creates a Nifti image of reconstructed cluster labels. 
         Args:
             labels: A vector of cluster labels
-            output_dir: A string indicating folder to output images to. If None, 
-                creates a "ClusterImages" directory below the Clusterer instance's
-                output directory.
         Outputs:
             Cluster_k.nii.gz: Will output a nifti image with cluster labels
         '''
 
-        labels += 1
+        # labels += 1
 
         # Reconstruct grid into original space
         # TODO: replace with masker.unmask()
@@ -298,11 +297,31 @@ class Clusterer:
 
             labels = m
 
-        if output_dir is None:
-             output_dir = join(self.output_dir, 'ClusterImages')
+        clusters = np.unique(labels)
+        n_clusters = len(clusters)
 
-        if not os.path.isdir(output_dir):
+        output_dir = join(self.output_dir, self.algorithm + '_k' + str(n_clusters))
+
+        if not isdir(output_dir):
             os.makedirs(output_dir)
 
-        outfile = join(output_dir,'Cluster_k%d.nii.gz' % (len(np.unique(labels))))
+        outfile = join(output_dir,'cluster_labels.nii.gz')
         imageutils.save_img(labels, outfile, self.masker)
+
+        # Generate a coactivation map for each cluster
+        if coactivation_maps:
+            if not hasattr(self, 'dataset'):
+                raise AttributeError('The attribute \'dataset\' does not exist. To generate ' +
+                    'coactivation images for clusters, the Clusterer must be initialized ' +
+                    'by passing a Neurosynth Dataset instance.')
+            coact_dir = join(output_dir, 'coactivation')
+            if not isdir(coact_dir):
+                os.makedirs(coact_dir)
+            for c in clusters:
+                img = np.zeros_like(labels)
+                img[labels==c] = 1
+                img = self.masker.unmask(img)
+                ids = self.dataset.get_ids_by_mask(img, 0.25)
+                ma = meta.MetaAnalysis(self.dataset, ids)
+                ma.save_results(coact_dir, 'cluster_%d' % c)
+
