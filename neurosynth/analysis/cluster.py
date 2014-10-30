@@ -25,7 +25,8 @@ class Clusterer:
             distance_metric=None, **kwargs):
         """ Initialize Clusterer.
         Args:
-            algorithm: Algorithm to use for clustering.
+            algorithm: Algorithm to use for clustering. Must be one of 'ward', 'spectral',
+                'agglomerative', 'dbscan', 'kmeans', or 'minik'.
             dataset: The dataset to use for clustering. Either a Dataset instance or a numpy
                 array with voxels in rows and features in columns.
             output_directory: Directory to use for writing all outputs.
@@ -236,7 +237,7 @@ class Clusterer:
         Args:
             algorithm: The clustering algorithm to use. Either a string or an (uninitialized)
                 scikit-learn clustering object. If string, must be one of 'ward', 'spectral', 
-                'kmeans', or 'minik'.
+                'agglomerative', 'dbscan', 'kmeans', or 'minik'.
         """
 
         self.algorithm = algorithm
@@ -246,6 +247,7 @@ class Clusterer:
             algs = {
                 'ward': cluster.Ward,
                 'spectral': cluster.SpectralClustering,
+                'agglomerative': cluster.AgglomerativeClustering,
                 'kmeans': cluster.KMeans,
                 'minik': cluster.MiniBatchKMeans,
                 'affprop': cluster.AffinityPropagation,
@@ -254,7 +256,7 @@ class Clusterer:
 
             if algorithm not in algs.keys():
                 raise ValueError("Invalid clustering algorithm name. Valid options are 'ward'," + 
-                    "'spectral', 'kmeans', 'minik', 'affprop', or 'dbscan'.")
+                    "'spectral', 'kmeans', 'minik', 'agglomerative', 'affprop', or 'dbscan'.")
 
             algorithm = algs[algorithm]
 
