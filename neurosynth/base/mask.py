@@ -74,16 +74,19 @@ class Masker(object):
         Args:
             layers: An int, string or list of strings and/or ints. Ints are interpreted 
                 as indices in the stack to remove; strings are interpreted as names of 
-                layers to remove.
+                layers to remove. Negative ints will also work--i.e., remove(-1) will
+                drop the last layer added.
         """
         if not isinstance(layers, list):
             layers = [layers]
-            for l in layers:
-                if isinstance(l, basestring):
-                    self.stack.remove(l)
-                else:
-                    l = self.stack.pop(l)
-                self.layers.pop(l)
+        for l in layers:
+            if isinstance(l, basestring):
+                if l not in self.layers:
+                    raise ValueError("There's no image/layer named '%s' in the masking stack!" % l)
+                self.stack.remove(l)
+            else:
+                l = self.stack.pop(l)
+            del self.layers[l]
 
 
     def get_image(self, image, output='vector'):
