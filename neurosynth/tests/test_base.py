@@ -295,7 +295,10 @@ class TestMasker(unittest.TestCase):
         self.masker.remove('motor')
         self.assertEqual(len(self.masker.layers), 1)
         self.assertEqual(len(self.masker.stack), 1)
-
+        self.masker.add(get_test_data_path() + 'medial_motor.nii.gz')
+        self.masker.remove(-1)
+        self.assertTrue('layer_0' in self.masker.layers.keys())
+        self.assertEqual(len(self.masker.layers), 1)
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
 

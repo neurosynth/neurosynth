@@ -19,16 +19,16 @@ logger = logging.getLogger('neurosynth.cluster')
 
 class Clusterer:
 
-    def __init__(self, algorithm, dataset=None, output_dir='.',  grid_scale=None,
+    def __init__(self, dataset, algorithm=None, output_dir='.',  grid_scale=None,
             features=None, feature_threshold=0.0, global_mask=None, roi_mask=None, 
             distance_mask=None, min_voxels_per_study=None, min_studies_per_voxel=None, 
             distance_metric=None, **kwargs):
         """ Initialize Clusterer.
         Args:
+            dataset: The Dataset instance to use for clustering.
             algorithm: Algorithm to use for clustering. Must be one of 'ward', 'spectral',
-                'agglomerative', 'dbscan', 'kmeans', or 'minik'.
-            dataset: The dataset to use for clustering. Either a Dataset instance or a numpy
-                array with voxels in rows and features in columns.
+                'agglomerative', 'dbscan', 'kmeans', or 'minik'. If None, can be set 
+                later via set_algorithm() or cluster().
             output_directory: Directory to use for writing all outputs.
             grid_scale: Optional integer. If provided, a 3D grid will be applied to the 
                 image data, with values in all voxels in each grid cell being averaged 
@@ -38,8 +38,8 @@ class Clusterer:
                 Dataset instance. If dataset is a numpy matrix, will be ignored.
             feature_threshold: float; the threshold to use for feature selection. Will be 
                 ignored if features is None.
-            global_mask: An image defining the space to use for all analyses. Only necessary
-                if dataset is a numpy array.
+            global_mask: An image defining the space to use for all analyses. If None, the 
+                mask found in the Dataset will be used.
             roi_mask: An image that determines which voxels to cluster. All non-zero voxels
                 will be included in the clustering analysis. When roi_mask is None, all 
                 voxels in the global_mask (i.e., the whole brain) will be clustered. roi_mask
@@ -71,27 +71,26 @@ class Clusterer:
                     'min_studies_per_voxel', 'distance_metric'] + kwargs.keys()):
             self.args[a] = locals()[a]
 
-        self._set_clustering_algorithm(algorithm, **kwargs)
+        self.set_algorithm(algorithm, **kwargs)
 
-        if isinstance(dataset, Dataset):
+        self.dataset = dataset
 
-            self.dataset = dataset
+        self.masker = dataset.masker if global_mask is None else Masker(global_mask)
 
-            if global_mask is None:
-                global_mask = dataset.masker
+        if features is not None:
+            data = self.dataset.get_ids_by_features(features, threshold=feature_threshold, 
+                                    get_image_data=True)
+        else:
+            data = self.dataset.get_image_data()
 
-            if features is not None:
-                data = self.dataset.get_ids_by_features(features, threshold=feature_threshold, 
-                            get_image_data=True)
-            else:
-                data = self.dataset.get_image_data()
-
-            # if min_studies_per_voxel is not None:
-            #     logger.info("Thresholding voxels based on number of studies.")
-            #     sum_vox = data.sum(1)
-            #     # Save the indices for later reconstruction
-            #     active_vox = np.where(sum_vox > min_studies_per_voxel)[0]  
-            #     n_active_vox = active_vox.shape[0]
+        if min_studies_per_voxel is not None:
+            logger.info("Thresholding voxels based on number of studies.")
+            sum_vox = data.sum(1)
+            # Save the indices for later reconstruction
+            active_vox = sum_vox > min_studies_per_voxel
+            # n_active_vox = active_vox.shape[0]
+            av = self.masker.unmask(active_vox, output='vector')
+            self.masker.add(av)
 
             # if min_voxels_per_study is not None:
             #     logger.info("Thresholding studies based on number of voxels.")
@@ -107,19 +106,7 @@ class Clusterer:
             #     logger.info("Selecting studies with more than %d voxels." % min_voxels_per_study)
             #     data = data[:, active_studies]
 
-            self.data = data
-
-        else:
-            self.data = dataset
-
-            if global_mask is None:
-                raise ValueError("If dataset is a numpy array, a valid global_mask (filename, " +
-                    "Mask instance, or nibabel image) must be passed.")
-
-        if not isinstance(global_mask, Masker):
-            global_mask = Masker(global_mask)
-        
-        self.masker = global_mask
+        self.data = data
 
         if distance_mask is not None:
             self.masker.add(distance_mask)
@@ -129,7 +116,7 @@ class Clusterer:
                 vox = self.masker.get_current_mask(in_global_mask=True)
                 self.target_data = self.data[vox,:]
 
-            self.masker.reset()
+            self.masker.remove(-1)
 
         if roi_mask is not None:
             self.masker.add(roi_mask)
@@ -170,17 +157,25 @@ class Clusterer:
         self.distance_matrix = dist
 
 
-    def cluster(self, n_clusters=10, save_images=True, precomputed_distances=False,
-            bundle=False, coactivation_maps=False):
+    def cluster(self, algorithm=None, n_clusters=10, save_images=True, 
+                precomputed_distances=False, bundle=False, coactivation_maps=False,
+                **kwargs):
         """
         Args:
+            algorithm: Algorithm to use for clustering. Must be one of 'ward', 'spectral',
+                'agglomerative', 'dbscan', 'kmeans', or 'minik'. If None, uses the algorithm
+                passed at initialization.
             n_clusters: Number of clusters to extract. Can be an integer or a list
                 of integers to iterate.
             save_images: Boolean indicating whether or not to save images to file.
             precomputed_distances: Indicates whether or not to use precomputed distances in 
                 the clustering. If True, the distance_matrix stored in the instance will be 
                 used; when False (default), the raw data will be used.
+            kwargs: Optional arguments to pass onto the scikit-learn clustering object.
         """
+        if algorithm is not None:
+            self.set_algorithm(algorithm, **kwargs)
+
         if isinstance(n_clusters, int):
             n_clusters = [n_clusters]
 
@@ -232,12 +227,14 @@ class Clusterer:
 
 
 
-    def _set_clustering_algorithm(self, algorithm, **kwargs):
+    def set_algorithm(self, algorithm, **kwargs):
         """ Set the algorithm to use in subsequent cluster analyses.
         Args:
             algorithm: The clustering algorithm to use. Either a string or an (uninitialized)
                 scikit-learn clustering object. If string, must be one of 'ward', 'spectral', 
                 'agglomerative', 'dbscan', 'kmeans', or 'minik'.
+            kwargs: Additional keyword arguments to pass onto the scikit-learn clustering
+                object.
         """
 
         self.algorithm = algorithm
