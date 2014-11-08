@@ -191,17 +191,16 @@ class Dataset(object):
         else:
             return [m for m in self.mappables if m.id in ids]
 
-    def get_ids_by_features(self, features, threshold=None, func=np.sum, get_image_data=False, get_weights=False):
+    def get_ids_by_features(self, features, threshold=0.001, func=np.sum, get_image_data=False, get_weights=False):
         """ A wrapper for FeatureTable.get_ids().
 
         Args:
-          features: A list of features to use when selecting Mappables.
-          threshold: Optional float between 0 and 1. If passed, the threshold will be used as
-            a cut-off when selecting Mappables.
-          func: The function to use when aggregating over the list of features. See
-            documentation in FeatureTable.get_ids() for a full explanation.
-          get_image_data: An optional boolean. When True, returns a voxel x mappable matrix
-            of image data rather than the Mappable instances themselves.
+            features: A list of features to use when selecting Mappables.
+            threshold: Float in range 0-1. Threshold used to select mappables.
+            func: The function to use when aggregating over the list of features. See
+                documentation in FeatureTable.get_ids() for a full explanation.
+            get_image_data: An optional boolean. When True, returns a voxel x mappable matrix
+                of image data rather than the Mappable instances themselves.
         """
         ids = self.feature_table.get_ids(features, threshold, func, get_weights)
         return self.get_image_data(ids) if get_image_data else ids
