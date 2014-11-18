@@ -568,7 +568,6 @@ class FeatureTable(object):
           When get_weights is false (default), returns a list of Mappable names. When true,
           returns a dict, with mappable names as keys and feature weights as values.
         """
-
         if isinstance(features, str):
             features = [features]
         features = self.search_features(features)  # Expand wild cards

@@ -12,14 +12,12 @@ logger = logging.getLogger('neurosynth.lexparser')
 class Lexer(object):
 
     tokens = (
-        'FEATURE', 'FLOAT', 'ANDNOT', 'OR', 'AND', 'CONTRAST', 'LPAR', 'RPAR', 'LT', 'RT'
+        'WORD', 'FLOAT', 'ANDNOT', 'OR', 'AND', 'LPAR', 'RPAR', 'LT', 'RT'
     )
 
-    t_FEATURE = r'[a-zA-Z\_\-\*]+'
     t_ANDNOT = r'\&\~'
     t_AND = r'\&'
     t_OR = r'\|'
-    # t_CONTRAST = r'\%'
     t_LPAR = r'\('
     t_RPAR = r'\)'
     t_LT = r'\<'
@@ -29,6 +27,10 @@ class Lexer(object):
 
     def __init__(self, dataset=None):
         self.dataset = dataset
+
+    def t_WORD(self, t):
+        r'[a-zA-Z\_\-\*]+'
+        return t
 
     def t_FLOAT(self, t):
         r'[0-9\.]+'
@@ -82,8 +84,14 @@ class Parser(object):
         'list : list RT freq'
         p[0] = p[1][p[1] >= p[3]]
 
+    def p_feature_words(self, p):
+        '''feature : WORD WORD
+                | feature WORD'''
+        p[0] = ' '.join([p[1], p[2]])
+
     def p_list_feature(self, p):
-        'list : FEATURE'
+        '''list : feature
+            | WORD '''
         p[0] = self.dataset.get_ids_by_features(p[1], self.threshold, self.func, get_weights=True)
 
     def p_list_expr(self, p):
@@ -96,6 +104,9 @@ class Parser(object):
 
     def build(self, **kwargs):
         self.parser = yacc.yacc(module=self, **kwargs)
+
+    def p_error(self, p):
+        print p
 
     def parse(self, input):
         return self.parser.parse(input)

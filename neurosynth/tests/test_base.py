@@ -116,11 +116,16 @@ class TestBase(unittest.TestCase):
         features = tt.search_features(['f*'])
         self.assertEqual(len(features), 4)
         d = self.dataset
+        ids = d.get_ids_by_features('f4', threshold=0.001)
+        self.assertEqual(list(ids), ['study5'])
         ids = d.get_ids_by_features(['f*'], threshold=0.001)
         self.assertEqual(len(ids), 4)
         img_data = d.get_ids_by_features(
             ['f1', 'f3', 'g1'], 0.001, func=np.max, get_image_data=True)
         self.assertEqual(img_data.shape, (228453, 5))
+        d.feature_table.data.columns = ['f1', 'f2', 'my ngram', 'my ngram reprise', 'g1']
+        ids = d.get_ids_by_features('my ngram reprise', threshold=0.001)
+        self.assertEqual(list(ids), ['study5'])
 
     def test_selection_by_expression(self):
         """ Tests the expression-based search using the lexer/parser. 
@@ -143,6 +148,12 @@ class TestBase(unittest.TestCase):
             self.assertEqual(list(ids), ['study1', 'study2', 'study3', 'study4'])
             ids = self.dataset.get_ids_by_expression("(f* & g*)", func=np.sum, threshold=0.001)
             self.assertEqual(list(ids), ['study1', 'study4'])
+            # test N-gram feature handling
+            self.dataset.feature_table.data.columns = ['f1', 'f2', 'my ngram', 'my ngram reprise', 'g1']
+            ids = self.dataset.get_ids_by_expression("my ngram reprise")
+            self.assertEqual(list(ids), ['study5'])
+            ids = self.dataset.get_ids_by_expression("my ngram*", threshold=0.01)
+            self.assertEqual(list(ids), ['study1', 'study4', 'study5'])
             try:
                 os.unlink('lextab.py')
                 os.unlink('parser.out')
