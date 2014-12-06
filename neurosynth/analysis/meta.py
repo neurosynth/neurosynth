@@ -135,12 +135,13 @@ class MetaAnalysis(object):
             p[p < 1e-240] = 1e-240
             # Convert to z and assign tail
             z = np.abs(norm.ppf(p)) * sign
-            # Set invalid voxels to 0
-            z[np.isinf(z)] = 0.0
+            # Set very large z's to max precision
+            z[np.isinf(z)] = norm.ppf(1e-240)*-1
             return z
             
         # One-way chi-square test for consistency of activation
         p_vals = stats.one_way(np.squeeze(n_selected_active_voxels), n_selected)
+        p_vals[p_vals<1e-240] = 1e-240
         z_sign = np.sign(n_selected_active_voxels - np.mean(n_selected_active_voxels)).ravel()
         pAgF_z = p_to_z(p_vals, z_sign)
         fdr_thresh = stats.fdr(p_vals, q)
@@ -151,6 +152,7 @@ class MetaAnalysis(object):
             np.array([[n_selected_active_voxels, n_unselected_active_voxels],
                       [n_selected - n_selected_active_voxels, n_unselected - n_unselected_active_voxels]]).T)
         p_vals = stats.two_way(cells)
+        p_vals[p_vals<1e-240] = 1e-240
         z_sign = np.sign(pAgF - pAgU).ravel()
         pFgA_z = p_to_z(p_vals, z_sign)
         fdr_thresh = stats.fdr(p_vals, q)
