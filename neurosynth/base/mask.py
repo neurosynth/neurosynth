@@ -115,7 +115,7 @@ class Masker(object):
             raise ValueError("Input image must be a string, a NiBabel image, or a " + 
                 "numpy array.")
 
-        if image.shape == self.volume.shape:
+        if image.shape[:3] == self.volume.shape:
             if output == 'image':
                 return nb.nifti1.Nifti1Image(image, None, self.get_header())
             elif output == 'array':
@@ -196,12 +196,12 @@ class Masker(object):
             # but we generate x,y,z,t volume
             image = np.zeros(self.full.shape + (n_volumes,))
             image[self.current_mask, :] = data
-            return np.reshape(image, self.volume.shape + (n_volumes,))
+            image = np.reshape(image, self.volume.shape + (n_volumes,))
         else:
             img = self.full.copy()
             image = np.zeros(self.full.shape)
             image[self.current_mask] = data
-            return self.get_image(image, output)
+        return self.get_image(image, output)
 
 
     def _set_mask(self, layers=None, include_global_mask=True):
@@ -226,7 +226,7 @@ class Masker(object):
         self.n_vox_in_mask = len(np.where(self.current_mask)[0])
 
 
-    def get_current_mask(self, output='image', compute_mask=True, in_global_mask=False):
+    def get_current_mask(self, output='vector', compute_mask=True, in_global_mask=False):
         """ Convenience method for getting current mask.
         Args:
             output: Format of output.

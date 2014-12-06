@@ -181,19 +181,13 @@ class TestBase(unittest.TestCase):
         ids = dataset.get_ids_by_mask(
             get_test_data_path() + 'sgacc_mask.nii.gz')
         nvoxels = dataset.masker.n_vox_in_vol
-
         nvols = 2
         data2d = np.arange(nvoxels * nvols).reshape((nvoxels, -1))
-
-        data2d_unmasked_separately = [
-            dataset.masker.unmask(data2d[:, i]) for i in xrange(nvols)]
-        data2d_unmasked = dataset.masker.unmask(data2d)
-        self.assertEqual(data2d_unmasked.shape,
-                         data2d_unmasked_separately[0].shape + (nvols,))
-        # and check corresponding volumes
-        for i in xrange(nvols):
-            self.assertTrue(np.all(data2d_unmasked[
-                            ..., i] == data2d_unmasked_separately[i]))
+        data2d_unmasked = dataset.masker.unmask(data2d, output='array')
+        self.assertEqual(data2d_unmasked.shape, (91, 109, 91, 2))
+        data2d_unmasked = dataset.masker.unmask(data2d, output='image')
+        self.assertEqual(data2d_unmasked.shape, (91, 109, 91, 2))
+        self.assertTrue(hasattr(data2d_unmasked, 'get_data'))
 
     def test_selection_by_peaks(self):
         """ Test peak-based Mappable selection. """
