@@ -5,3 +5,5 @@ build/
 dist
 dist/*
 .ipynb_checkpoints
+docs/_*/*
+neurosynth.egg-info
