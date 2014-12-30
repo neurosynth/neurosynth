@@ -7,7 +7,7 @@ import sys
 if len(set(('test', 'easy_install')).intersection(sys.argv)) > 0:
     import setuptools
 
-from distutils.core import setup
+from setuptools import setup
 
 extra_setuptools_args = {}
 if 'setuptools' in sys.modules:
