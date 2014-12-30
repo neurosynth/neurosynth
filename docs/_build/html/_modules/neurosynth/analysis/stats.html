@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neurosynth.analysis.stats &mdash; neurosynth  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="neurosynth  documentation" href="../../../index.html" />
+    <link rel="up" title="neurosynth" href="../../neurosynth.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neurosynth  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../neurosynth.html" accesskey="U">neurosynth</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for neurosynth.analysis.stats</h1><div class="highlight"><pre>
+<span class="c"># emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-</span>
+<span class="c"># ex: set sts=2 ts=2 sw=2 et:</span>
+<span class="sd">&quot;&quot;&quot;Various statistical helper methods.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">special</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">ss</span>
+
+
+<div class="viewcode-block" id="pearson"><a class="viewcode-back" href="../../../neurosynth.analysis.html#neurosynth.analysis.stats.pearson">[docs]</a><span class="k">def</span> <span class="nf">pearson</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Correlates row vector x with each row vector in 2D array y. &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+    <span class="n">ms</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[(</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span> <span class="bp">None</span><span class="p">)]</span>
+    <span class="n">datam</span> <span class="o">=</span> <span class="n">data</span> <span class="o">-</span> <span class="n">ms</span>
+    <span class="n">datass</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">ss</span><span class="p">(</span><span class="n">datam</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">datam</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">datam</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="n">rs</span> <span class="o">=</span> <span class="n">temp</span> <span class="o">/</span> <span class="p">(</span><span class="n">datass</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">*</span> <span class="n">datass</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">rs</span>
+
+</div>
+<div class="viewcode-block" id="two_way"><a class="viewcode-back" href="../../../neurosynth.analysis.html#neurosynth.analysis.stats.two_way">[docs]</a><span class="k">def</span> <span class="nf">two_way</span><span class="p">(</span><span class="n">cells</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Two-way chi-square test of independence.</span>
+<span class="sd">    Takes a 3D array as input: N(voxels) x 2 x 2, where the last two dimensions</span>
+<span class="sd">    are the contingency table for each of N voxels. Returns an array of p-values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># Mute divide-by-zero warning for bad voxels since we account for that</span>
+    <span class="c"># later</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s">&quot;ignore&quot;</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>
+
+    <span class="n">cells</span> <span class="o">=</span> <span class="n">cells</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s">&#39;float64&#39;</span><span class="p">)</span>  <span class="c"># Make sure we don&#39;t overflow</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_over_axes</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">,</span> <span class="n">cells</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">chi_sq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">cells</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;float64&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+            <span class="n">exp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">cells</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,:],</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">cells</span><span class="p">[:,:,</span> <span class="n">j</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span> <span class="o">/</span> <span class="n">total</span>
+            <span class="n">bad_vox</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">exp</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">chi_sq</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">cells</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">exp</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">exp</span>
+            <span class="n">chi_sq</span><span class="p">[</span><span class="n">bad_vox</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c"># Set p-value for invalid voxels to 1</span>
+    <span class="n">chi_sq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_over_axes</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">,</span> <span class="n">chi_sq</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">special</span><span class="o">.</span><span class="n">chdtrc</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">chi_sq</span><span class="p">)</span>  <span class="c"># .astype(dt)</span>
+
+</div>
+<div class="viewcode-block" id="one_way"><a class="viewcode-back" href="../../../neurosynth.analysis.html#neurosynth.analysis.stats.one_way">[docs]</a><span class="k">def</span> <span class="nf">one_way</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; One-way chi-square test of independence.</span>
+<span class="sd">    Takes a 1D array as input and compares activation at each voxel to proportion</span>
+<span class="sd">    expected under a uniform distribution throughout the array. Note that</span>
+<span class="sd">    if you&#39;re testing activation with this, make sure that only valid voxels</span>
+<span class="sd">    (e.g., in-mask gray matter voxels) are included in the array, or results</span>
+<span class="sd">    won&#39;t make any sense!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">term</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s">&#39;float64&#39;</span><span class="p">)</span>
+    <span class="n">no_term</span> <span class="o">=</span> <span class="n">n</span> <span class="o">-</span> <span class="n">term</span>
+    <span class="n">t_exp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">t_exp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">t_exp</span><span class="p">,]</span><span class="o">*</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">nt_exp</span> <span class="o">=</span> <span class="n">n</span> <span class="o">-</span> <span class="n">t_exp</span>
+    <span class="n">t_mss</span> <span class="o">=</span> <span class="p">(</span><span class="n">term</span> <span class="o">-</span> <span class="n">t_exp</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">t_exp</span>
+    <span class="n">nt_mss</span> <span class="o">=</span> <span class="p">(</span><span class="n">no_term</span> <span class="o">-</span> <span class="n">nt_exp</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">nt_exp</span>
+    <span class="n">chi2</span> <span class="o">=</span> <span class="n">t_mss</span> <span class="o">+</span> <span class="n">nt_mss</span>
+    <span class="k">return</span> <span class="n">special</span><span class="o">.</span><span class="n">chdtrc</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">chi2</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="fdr"><a class="viewcode-back" href="../../../neurosynth.analysis.html#neurosynth.analysis.stats.fdr">[docs]</a><span class="k">def</span> <span class="nf">fdr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="o">=.</span><span class="mo">05</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Determine FDR threshold given a p value array and desired false discovery rate q. &quot;&quot;&quot;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">nvox</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">null</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nvox</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;float&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="n">q</span> <span class="o">/</span> <span class="n">nvox</span>
+    <span class="n">below</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">s</span> <span class="o">&lt;=</span> <span class="n">null</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">s</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">below</span><span class="p">)]</span> <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">below</span><span class="p">)</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neurosynth  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../neurosynth.html" >neurosynth</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Tal Yarkoni.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

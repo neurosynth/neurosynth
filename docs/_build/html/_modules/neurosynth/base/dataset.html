@@ -1,0 +1,707 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neurosynth.base.dataset &mdash; neurosynth  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="neurosynth  documentation" href="../../../index.html" />
+    <link rel="up" title="neurosynth" href="../../neurosynth.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neurosynth  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../neurosynth.html" accesskey="U">neurosynth</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for neurosynth.base.dataset</h1><div class="highlight"><pre>
+<span class="c"># emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-</span>
+<span class="c"># ex: set sts=2 ts=2 sw=2 et:</span>
+<span class="sd">&quot;&quot;&quot; A Neurosynth Dataset &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">sparse</span>
+
+<span class="kn">import</span> <span class="nn">mappable</span>
+
+<span class="kn">from</span> <span class="nn">neurosynth.base</span> <span class="kn">import</span> <span class="n">mask</span><span class="p">,</span> <span class="n">imageutils</span><span class="p">,</span> <span class="n">transformations</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;neurosynth.dataset&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Dataset"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset">[docs]</a><span class="k">class</span> <span class="nc">Dataset</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">feature_filename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">masker</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                  <span class="n">target</span><span class="o">=</span><span class="s">&#39;MNI&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialize a new Dataset instance.</span>
+
+<span class="sd">        Creates a new Dataset instance from a text file containing activation data.</span>
+<span class="sd">        At minimum, the input file must contain tab-delimited columns named x, y, z,</span>
+<span class="sd">        id, and space (case-insensitive). The x/y/z columns indicate the coordinates</span>
+<span class="sd">        of the activation center or peak, the id column is used to group multiple</span>
+<span class="sd">        activations from a single Mappable (e.g. an article). Typically the id should</span>
+<span class="sd">        be a uniquely identifying field accessible to others, e.g., a doi in the case</span>
+<span class="sd">        of entire articles. The space column indicates the nominal atlas used to</span>
+<span class="sd">        produce each activation. Currently all values except &#39;TAL&#39; (Talairach) will</span>
+<span class="sd">        be ignored. If space == TAL and the transform argument is True, all activations</span>
+<span class="sd">        reported in Talairach space will be converted to MNI space using the</span>
+<span class="sd">        Lancaster et al transform.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          filename: The name of a database file containing a list of activations.</span>
+<span class="sd">          feature_filename: An optional filename to construct a FeatureTable from.</span>
+<span class="sd">          masker: An optional Nifti/Analyze image name defining the space to use for</span>
+<span class="sd">            all operations. If no image is passed, defaults to the MNI152 2 mm</span>
+<span class="sd">            template packaged with FSL.</span>
+<span class="sd">          r: An optional integer specifying the radius of the smoothing kernel, in mm.</span>
+<span class="sd">            Defaults to 6 mm.</span>
+<span class="sd">          transform: Optional argument specifying how to handle transformation between</span>
+<span class="sd">            coordinates reported in different stereotactic spaces. When True (default),</span>
+<span class="sd">            activations in Talairach (T88) space will be converted to MNI space using</span>
+<span class="sd">            the Lancaster et al (2007) transform; no other transformations will be</span>
+<span class="sd">            applied. When False, no transformation will be applied. Alternatively,</span>
+<span class="sd">            the user can pass their own dictionary of named transformations to apply,</span>
+<span class="sd">            in which case each activation will be checked against the dictionary</span>
+<span class="sd">            as it is read in and the specified transformation will be applied if</span>
+<span class="sd">            found (for further explanation, see transformations.Transformer).</span>
+<span class="sd">          target: The name of the target space within which activation coordinates</span>
+<span class="sd">            are represented. By default, MNI.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          A Dataset instance.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Instance properties</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">r</span>
+
+        <span class="c"># Set up transformations between different image spaces</span>
+        <span class="k">if</span> <span class="n">transform</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transform</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">transform</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;T88&#39;</span><span class="p">:</span> <span class="n">transformations</span><span class="o">.</span><span class="n">t88_to_mni</span><span class="p">(),</span>
+                              <span class="s">&#39;TAL&#39;</span><span class="p">:</span> <span class="n">transformations</span><span class="o">.</span><span class="n">t88_to_mni</span><span class="p">()</span>
+                             <span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span> <span class="o">=</span> <span class="n">transformations</span><span class="o">.</span><span class="n">Transformer</span><span class="p">(</span><span class="n">transform</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># Load mappables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mappables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_mappables_from_txt</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+        <span class="c"># Load the volume into a new Masker</span>
+        <span class="k">if</span> <span class="n">masker</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">resource_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span>
+                                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span>
+                                        <span class="s">&#39;resources&#39;</span><span class="p">)</span>
+            <span class="n">masker</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">resource_dir</span><span class="p">,</span> <span class="s">&#39;MNI152_T1_2mm_brain.nii.gz&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">masker</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">Masker</span><span class="p">(</span><span class="n">masker</span><span class="p">)</span>
+
+        <span class="c"># Create supporting tables for images and features</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_image_table</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">feature_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">feature_table</span> <span class="o">=</span> <span class="n">FeatureTable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feature_filename</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_load_mappables_from_txt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Load mappables from a text file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          filename: a string pointing to the location of the txt file to read from.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Loading mappables from </span><span class="si">%s</span><span class="s">...&quot;</span> <span class="o">%</span> <span class="n">filename</span><span class="p">)</span>
+        
+        <span class="c"># Read in with pandas</span>
+        <span class="n">contents</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s">&#39;</span><span class="se">\t</span><span class="s">&#39;</span><span class="p">)</span>
+        <span class="n">contents</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">contents</span><span class="o">.</span><span class="n">columns</span><span class="p">)]</span>
+
+        <span class="c"># Make sure all mandatory columns exist</span>
+        <span class="n">mc</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="s">&#39;y&#39;</span><span class="p">,</span> <span class="s">&#39;z&#39;</span><span class="p">,</span> <span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="s">&#39;space&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">mc</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">contents</span><span class="o">.</span><span class="n">columns</span><span class="p">))):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s">&quot;At least one of mandatory columns (x, y, z, id, and space) is missing from input file.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c"># Initialize all mappables--for now, assume Articles are passed</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Loading study data from database file...&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">contents</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="n">as_index</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> 
+                <span class="n">mappable</span><span class="o">.</span><span class="n">Article</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="p">)))</span>
+
+
+<div class="viewcode-block" id="Dataset.create_image_table"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.create_image_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_image_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create and store a new ImageTable instance based on the current Dataset.</span>
+
+<span class="sd">        Will generally be called privately, but may be useful as a convenience</span>
+<span class="sd">        method in cases where the user wants to re-generate the table with a</span>
+<span class="sd">        new smoothing kernel of different radius.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          r: An optional integer indicating the radius of the smoothing kernel.</span>
+<span class="sd">            By default, this is None, which will keep whatever value is currently</span>
+<span class="sd">            set in the Dataset instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Creating image table...&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">r</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image_table</span> <span class="o">=</span> <span class="n">ImageTable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Dataset.add_mappables"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.add_mappables">[docs]</a>    <span class="k">def</span> <span class="nf">add_mappables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mappables</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">remap</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Append new Mappable objects to the end of the list.</span>
+
+<span class="sd">        Either a filename or a list of mappables must be passed.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          filename: The location of the file to extract new mappables from.</span>
+<span class="sd">          mappables: A list of Mappable instances to append to the current list.</span>
+<span class="sd">          remap: Optional boolean indicating whether to regenerate the entire</span>
+<span class="sd">            ImageTable after appending the new Mappables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># TODO: (i) it would be more effiicent to only map the new Mappables into</span>
+        <span class="c"># the ImageTable instead of redoing everything. (ii) we should check for</span>
+        <span class="c"># duplicates and prompt whether to overwrite or update in cases where</span>
+        <span class="c"># conflicts occur.</span>
+        <span class="k">if</span> <span class="n">filename</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mappables</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_load_mappables_from_txt</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">mappables</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mappables</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">mappables</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">remap</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">image_table</span> <span class="o">=</span> <span class="n">create_image_table</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Dataset.delete_mappables"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.delete_mappables">[docs]</a>    <span class="k">def</span> <span class="nf">delete_mappables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">,</span> <span class="n">remap</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Delete specific Mappables from the Dataset.</span>
+
+<span class="sd">        Note that &#39;ids&#39; is a list of unique identifiers of the Mappables (e.g., doi&#39;s),</span>
+<span class="sd">        and not indices in the current instance&#39;s mappables list.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          ids: A list of ids corresponding to the Mappables to delete.</span>
+<span class="sd">          remap: Optional boolean indicating whether to regenerate the entire</span>
+<span class="sd">            ImageTable after deleting undesired Mappables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mappables</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mappables</span> <span class="k">if</span> <span class="n">m</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">remap</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">image_table</span> <span class="o">=</span> <span class="n">create_image_table</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Dataset.get_mappables"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.get_mappables">[docs]</a>    <span class="k">def</span> <span class="nf">get_mappables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">,</span> <span class="n">get_image_data</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Takes a list of unique ids and returns corresponding Mappables.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          ids: A list of ids of the mappables to return.</span>
+<span class="sd">          get_image_data: An optional boolean. When True, returns a voxel x mappable matrix</span>
+<span class="sd">            of image data rather than the Mappable instances themselves.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          If get_image_data is True, a 2D numpy array of voxels x Mappables. Otherwise, a</span>
+<span class="sd">          list of Mappables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">get_image_data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_data</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mappables</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="Dataset.get_ids_by_features"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.get_ids_by_features">[docs]</a>    <span class="k">def</span> <span class="nf">get_ids_by_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">,</span> <span class="n">get_image_data</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">get_weights</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; A wrapper for FeatureTable.get_ids().</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          features: A list of features to use when selecting Mappables.</span>
+<span class="sd">          threshold: Optional float between 0 and 1. If passed, the threshold will be used as</span>
+<span class="sd">            a cut-off when selecting Mappables.</span>
+<span class="sd">          func: The function to use when aggregating over the list of features. See</span>
+<span class="sd">            documentation in FeatureTable.get_ids() for a full explanation.</span>
+<span class="sd">          get_image_data: An optional boolean. When True, returns a voxel x mappable matrix</span>
+<span class="sd">            of image data rather than the Mappable instances themselves.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_table</span><span class="o">.</span><span class="n">get_ids</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">get_weights</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_data</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="k">if</span> <span class="n">get_image_data</span> <span class="k">else</span> <span class="n">ids</span>
+</div>
+<div class="viewcode-block" id="Dataset.get_ids_by_expression"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.get_ids_by_expression">[docs]</a>    <span class="k">def</span> <span class="nf">get_ids_by_expression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">,</span> <span class="n">get_image_data</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_table</span><span class="o">.</span><span class="n">get_ids_by_expression</span><span class="p">(</span><span class="n">expression</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_data</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="k">if</span> <span class="n">get_image_data</span> <span class="k">else</span> <span class="n">ids</span>
+</div>
+<div class="viewcode-block" id="Dataset.get_ids_by_mask"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.get_ids_by_mask">[docs]</a>    <span class="k">def</span> <span class="nf">get_ids_by_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">get_image_data</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return all mappable objects that activate within the bounds</span>
+<span class="sd">        defined by the mask image. </span>
+<span class="sd">        Args:</span>
+<span class="sd">            mask: the mask image (see Masker documentation for valid data types).</span>
+<span class="sd">            threshold: an integer or float. If an integer, the absolute number of </span>
+<span class="sd">                voxels that must be active within the mask for a study to be retained.</span>
+<span class="sd">                When a float, proportion of voxels that must be active.</span>
+<span class="sd">            get_image_data: if True, returns the image data rather than the study IDs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="n">num_vox</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+        <span class="n">prop_mask_active</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_table</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="n">prop_mask_active</span> <span class="o">/=</span> <span class="n">num_vox</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">prop_mask_active</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_data</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="k">if</span> <span class="n">get_image_data</span> <span class="k">else</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">image_table</span><span class="o">.</span><span class="n">ids</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="Dataset.get_ids_by_peaks"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.get_ids_by_peaks">[docs]</a>    <span class="k">def</span> <span class="nf">get_ids_by_peaks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">peaks</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">get_image_data</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; A wrapper for get_ids_by_mask. Takes a set of xyz coordinates and generates</span>
+<span class="sd">        a new Nifti1Image to use as a mask.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          peaks: Either an n x 3 numpy array, or a list of lists (e.g., [[-10, 22, 14]])</span>
+<span class="sd">            specifying the world (x/y/z) coordinates of the target location(s).</span>
+<span class="sd">          r: Radius in millimeters of the sphere to grow around each location.</span>
+<span class="sd">          threshold: Optional float indicating the proportion of voxels that must be</span>
+<span class="sd">            active in order for a Mappable to be considered active.</span>
+<span class="sd">          get_image_data: If true, returns the image data for all activated Mappables in</span>
+<span class="sd">            a voxel x Mappable numpy array. Otherwise, returns just the IDs of Mappables.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          Either a list of ids (if get_image_data = False) or a numpy array of image data.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">peaks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">peaks</span><span class="p">)</span>  <span class="c"># Make sure we have a numpy array</span>
+        <span class="n">peaks</span> <span class="o">=</span> <span class="n">transformations</span><span class="o">.</span><span class="n">xyz_to_mat</span><span class="p">(</span><span class="n">peaks</span><span class="p">)</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">imageutils</span><span class="o">.</span><span class="n">map_peaks_to_image</span><span class="p">(</span>
+            <span class="n">peaks</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">vox_dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">vox_dims</span><span class="p">,</span>
+            <span class="n">dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">get_header</span><span class="p">())</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_ids_by_mask</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">get_image_data</span><span class="o">=</span><span class="n">get_image_data</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Dataset.add_features"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.add_features">[docs]</a>    <span class="k">def</span> <span class="nf">add_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="s">&#39;outer&#39;</span><span class="p">,</span> <span class="n">duplicates</span><span class="o">=</span><span class="s">&#39;ignore&#39;</span><span class="p">,</span>
+            <span class="n">min_studies</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.001</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Construct a new FeatureTable from file.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            features: Feature data to add. Can be:</span>
+<span class="sd">                (a) A text file containing the feature data, where each row is a </span>
+<span class="sd">                study in the database, with features in columns. The first column </span>
+<span class="sd">                must contain the IDs of the studies to match up with the image data.</span>
+<span class="sd">                (b) A pandas DataFrame, where studies are in rows, features are </span>
+<span class="sd">                in columns, and the index provides the study IDs.</span>
+<span class="sd">            append: If True, adds new features to existing ones incrementally.</span>
+<span class="sd">                If False, replaces old features.</span>
+<span class="sd">            merge, duplicates, min_studies, threshold: Additional arguments passed to </span>
+<span class="sd">                FeatureTable.add_features().</span>
+<span class="sd">         &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">append</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;feature_table&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">feature_table</span> <span class="o">=</span> <span class="n">FeatureTable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">feature_table</span><span class="o">.</span><span class="n">add_features</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="n">merge</span><span class="p">,</span> <span class="n">duplicates</span><span class="o">=</span><span class="n">duplicates</span><span class="p">,</span>
+            <span class="n">min_studies</span><span class="o">=</span><span class="n">min_studies</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Dataset.get_image_data"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.get_image_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_image_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">voxels</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dense</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; A convenience wrapper for ImageTable.get_image_data(). &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_table</span><span class="o">.</span><span class="n">get_image_data</span><span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="n">voxels</span><span class="o">=</span><span class="n">voxels</span><span class="p">,</span> <span class="n">dense</span><span class="o">=</span><span class="n">dense</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Dataset.get_feature_data"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.get_feature_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_feature_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; A convenience wrapper for FeatureTable.get_image_data(). &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_table</span><span class="o">.</span><span class="n">get_feature_data</span><span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Dataset.get_feature_names"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.get_feature_names">[docs]</a>    <span class="k">def</span> <span class="nf">get_feature_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns names of features. If features is None, returns all features.</span>
+<span class="sd">        Otherwise assumes the user is trying to find the order of the features.  &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">features</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_table</span><span class="o">.</span><span class="n">get_ordered_names</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_table</span><span class="o">.</span><span class="n">feature_names</span>
+</div>
+<div class="viewcode-block" id="Dataset.get_feature_counts"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.get_feature_counts">[docs]</a>    <span class="k">def</span> <span class="nf">get_feature_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.001</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns a dictionary, where the keys are the feature names</span>
+<span class="sd">        and the values are the number of studies tagged with the feature. &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_names</span><span class="p">():</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_ids_by_features</span><span class="p">([</span><span class="n">f</span><span class="p">],</span> <span class="n">func</span><span class="o">=</span><span class="n">func</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">result</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Dataset.load"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Load a pickled Dataset instance from file. &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">cPickle</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">cPickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="s">&#39;feature_table&#39;</span><span class="p">):</span>
+            <span class="n">dataset</span><span class="o">.</span><span class="n">feature_table</span><span class="o">.</span><span class="n">_csr_to_sdf</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">dataset</span>
+</div>
+<div class="viewcode-block" id="Dataset.save"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">keep_mappables</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Pickle the Dataset instance to the provided file.</span>
+
+<span class="sd">        If keep_mappables = False (default), will delete the Mappable objects</span>
+<span class="sd">        themselves before pickling. This will save a good deal of space and</span>
+<span class="sd">        is generally advisable once a stable Dataset is created, as the</span>
+<span class="sd">        Mappables are rarely used after the ImageTable is generated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">keep_mappables</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mappables</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;feature_table&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">feature_table</span><span class="o">.</span><span class="n">_sdf_to_csr</span><span class="p">()</span>
+
+        <span class="kn">import</span> <span class="nn">cPickle</span>
+        <span class="n">cPickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;wb&#39;</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;feature_table&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">feature_table</span><span class="o">.</span><span class="n">_csr_to_sdf</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Dataset.to_json"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.Dataset.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Save the Dataset to file in JSON format.</span>
+
+<span class="sd">        This is not recommended, as the resulting file will typically be several</span>
+<span class="sd">        GB in size. If no filename is provided, returns the JSON string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">json</span>
+        <span class="n">mappables</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mappables</span><span class="p">]</span>
+        <span class="n">json_string</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s">&#39;mappables&#39;</span><span class="p">:</span> <span class="n">mappables</span><span class="p">})</span>
+        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json_string</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json_string</span>
+
+</div></div>
+<div class="viewcode-block" id="ImageTable"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.ImageTable">[docs]</a><span class="k">class</span> <span class="nc">ImageTable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mappables</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">masker</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">use_sparse</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialize a new ImageTable.</span>
+
+<span class="sd">        If a Dataset instance is passed, all inputs are taken from the Dataset.</span>
+<span class="sd">        Alternatively, a user can manually pass the desired mappables</span>
+<span class="sd">        and masker (e.g., in cases where the ImageTable class is being used without a</span>
+<span class="sd">        Dataset). Can optionally specify the radius of the sphere used for smoothing (default:</span>
+<span class="sd">        6 mm), as well as whether or not to represent the data as a sparse array</span>
+<span class="sd">        (generally this should be left to True, as these data are quite sparse and</span>
+<span class="sd">        computation can often be speeded up by an order of magnitude.)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">mappables</span><span class="p">,</span> <span class="n">masker</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">mappables</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">masker</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">r</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="p">[</span><span class="n">mappables</span><span class="p">,</span> <span class="n">masker</span><span class="p">,</span> <span class="n">r</span><span class="p">]:</span>
+            <span class="k">assert</span> <span class="n">var</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">mappables</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">masker</span> <span class="o">=</span> <span class="n">masker</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">r</span>
+
+        <span class="n">data_shape</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">n_vox_in_vol</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">mappables</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">use_sparse</span><span class="p">:</span>
+            <span class="c"># Fancy indexing assignment is not supported for sparse matrices, so</span>
+            <span class="c"># let&#39;s keep lists of values and their indices (rows, cols) to later</span>
+            <span class="c"># construct the csr_matrix.</span>
+            <span class="n">vals</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">data_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Creating matrix of </span><span class="si">%d</span><span class="s"> mappables...&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mappables</span><span class="p">),))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mappables</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">...&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mappables</span><span class="p">))))</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">imageutils</span><span class="o">.</span><span class="n">map_peaks_to_image</span><span class="p">(</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">peaks</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">r</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">get_header</span><span class="p">())</span>
+            <span class="n">img_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">use_sparse</span><span class="p">:</span>
+                <span class="n">nz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">img_masked</span><span class="p">)</span>
+                <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nz</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">vals</span> <span class="o">+=</span> <span class="nb">list</span><span class="p">(</span><span class="n">img_masked</span><span class="p">[</span><span class="n">nz</span><span class="p">])</span>
+                <span class="n">rows</span> <span class="o">+=</span> <span class="nb">list</span><span class="p">(</span><span class="n">nz</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">cols</span> <span class="o">+=</span> <span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">nz</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">img_masked</span>
+
+        <span class="k">if</span> <span class="n">use_sparse</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">((</span>
+                <span class="n">vals</span><span class="p">,</span> <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)),</span> <span class="n">shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ImageTable.get_image_data"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.ImageTable.get_image_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_image_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">voxels</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dense</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Slices and returns a subset of image data.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          ids: A list or 1D numpy array of Mappable ids to return. If None, returns</span>
+<span class="sd">            data for all Mappables.</span>
+<span class="sd">          voxels: A list or 1D numpy array of voxel indices (i.e., rows) to return.</span>
+<span class="sd">            If None, returns data for all voxels.</span>
+<span class="sd">          dense: Optional boolean. When True (default), convert the result to a dense</span>
+<span class="sd">            array before returning. When False, keep as sparse matrix.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          A 2D numpy array, with voxels in rows and mappables in columns.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ids</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ids</span><span class="p">)))[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="p">[:,</span> <span class="n">idxs</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">voxels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">voxels</span><span class="p">,:]</span>
+        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span> <span class="k">if</span> <span class="n">dense</span> <span class="k">else</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="ImageTable.trim"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.ImageTable.trim">[docs]</a>    <span class="k">def</span> <span class="nf">trim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Trim ImageTable to keep only the passed Mappables. This is a convenience</span>
+<span class="sd">        method, and should generally be avoided in favor of non-destructive alternatives</span>
+<span class="sd">        that don&#39;t require slicing (e.g., matrix multiplication). &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_data</span><span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="n">dense</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>  <span class="c"># .tocoo()</span>
+        <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ids</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ids</span><span class="p">)))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ids</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idxs</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="ImageTable.save_images_to_file"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.ImageTable.save_images_to_file">[docs]</a>    <span class="k">def</span> <span class="nf">save_images_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">,</span> <span class="n">outroot</span><span class="o">=</span><span class="s">&#39;./&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Reconstructs vectorized images corresponding to the specified Mappable ids</span>
+<span class="sd">        and saves them to file, prepending with the outroot (default: current directory). &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="ImageTable.save"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.ImageTable.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">cPickle</span>
+        <span class="n">cPickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;wb&#39;</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="FeatureTable"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.FeatureTable">[docs]</a><span class="k">class</span> <span class="nc">FeatureTable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; A FeatureTable instance stores a matrix of mappables x features, along with</span>
+<span class="sd">    associated manipulation methods. &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialize a new FeatureTable. Takes as input a parent DataSet instance and</span>
+<span class="sd">        feature data (if provided). &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_features</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FeatureTable.add_features"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.FeatureTable.add_features">[docs]</a>    <span class="k">def</span> <span class="nf">add_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="s">&#39;outer&#39;</span><span class="p">,</span> <span class="n">duplicates</span><span class="o">=</span><span class="s">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">min_studies</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add new features to FeatureTable.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            features: A filename to load data from, or a pandas DataFrame. In either case, </span>
+<span class="sd">                studies are in rows and features are in columns. Values in cells reflect the</span>
+<span class="sd">                weight of the intersecting feature for the intersecting study. Feature names and</span>
+<span class="sd">                mappable IDs should be included as the first column and first row, respectively.</span>
+<span class="sd">            merge: The merge strategy to use when merging new features with old. This is passed </span>
+<span class="sd">                to pandas.merge, so can be &#39;left&#39;, &#39;right&#39;, &#39;outer&#39;, or &#39;inner&#39;. Defaults to </span>
+<span class="sd">                outer (i.e., all data in both new and old will be kept, and missing values </span>
+<span class="sd">                will be assigned zeros.)</span>
+<span class="sd">            duplicates: string indicating how to handle features whose name matches an existing</span>
+<span class="sd">                feature. Valid options:</span>
+<span class="sd">                &#39;ignore&#39; (default): ignores the new feature, keeps old data</span>
+<span class="sd">                &#39;replace&#39;: replace the old feature&#39;s data with the new data</span>
+<span class="sd">                &#39;merge&#39;: keeps both features, renaming them so they&#39;re different</span>
+<span class="sd">            min_studies: minimum number of studies that pass threshold in order to add feature</span>
+<span class="sd">            threshold: minimum threshold to use for applying min_studies</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">features</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> cannot be found.&quot;</span> <span class="o">%</span> <span class="n">features</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">features</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s">&#39;</span><span class="se">\t</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> cannot be parsed: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">min_studies</span><span class="p">:</span>
+            <span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">features</span><span class="o">.</span><span class="n">values</span><span class="o">&gt;=</span><span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">min_studies</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">features</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span><span class="n">valid</span><span class="p">]</span>
+
+        <span class="c"># Warn user if no/few IDs match between the FeatureTable and the Dataset.</span>
+        <span class="c"># This most commonly happens because older database.txt files used doi&#39;s as </span>
+        <span class="c"># IDs whereas we now use PMIDs throughout.</span>
+        <span class="n">n_studies</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+        <span class="n">n_common_ids</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">features</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">image_table</span><span class="o">.</span><span class="n">ids</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">float</span><span class="p">(</span><span class="n">n_common_ids</span><span class="p">)</span><span class="o">/</span><span class="n">n_studies</span> <span class="o">&lt;</span> <span class="mf">0.01</span><span class="p">:</span> <span class="c"># Minimum 1% overlap</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Only </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">n_common_ids</span> <span class="k">if</span> <span class="n">n_common_ids</span> <span class="k">else</span> <span class="s">&quot;None of the&quot;</span> 
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span> <span class="o">+</span> <span class="s">&quot; studies in the feature file matched studies currently in &quot;</span> <span class="o">+</span> 
+                <span class="s">&quot;the Dataset. The most likely cause for this is that you&#39;re pairing a newer &quot;</span> <span class="o">+</span>
+                <span class="s">&quot;feature set with an older, incompatible database file. You may want to try &quot;</span> <span class="o">+</span>
+                <span class="s">&quot;regenerating the Dataset instance from a newer database file that uses PMIDs &quot;</span> <span class="o">+</span>
+                <span class="s">&quot;rather than doi&#39;s as the study identifiers in the first column.&quot;</span><span class="p">)</span>
+
+        <span class="n">old_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>
+        <span class="c"># Handle features with duplicate names</span>
+        <span class="n">common_features</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">old_data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">features</span><span class="o">.</span><span class="n">columns</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">duplicates</span> <span class="o">==</span> <span class="s">&#39;ignore&#39;</span><span class="p">:</span>
+            <span class="n">features</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">common_features</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">duplicates</span> <span class="o">==</span> <span class="s">&#39;replace&#39;</span><span class="p">:</span>
+            <span class="n">old_data</span> <span class="o">=</span> <span class="n">old_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">common_features</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">old_data</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="n">merge</span><span class="p">,</span> <span class="n">left_index</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">right_index</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">to_sparse</span><span class="p">()</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="FeatureTable.feature_names"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.FeatureTable.feature_names">[docs]</a>    <span class="k">def</span> <span class="nf">feature_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="FeatureTable.get_feature_data"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.FeatureTable.get_feature_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_feature_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dense</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Slices and returns a subset of feature data.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ids: A list or 1D numpy array of Mappable ids to return rows for. </span>
+<span class="sd">                If None, returns data for all Mappables (i.e., all rows in array). </span>
+<span class="sd">            features: A list or 1D numpy array of named features to return. </span>
+<span class="sd">                If None, returns data for all features (i.e., all columns in array).</span>
+<span class="sd">            dense: Optional boolean. When True (default), convert the result to a dense</span>
+<span class="sd">                array before returning. When False, keep as sparse matrix. Note that if </span>
+<span class="sd">                ids is not None, the returned array will always be dense.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">          A pandas DataFrame, with mappable IDs in rows and features in columns.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+
+        <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">ids</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ix</span><span class="p">[:,</span><span class="n">features</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span> <span class="k">if</span> <span class="n">dense</span> <span class="k">else</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="FeatureTable.get_ordered_names"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.FeatureTable.get_ordered_names">[docs]</a>    <span class="k">def</span> <span class="nf">get_ordered_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Given a list of features, returns features in order that they appear in database</span>
+<span class="sd">        Args:</span>
+<span class="sd">            features: A list or 1D numpy array of named features to return. </span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of features in order they appear in database</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">features</span><span class="p">)))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">idxs</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="FeatureTable.get_ids"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.FeatureTable.get_ids">[docs]</a>    <span class="k">def</span> <span class="nf">get_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">,</span> <span class="n">get_weights</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns a list of all Mappables in the table that meet the desired feature-based</span>
+<span class="sd">        criteria.</span>
+
+<span class="sd">        Will most commonly be used to retrieve Mappables that use one or more</span>
+<span class="sd">        features with some minimum frequency; e.g.,: get_ids([&#39;fear&#39;, &#39;anxiety&#39;], threshold=0.001)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          features: a list of feature names to search on</span>
+<span class="sd">          threshold: optional float indicating threshold features must pass to be included</span>
+<span class="sd">          func: any numpy function to use for thresholding (default: sum). The function will be</span>
+<span class="sd">            applied to the list of features and the result compared to the threshold. This can be</span>
+<span class="sd">            used to change the meaning of the query in powerful ways. E.g,:</span>
+<span class="sd">              max: any of the features have to pass threshold (i.e., max &gt; thresh)</span>
+<span class="sd">              min: all features must each individually pass threshold (i.e., min &gt; thresh)</span>
+<span class="sd">              sum: the summed weight of all features must pass threshold (i.e., sum &gt; thresh)</span>
+<span class="sd">          get_weights: boolean indicating whether or not to return weights.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          When get_weights is false (default), returns a list of Mappable names. When true,</span>
+<span class="sd">          returns a dict, with mappable names as keys and feature weights as values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="n">features</span><span class="p">]</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_features</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>  <span class="c"># Expand wild cards</span>
+        <span class="n">feature_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">ix</span><span class="p">[:,</span> <span class="n">features</span><span class="p">]</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">feature_weights</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">above_thresh</span> <span class="o">=</span> <span class="n">weights</span><span class="p">[</span><span class="n">weights</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">]</span>
+        <span class="c"># ids_to_keep = self.ids[above_thresh]</span>
+        <span class="k">return</span> <span class="n">above_thresh</span> <span class="k">if</span> <span class="n">get_weights</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">above_thresh</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="FeatureTable.search_features"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.FeatureTable.search_features">[docs]</a>    <span class="k">def</span> <span class="nf">search_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">search</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Returns all features that match any of the elements in the input list. &#39;&#39;&#39;</span>
+        <span class="n">search</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">,</span> <span class="s">&#39;.*&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">search</span><span class="p">]</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">search</span><span class="p">:</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">cols</span> <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">s</span> <span class="o">+</span> <span class="s">&#39;$&#39;</span><span class="p">,</span> <span class="n">f</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">results</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="FeatureTable.get_ids_by_expression"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.FeatureTable.get_ids_by_expression">[docs]</a>    <span class="k">def</span> <span class="nf">get_ids_by_expression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Use a PEG to parse expression and return mappables. &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">neurosynth.base</span> <span class="kn">import</span> <span class="n">lexparser</span> <span class="k">as</span> <span class="n">lp</span>
+        <span class="n">lexer</span> <span class="o">=</span> <span class="n">lp</span><span class="o">.</span><span class="n">Lexer</span><span class="p">()</span>
+        <span class="n">lexer</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">lp</span><span class="o">.</span><span class="n">Parser</span><span class="p">(</span>
+            <span class="n">lexer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">func</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">expression</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="FeatureTable.get_features_by_ids"><a class="viewcode-back" href="../../../neurosynth.base.html#neurosynth.base.dataset.FeatureTable.get_features_by_ids">[docs]</a>    <span class="k">def</span> <span class="nf">get_features_by_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">get_weights</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Returns features for which the mean loading across all specified studies (in ids)</span>
+<span class="sd">        is &gt;= threshold. &#39;&#39;&#39;</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">ids</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">above_thresh</span> <span class="o">=</span> <span class="n">weights</span><span class="p">[</span><span class="n">weights</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">above_thresh</span> <span class="k">if</span> <span class="n">get_weights</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">above_thresh</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">_sdf_to_csr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Convert FeatureTable to SciPy CSR matrix because pandas has a weird bug that </span>
+<span class="sd">        crashes de-serializing when data are in SparseDataFrame. (Bonus: takes up </span>
+<span class="sd">        less space.) Really need to fix this! &quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s">&#39;columns&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">),</span>
+            <span class="s">&#39;index&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">),</span>
+            <span class="s">&#39;values&#39;</span><span class="p">:</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">_csr_to_sdf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Inverse of _sdf_to_csr(). &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s">&#39;values&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">todense</span><span class="p">(),</span> <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s">&#39;index&#39;</span><span class="p">],</span> 
+                            <span class="n">columns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s">&#39;columns&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">to_sparse</span><span class="p">()</span>
+</pre></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neurosynth  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../neurosynth.html" >neurosynth</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Tal Yarkoni.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

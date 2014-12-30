@@ -1,0 +1,1005 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neurosynth.base package &mdash; neurosynth  documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="neurosynth  documentation" href="index.html" />
+    <link rel="up" title="neurosynth package" href="neurosynth.html" />
+    <link rel="next" title="neurosynth.tests package" href="neurosynth.tests.html" />
+    <link rel="prev" title="neurosynth.analysis package" href="neurosynth.analysis.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="neurosynth.tests.html" title="neurosynth.tests package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="neurosynth.analysis.html" title="neurosynth.analysis package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">neurosynth  documentation</a> &raquo;</li>
+          <li><a href="neurosynth.html" accesskey="U">neurosynth package</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">neurosynth.base package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-neurosynth.base.dataset">neurosynth.base.dataset module</a></li>
+<li><a class="reference internal" href="#module-neurosynth.base.imageutils">neurosynth.base.imageutils module</a></li>
+<li><a class="reference internal" href="#module-neurosynth.base.lexparser">neurosynth.base.lexparser module</a></li>
+<li><a class="reference internal" href="#module-neurosynth.base.mappable">neurosynth.base.mappable module</a></li>
+<li><a class="reference internal" href="#module-neurosynth.base.mask">neurosynth.base.mask module</a></li>
+<li><a class="reference internal" href="#module-neurosynth.base.transformations">neurosynth.base.transformations module</a></li>
+<li><a class="reference internal" href="#module-neurosynth.base">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="neurosynth.analysis.html"
+                        title="previous chapter">neurosynth.analysis package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="neurosynth.tests.html"
+                        title="next chapter">neurosynth.tests package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/neurosynth.base.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="neurosynth-base-package">
+<h1>neurosynth.base package<a class="headerlink" href="#neurosynth-base-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-neurosynth.base.dataset">
+<span id="neurosynth-base-dataset-module"></span><h2>neurosynth.base.dataset module<a class="headerlink" href="#module-neurosynth.base.dataset" title="Permalink to this headline">¶</a></h2>
+<p>A Neurosynth Dataset</p>
+<dl class="class">
+<dt id="neurosynth.base.dataset.Dataset">
+<em class="property">class </em><tt class="descclassname">neurosynth.base.dataset.</tt><tt class="descname">Dataset</tt><big>(</big><em>filename</em>, <em>feature_filename=None</em>, <em>masker=None</em>, <em>r=6</em>, <em>transform=True</em>, <em>target='MNI'</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="neurosynth.base.dataset.Dataset.add_features">
+<tt class="descname">add_features</tt><big>(</big><em>features</em>, <em>append=True</em>, <em>merge='outer'</em>, <em>duplicates='ignore'</em>, <em>min_studies=0.0</em>, <em>threshold=0.001</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.add_features"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.add_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a new FeatureTable from file.
+Args:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>features: Feature data to add. Can be:</dt>
+<dd>(a) A text file containing the feature data, where each row is a 
+study in the database, with features in columns. The first column 
+must contain the IDs of the studies to match up with the image data.
+(b) A pandas DataFrame, where studies are in rows, features are 
+in columns, and the index provides the study IDs.</dd>
+<dt>append: If True, adds new features to existing ones incrementally.</dt>
+<dd>If False, replaces old features.</dd>
+<dt>merge, duplicates, min_studies, threshold: Additional arguments passed to </dt>
+<dd>FeatureTable.add_features().</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.Dataset.add_mappables">
+<tt class="descname">add_mappables</tt><big>(</big><em>filename=None</em>, <em>mappables=None</em>, <em>remap=True</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.add_mappables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.add_mappables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append new Mappable objects to the end of the list.</p>
+<p>Either a filename or a list of mappables must be passed.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">filename: The location of the file to extract new mappables from.
+mappables: A list of Mappable instances to append to the current list.
+remap: Optional boolean indicating whether to regenerate the entire</p>
+<blockquote class="last">
+<div>ImageTable after appending the new Mappables.</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.Dataset.create_image_table">
+<tt class="descname">create_image_table</tt><big>(</big><em>r=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.create_image_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.create_image_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create and store a new ImageTable instance based on the current Dataset.</p>
+<p>Will generally be called privately, but may be useful as a convenience
+method in cases where the user wants to re-generate the table with a
+new smoothing kernel of different radius.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt>r: An optional integer indicating the radius of the smoothing kernel.</dt>
+<dd>By default, this is None, which will keep whatever value is currently
+set in the Dataset instance.</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.Dataset.delete_mappables">
+<tt class="descname">delete_mappables</tt><big>(</big><em>ids</em>, <em>remap=True</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.delete_mappables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.delete_mappables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete specific Mappables from the Dataset.</p>
+<p>Note that &#8216;ids&#8217; is a list of unique identifiers of the Mappables (e.g., doi&#8217;s),
+and not indices in the current instance&#8217;s mappables list.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">ids: A list of ids corresponding to the Mappables to delete.
+remap: Optional boolean indicating whether to regenerate the entire</p>
+<blockquote class="last">
+<div>ImageTable after deleting undesired Mappables.</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.Dataset.get_feature_counts">
+<tt class="descname">get_feature_counts</tt><big>(</big><em>func=&lt;function sum at 0x10eae5578&gt;</em>, <em>threshold=0.001</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.get_feature_counts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.get_feature_counts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionary, where the keys are the feature names
+and the values are the number of studies tagged with the feature.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.Dataset.get_feature_data">
+<tt class="descname">get_feature_data</tt><big>(</big><em>ids=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.get_feature_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.get_feature_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>A convenience wrapper for FeatureTable.get_image_data().</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.Dataset.get_feature_names">
+<tt class="descname">get_feature_names</tt><big>(</big><em>features=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.get_feature_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.get_feature_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns names of features. If features is None, returns all features.
+Otherwise assumes the user is trying to find the order of the features.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.Dataset.get_ids_by_expression">
+<tt class="descname">get_ids_by_expression</tt><big>(</big><em>expression</em>, <em>threshold=0.001</em>, <em>func=&lt;function sum at 0x10eae5578&gt;</em>, <em>get_image_data=False</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.get_ids_by_expression"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.get_ids_by_expression" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.Dataset.get_ids_by_features">
+<tt class="descname">get_ids_by_features</tt><big>(</big><em>features</em>, <em>threshold=None</em>, <em>func=&lt;function sum at 0x10eae5578&gt;</em>, <em>get_image_data=False</em>, <em>get_weights=False</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.get_ids_by_features"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.get_ids_by_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for FeatureTable.get_ids().</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">features: A list of features to use when selecting Mappables.
+threshold: Optional float between 0 and 1. If passed, the threshold will be used as</p>
+<blockquote>
+<div>a cut-off when selecting Mappables.</div></blockquote>
+<dl class="last docutils">
+<dt>func: The function to use when aggregating over the list of features. See</dt>
+<dd>documentation in FeatureTable.get_ids() for a full explanation.</dd>
+<dt>get_image_data: An optional boolean. When True, returns a voxel x mappable matrix</dt>
+<dd>of image data rather than the Mappable instances themselves.</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.Dataset.get_ids_by_mask">
+<tt class="descname">get_ids_by_mask</tt><big>(</big><em>mask</em>, <em>threshold=0.0</em>, <em>get_image_data=False</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.get_ids_by_mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.get_ids_by_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all mappable objects that activate within the bounds
+defined by the mask image. 
+Args:</p>
+<blockquote>
+<div><p>mask: the mask image (see Masker documentation for valid data types).
+threshold: an integer or float. If an integer, the absolute number of</p>
+<blockquote>
+<div>voxels that must be active within the mask for a study to be retained.
+When a float, proportion of voxels that must be active.</div></blockquote>
+<p>get_image_data: if True, returns the image data rather than the study IDs.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.Dataset.get_ids_by_peaks">
+<tt class="descname">get_ids_by_peaks</tt><big>(</big><em>peaks</em>, <em>r=10</em>, <em>threshold=0.0</em>, <em>get_image_data=False</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.get_ids_by_peaks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.get_ids_by_peaks" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for get_ids_by_mask. Takes a set of xyz coordinates and generates
+a new Nifti1Image to use as a mask.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first docutils">
+<dt>peaks: Either an n x 3 numpy array, or a list of lists (e.g., [[-10, 22, 14]])</dt>
+<dd>specifying the world (x/y/z) coordinates of the target location(s).</dd>
+</dl>
+<p>r: Radius in millimeters of the sphere to grow around each location.
+threshold: Optional float indicating the proportion of voxels that must be</p>
+<blockquote>
+<div>active in order for a Mappable to be considered active.</div></blockquote>
+<dl class="last docutils">
+<dt>get_image_data: If true, returns the image data for all activated Mappables in</dt>
+<dd>a voxel x Mappable numpy array. Otherwise, returns just the IDs of Mappables.</dd>
+</dl>
+</dd>
+<dt>Returns:</dt>
+<dd>Either a list of ids (if get_image_data = False) or a numpy array of image data.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.Dataset.get_image_data">
+<tt class="descname">get_image_data</tt><big>(</big><em>ids=None</em>, <em>voxels=None</em>, <em>dense=True</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.get_image_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.get_image_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>A convenience wrapper for ImageTable.get_image_data().</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.Dataset.get_mappables">
+<tt class="descname">get_mappables</tt><big>(</big><em>ids</em>, <em>get_image_data=False</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.get_mappables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.get_mappables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a list of unique ids and returns corresponding Mappables.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">ids: A list of ids of the mappables to return.
+get_image_data: An optional boolean. When True, returns a voxel x mappable matrix</p>
+<blockquote class="last">
+<div>of image data rather than the Mappable instances themselves.</div></blockquote>
+</dd>
+<dt>Returns:</dt>
+<dd>If get_image_data is True, a 2D numpy array of voxels x Mappables. Otherwise, a
+list of Mappables.</dd>
+</dl>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="neurosynth.base.dataset.Dataset.load">
+<em class="property">classmethod </em><tt class="descname">load</tt><big>(</big><em>filename</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a pickled Dataset instance from file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.Dataset.save">
+<tt class="descname">save</tt><big>(</big><em>filename</em>, <em>keep_mappables=False</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pickle the Dataset instance to the provided file.</p>
+<p>If keep_mappables = False (default), will delete the Mappable objects
+themselves before pickling. This will save a good deal of space and
+is generally advisable once a stable Dataset is created, as the
+Mappables are rarely used after the ImageTable is generated.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.Dataset.to_json">
+<tt class="descname">to_json</tt><big>(</big><em>filename=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#Dataset.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.Dataset.to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the Dataset to file in JSON format.</p>
+<p>This is not recommended, as the resulting file will typically be several
+GB in size. If no filename is provided, returns the JSON string.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="neurosynth.base.dataset.FeatureTable">
+<em class="property">class </em><tt class="descclassname">neurosynth.base.dataset.</tt><tt class="descname">FeatureTable</tt><big>(</big><em>dataset</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#FeatureTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.FeatureTable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A FeatureTable instance stores a matrix of mappables x features, along with
+associated manipulation methods.</p>
+<dl class="method">
+<dt id="neurosynth.base.dataset.FeatureTable.add_features">
+<tt class="descname">add_features</tt><big>(</big><em>features</em>, <em>merge='outer'</em>, <em>duplicates='ignore'</em>, <em>min_studies=0</em>, <em>threshold=0.0001</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#FeatureTable.add_features"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.FeatureTable.add_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add new features to FeatureTable.
+Args:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>features: A filename to load data from, or a pandas DataFrame. In either case, </dt>
+<dd>studies are in rows and features are in columns. Values in cells reflect the
+weight of the intersecting feature for the intersecting study. Feature names and
+mappable IDs should be included as the first column and first row, respectively.</dd>
+<dt>merge: The merge strategy to use when merging new features with old. This is passed </dt>
+<dd>to pandas.merge, so can be &#8216;left&#8217;, &#8216;right&#8217;, &#8216;outer&#8217;, or &#8216;inner&#8217;. Defaults to 
+outer (i.e., all data in both new and old will be kept, and missing values 
+will be assigned zeros.)</dd>
+<dt>duplicates: string indicating how to handle features whose name matches an existing</dt>
+<dd>feature. Valid options:
+&#8216;ignore&#8217; (default): ignores the new feature, keeps old data
+&#8216;replace&#8217;: replace the old feature&#8217;s data with the new data
+&#8216;merge&#8217;: keeps both features, renaming them so they&#8217;re different</dd>
+</dl>
+<p>min_studies: minimum number of studies that pass threshold in order to add feature
+threshold: minimum threshold to use for applying min_studies</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="neurosynth.base.dataset.FeatureTable.feature_names">
+<tt class="descname">feature_names</tt><a class="reference internal" href="_modules/neurosynth/base/dataset.html#FeatureTable.feature_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.FeatureTable.feature_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.FeatureTable.get_feature_data">
+<tt class="descname">get_feature_data</tt><big>(</big><em>ids=None</em>, <em>features=None</em>, <em>dense=True</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#FeatureTable.get_feature_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.FeatureTable.get_feature_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Slices and returns a subset of feature data.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt>ids: A list or 1D numpy array of Mappable ids to return rows for. </dt>
+<dd>If None, returns data for all Mappables (i.e., all rows in array).</dd>
+<dt>features: A list or 1D numpy array of named features to return. </dt>
+<dd>If None, returns data for all features (i.e., all columns in array).</dd>
+<dt>dense: Optional boolean. When True (default), convert the result to a dense</dt>
+<dd>array before returning. When False, keep as sparse matrix. Note that if 
+ids is not None, the returned array will always be dense.</dd>
+</dl>
+</dd>
+<dt>Returns:</dt>
+<dd>A pandas DataFrame, with mappable IDs in rows and features in columns.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.FeatureTable.get_features_by_ids">
+<tt class="descname">get_features_by_ids</tt><big>(</big><em>ids=None</em>, <em>threshold=0.0001</em>, <em>func=&lt;function mean at 0x10eae5e60&gt;</em>, <em>get_weights=False</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#FeatureTable.get_features_by_ids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.FeatureTable.get_features_by_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns features for which the mean loading across all specified studies (in ids)
+is &gt;= threshold.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.FeatureTable.get_ids">
+<tt class="descname">get_ids</tt><big>(</big><em>features</em>, <em>threshold=None</em>, <em>func=&lt;function sum at 0x10eae5578&gt;</em>, <em>get_weights=False</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#FeatureTable.get_ids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.FeatureTable.get_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all Mappables in the table that meet the desired feature-based
+criteria.</p>
+<p>Will most commonly be used to retrieve Mappables that use one or more
+features with some minimum frequency; e.g.,: get_ids([&#8216;fear&#8217;, &#8216;anxiety&#8217;], threshold=0.001)</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">features: a list of feature names to search on
+threshold: optional float indicating threshold features must pass to be included
+func: any numpy function to use for thresholding (default: sum). The function will be</p>
+<blockquote>
+<div><p>applied to the list of features and the result compared to the threshold. This can be
+used to change the meaning of the query in powerful ways. E.g,:</p>
+<blockquote>
+<div>max: any of the features have to pass threshold (i.e., max &gt; thresh)
+min: all features must each individually pass threshold (i.e., min &gt; thresh)
+sum: the summed weight of all features must pass threshold (i.e., sum &gt; thresh)</div></blockquote>
+</div></blockquote>
+<p class="last">get_weights: boolean indicating whether or not to return weights.</p>
+</dd>
+<dt>Returns:</dt>
+<dd>When get_weights is false (default), returns a list of Mappable names. When true,
+returns a dict, with mappable names as keys and feature weights as values.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.FeatureTable.get_ids_by_expression">
+<tt class="descname">get_ids_by_expression</tt><big>(</big><em>expression</em>, <em>threshold=0.001</em>, <em>func=&lt;function sum at 0x10eae5578&gt;</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#FeatureTable.get_ids_by_expression"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.FeatureTable.get_ids_by_expression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use a PEG to parse expression and return mappables.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.FeatureTable.get_ordered_names">
+<tt class="descname">get_ordered_names</tt><big>(</big><em>features</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#FeatureTable.get_ordered_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.FeatureTable.get_ordered_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a list of features, returns features in order that they appear in database
+Args:</p>
+<blockquote>
+<div>features: A list or 1D numpy array of named features to return.</div></blockquote>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>A list of features in order they appear in database</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.FeatureTable.search_features">
+<tt class="descname">search_features</tt><big>(</big><em>search</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#FeatureTable.search_features"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.FeatureTable.search_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all features that match any of the elements in the input list.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="neurosynth.base.dataset.ImageTable">
+<em class="property">class </em><tt class="descclassname">neurosynth.base.dataset.</tt><tt class="descname">ImageTable</tt><big>(</big><em>dataset=None</em>, <em>mappables=None</em>, <em>masker=None</em>, <em>r=6</em>, <em>use_sparse=True</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#ImageTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.ImageTable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="neurosynth.base.dataset.ImageTable.get_image_data">
+<tt class="descname">get_image_data</tt><big>(</big><em>ids=None</em>, <em>voxels=None</em>, <em>dense=True</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#ImageTable.get_image_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.ImageTable.get_image_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Slices and returns a subset of image data.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt>ids: A list or 1D numpy array of Mappable ids to return. If None, returns</dt>
+<dd>data for all Mappables.</dd>
+<dt>voxels: A list or 1D numpy array of voxel indices (i.e., rows) to return.</dt>
+<dd>If None, returns data for all voxels.</dd>
+<dt>dense: Optional boolean. When True (default), convert the result to a dense</dt>
+<dd>array before returning. When False, keep as sparse matrix.</dd>
+</dl>
+</dd>
+<dt>Returns:</dt>
+<dd>A 2D numpy array, with voxels in rows and mappables in columns.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.ImageTable.save">
+<tt class="descname">save</tt><big>(</big><em>filename</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#ImageTable.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.ImageTable.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.ImageTable.save_images_to_file">
+<tt class="descname">save_images_to_file</tt><big>(</big><em>ids</em>, <em>outroot='./'</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#ImageTable.save_images_to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.ImageTable.save_images_to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reconstructs vectorized images corresponding to the specified Mappable ids
+and saves them to file, prepending with the outroot (default: current directory).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.dataset.ImageTable.trim">
+<tt class="descname">trim</tt><big>(</big><em>ids</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/dataset.html#ImageTable.trim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.dataset.ImageTable.trim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trim ImageTable to keep only the passed Mappables. This is a convenience
+method, and should generally be avoided in favor of non-destructive alternatives
+that don&#8217;t require slicing (e.g., matrix multiplication).</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-neurosynth.base.imageutils">
+<span id="neurosynth-base-imageutils-module"></span><h2>neurosynth.base.imageutils module<a class="headerlink" href="#module-neurosynth.base.imageutils" title="Permalink to this headline">¶</a></h2>
+<p>Miscellaneous image-related functions.</p>
+<dl class="function">
+<dt id="neurosynth.base.imageutils.convolve_image">
+<tt class="descclassname">neurosynth.base.imageutils.</tt><tt class="descname">convolve_image</tt><big>(</big><em>img</em>, <em>r=4</em>, <em>header=None</em>, <em>method='mean'</em>, <em>save=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/imageutils.html#convolve_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.imageutils.convolve_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take an image and multiples every non-zero value found by a hard
+sphere of radius r. Where multiple values overlap, use either sum or
+mean.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neurosynth.base.imageutils.create_grid">
+<tt class="descclassname">neurosynth.base.imageutils.</tt><tt class="descname">create_grid</tt><big>(</big><em>image</em>, <em>scale=4</em>, <em>apply_mask=True</em>, <em>save_file=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/imageutils.html#create_grid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.imageutils.create_grid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an image containing labeled cells in a 3D grid.
+Args:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>image: String or nibabel image. The image used to define the grid dimensions.</dt>
+<dd>Also used to define the mask to apply to the grid. Only voxels with 
+non-zero values in the mask will be retained; all other voxels will be zeroed out 
+in the returned image.</dd>
+<dt>scale: The scaling factor which controls the grid size. Value reflects diameter of cube</dt>
+<dd>in voxels.</dd>
+</dl>
+<p>apply_mask: Boolean indicating whether or not to zero out voxels not in image.
+save_file: Optional string giving the path to save image to. Image written out is</p>
+<blockquote>
+<div>a standard Nifti image. If save_file is None, no image is written.</div></blockquote>
+</div></blockquote>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>A nibabel image with the same dimensions as the input image. All voxels in each cell
+in the 3D grid are assigned the same non-zero label.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="neurosynth.base.imageutils.get_sphere">
+<tt class="descclassname">neurosynth.base.imageutils.</tt><tt class="descname">get_sphere</tt><big>(</big><em>coords</em>, <em>r=4</em>, <em>vox_dims=(2</em>, <em>2</em>, <em>2)</em>, <em>dims=(91</em>, <em>109</em>, <em>91)</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/imageutils.html#get_sphere"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.imageutils.get_sphere" title="Permalink to this definition">¶</a></dt>
+<dd><p># Return all points within r mm of coordinates. Generates a cube
+and then discards all points outside sphere. Only returns values that
+fall within the dimensions of the image.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neurosynth.base.imageutils.img_to_json">
+<tt class="descclassname">neurosynth.base.imageutils.</tt><tt class="descname">img_to_json</tt><big>(</big><em>img</em>, <em>decimals=2</em>, <em>swap=False</em>, <em>save=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/imageutils.html#img_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.imageutils.img_to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert an image volume to web-ready JSON format suitable for import into
+the Neurosynth viewer.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">img: An image filename.
+round: Optional integer giving number of decimals to round values to.
+swap: A temporary kludge to deal with some orientation problems. For some reason</p>
+<blockquote class="last">
+<div>the switch from PyNifti to NiBabel seems to produce images that load in a
+different orientation given the same header. In practice this can be addressed
+by flipping the x and z axes (swap = True), but need to look into this and
+come up with a permanent solution.</div></blockquote>
+</dd>
+<dt>Returns:</dt>
+<dd>a JSON-formatted string.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="neurosynth.base.imageutils.load_imgs">
+<tt class="descclassname">neurosynth.base.imageutils.</tt><tt class="descname">load_imgs</tt><big>(</big><em>filenames</em>, <em>masker</em>, <em>nan_to_num=True</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/imageutils.html#load_imgs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.imageutils.load_imgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load multiple images from file into an ndarray.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>filenames: A single filename or list of filenames pointing to valid images.
+masker: A Masker instance.
+nan_to_num: Optional boolean indicating whether to convert NaNs to zero.</dd>
+<dt>Returns:</dt>
+<dd>An m x n 2D numpy array, where m = number of voxels in mask and
+n = number of images passed.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="neurosynth.base.imageutils.map_peaks_to_image">
+<tt class="descclassname">neurosynth.base.imageutils.</tt><tt class="descname">map_peaks_to_image</tt><big>(</big><em>peaks</em>, <em>r=4</em>, <em>vox_dims=(2</em>, <em>2</em>, <em>2)</em>, <em>dims=(91</em>, <em>109</em>, <em>91)</em>, <em>header=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/imageutils.html#map_peaks_to_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.imageutils.map_peaks_to_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take a set of discrete foci (i.e., 2-D array of xyz coordinates)
+and generate a corresponding image, convolving each focus with a
+hard sphere of radius r.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neurosynth.base.imageutils.save_img">
+<tt class="descclassname">neurosynth.base.imageutils.</tt><tt class="descname">save_img</tt><big>(</big><em>data</em>, <em>filename</em>, <em>mask</em>, <em>header=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/imageutils.html#save_img"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.imageutils.save_img" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save a vectorized image to file.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neurosynth.base.imageutils.threshold_img">
+<tt class="descclassname">neurosynth.base.imageutils.</tt><tt class="descname">threshold_img</tt><big>(</big><em>data</em>, <em>threshold</em>, <em>mask=None</em>, <em>mask_out='below'</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/imageutils.html#threshold_img"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.imageutils.threshold_img" title="Permalink to this definition">¶</a></dt>
+<dd><p>Threshold data, setting all values in the array above/below threshold to zero.
+Optionally, can provide a mask (a 1D array with the same length as data), in which
+case the threshold is first applied to the mask, and the resulting indices are used
+to threshold the data. This is primarily useful when, e.g., applying a statistical
+threshold to a z-value image based on a p-value threshold. The mask_out argument
+indicates whether to zero out values &#8216;below&#8217; the threshold (default) or &#8216;above&#8217; the
+threshold. Note: use &#8216;above&#8217; when masking based on p values.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-neurosynth.base.lexparser">
+<span id="neurosynth-base-lexparser-module"></span><h2>neurosynth.base.lexparser module<a class="headerlink" href="#module-neurosynth.base.lexparser" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="neurosynth.base.lexparser.Lexer">
+<em class="property">class </em><tt class="descclassname">neurosynth.base.lexparser.</tt><tt class="descname">Lexer</tt><big>(</big><em>dataset=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Lexer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Lexer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="neurosynth.base.lexparser.Lexer.build">
+<tt class="descname">build</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Lexer.build"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Lexer.build" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="neurosynth.base.lexparser.Lexer.t_AND">
+<tt class="descname">t_AND</tt><em class="property"> = '\\&amp;'</em><a class="headerlink" href="#neurosynth.base.lexparser.Lexer.t_AND" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="neurosynth.base.lexparser.Lexer.t_ANDNOT">
+<tt class="descname">t_ANDNOT</tt><em class="property"> = '\\&amp;\\~'</em><a class="headerlink" href="#neurosynth.base.lexparser.Lexer.t_ANDNOT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="neurosynth.base.lexparser.Lexer.t_FEATURE">
+<tt class="descname">t_FEATURE</tt><em class="property"> = '[a-zA-Z\\_\\-\\*]+'</em><a class="headerlink" href="#neurosynth.base.lexparser.Lexer.t_FEATURE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.lexparser.Lexer.t_FLOAT">
+<tt class="descname">t_FLOAT</tt><big>(</big><em>t</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Lexer.t_FLOAT"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Lexer.t_FLOAT" title="Permalink to this definition">¶</a></dt>
+<dd><p>[0-9.]+</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="neurosynth.base.lexparser.Lexer.t_LPAR">
+<tt class="descname">t_LPAR</tt><em class="property"> = '\\('</em><a class="headerlink" href="#neurosynth.base.lexparser.Lexer.t_LPAR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="neurosynth.base.lexparser.Lexer.t_LT">
+<tt class="descname">t_LT</tt><em class="property"> = '\\&lt;'</em><a class="headerlink" href="#neurosynth.base.lexparser.Lexer.t_LT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="neurosynth.base.lexparser.Lexer.t_OR">
+<tt class="descname">t_OR</tt><em class="property"> = '\\|'</em><a class="headerlink" href="#neurosynth.base.lexparser.Lexer.t_OR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="neurosynth.base.lexparser.Lexer.t_RPAR">
+<tt class="descname">t_RPAR</tt><em class="property"> = '\\)'</em><a class="headerlink" href="#neurosynth.base.lexparser.Lexer.t_RPAR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="neurosynth.base.lexparser.Lexer.t_RT">
+<tt class="descname">t_RT</tt><em class="property"> = '\\&gt;'</em><a class="headerlink" href="#neurosynth.base.lexparser.Lexer.t_RT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.lexparser.Lexer.t_error">
+<tt class="descname">t_error</tt><big>(</big><em>t</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Lexer.t_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Lexer.t_error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="neurosynth.base.lexparser.Lexer.t_ignore">
+<tt class="descname">t_ignore</tt><em class="property"> = ' \t'</em><a class="headerlink" href="#neurosynth.base.lexparser.Lexer.t_ignore" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.lexparser.Lexer.test">
+<tt class="descname">test</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Lexer.test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Lexer.test" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="neurosynth.base.lexparser.Lexer.tokens">
+<tt class="descname">tokens</tt><em class="property"> = ('FEATURE', 'FLOAT', 'ANDNOT', 'OR', 'AND', 'CONTRAST', 'LPAR', 'RPAR', 'LT', 'RT')</em><a class="headerlink" href="#neurosynth.base.lexparser.Lexer.tokens" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="neurosynth.base.lexparser.Parser">
+<em class="property">class </em><tt class="descclassname">neurosynth.base.lexparser.</tt><tt class="descname">Parser</tt><big>(</big><em>lexer</em>, <em>dataset</em>, <em>threshold=0.001</em>, <em>func='sum'</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="neurosynth.base.lexparser.Parser.build">
+<tt class="descname">build</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Parser.build"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Parser.build" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.lexparser.Parser.p_freq_float">
+<tt class="descname">p_freq_float</tt><big>(</big><em>p</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Parser.p_freq_float"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Parser.p_freq_float" title="Permalink to this definition">¶</a></dt>
+<dd><p>freq : FLOAT</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.lexparser.Parser.p_list_and">
+<tt class="descname">p_list_and</tt><big>(</big><em>p</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Parser.p_list_and"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Parser.p_list_and" title="Permalink to this definition">¶</a></dt>
+<dd><p>list : list AND list</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.lexparser.Parser.p_list_andnot">
+<tt class="descname">p_list_andnot</tt><big>(</big><em>p</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Parser.p_list_andnot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Parser.p_list_andnot" title="Permalink to this definition">¶</a></dt>
+<dd><p>list : list ANDNOT list</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.lexparser.Parser.p_list_expr">
+<tt class="descname">p_list_expr</tt><big>(</big><em>p</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Parser.p_list_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Parser.p_list_expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>list : LPAR list RPAR</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.lexparser.Parser.p_list_feature">
+<tt class="descname">p_list_feature</tt><big>(</big><em>p</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Parser.p_list_feature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Parser.p_list_feature" title="Permalink to this definition">¶</a></dt>
+<dd><p>list : FEATURE</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.lexparser.Parser.p_list_lt">
+<tt class="descname">p_list_lt</tt><big>(</big><em>p</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Parser.p_list_lt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Parser.p_list_lt" title="Permalink to this definition">¶</a></dt>
+<dd><p>list : list LT freq</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.lexparser.Parser.p_list_or">
+<tt class="descname">p_list_or</tt><big>(</big><em>p</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Parser.p_list_or"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Parser.p_list_or" title="Permalink to this definition">¶</a></dt>
+<dd><p>list : list OR list</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.lexparser.Parser.p_list_rt">
+<tt class="descname">p_list_rt</tt><big>(</big><em>p</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Parser.p_list_rt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Parser.p_list_rt" title="Permalink to this definition">¶</a></dt>
+<dd><p>list : list RT freq</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.lexparser.Parser.parse">
+<tt class="descname">parse</tt><big>(</big><em>input</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/lexparser.html#Parser.parse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.lexparser.Parser.parse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-neurosynth.base.mappable">
+<span id="neurosynth-base-mappable-module"></span><h2>neurosynth.base.mappable module<a class="headerlink" href="#module-neurosynth.base.mappable" title="Permalink to this headline">¶</a></h2>
+<p>Base Mappable object and all objects that inherit from Mappable.</p>
+<p>A Mappable object is defined by the presence of one or more Peaks that can
+be meaningfully represented as a spatial image.</p>
+<dl class="class">
+<dt id="neurosynth.base.mappable.Article">
+<em class="property">class </em><tt class="descclassname">neurosynth.base.mappable.</tt><tt class="descname">Article</tt><big>(</big><em>data</em>, <em>transformer=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/mappable.html#Article"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.mappable.Article" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neurosynth.base.mappable.Mappable" title="neurosynth.base.mappable.Mappable"><tt class="xref py py-class docutils literal"><span class="pre">neurosynth.base.mappable.Mappable</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="neurosynth.base.mappable.Mappable">
+<em class="property">class </em><tt class="descclassname">neurosynth.base.mappable.</tt><tt class="descname">Mappable</tt><big>(</big><em>data</em>, <em>transformer=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/mappable.html#Mappable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.mappable.Mappable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="neurosynth.base.mappable.Mappable.map_peaks">
+<tt class="descname">map_peaks</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/base/mappable.html#Mappable.map_peaks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.mappable.Mappable.map_peaks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map all Peaks to a new Nifti1Image.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.mappable.Mappable.to_json">
+<tt class="descname">to_json</tt><big>(</big><em>filename=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/mappable.html#Mappable.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.mappable.Mappable.to_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.mappable.Mappable.to_s">
+<tt class="descname">to_s</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/base/mappable.html#Mappable.to_s"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.mappable.Mappable.to_s" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="neurosynth.base.mappable.Table">
+<em class="property">class </em><tt class="descclassname">neurosynth.base.mappable.</tt><tt class="descname">Table</tt><big>(</big><em>data</em>, <em>transformer=None</em>, <em>article=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/mappable.html#Table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.mappable.Table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neurosynth.base.mappable.Mappable" title="neurosynth.base.mappable.Mappable"><tt class="xref py py-class docutils literal"><span class="pre">neurosynth.base.mappable.Mappable</span></tt></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-neurosynth.base.mask">
+<span id="neurosynth-base-mask-module"></span><h2>neurosynth.base.mask module<a class="headerlink" href="#module-neurosynth.base.mask" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="neurosynth.base.mask.Masker">
+<em class="property">class </em><tt class="descclassname">neurosynth.base.mask.</tt><tt class="descname">Masker</tt><big>(</big><em>volume</em>, <em>layers=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/mask.html#Masker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.mask.Masker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Handles vectorization/masking/unmasking of images.</p>
+<dl class="method">
+<dt id="neurosynth.base.mask.Masker.add">
+<tt class="descname">add</tt><big>(</big><em>layers</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/mask.html#Masker.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.mask.Masker.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add one or more layers to the stack of masking layers. 
+Args:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>layers: A string, NiBabel image, list, or dict.</dt>
+<dd>If anything other than a dict is passed, assigns sequential layer names 
+based on the current position in stack; if a dict, uses key as the name 
+and value as the mask image.</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.mask.Masker.get_current_mask">
+<tt class="descname">get_current_mask</tt><big>(</big><em>output='image'</em>, <em>compute_mask=True</em>, <em>in_global_mask=False</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/mask.html#Masker.get_current_mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.mask.Masker.get_current_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience method for getting current mask.
+Args:</p>
+<blockquote>
+<div><p>output: Format of output.
+compute_mask: Whether to refresh the current mask or not.
+in_global_mask: If True, returns a vector with the same dimensionality as</p>
+<blockquote>
+<div>the global mask (i.e., self.volume).</div></blockquote>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.mask.Masker.get_header">
+<tt class="descname">get_header</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/base/mask.html#Masker.get_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.mask.Masker.get_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for the NiBabel method.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.mask.Masker.get_image">
+<tt class="descname">get_image</tt><big>(</big><em>image</em>, <em>output='vector'</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/mask.html#Masker.get_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.mask.Masker.get_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>A flexible method for transforming between different representations of 
+image data.
+Args:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>image: The input image. Can be a string (filename of image), NiBabel image,</dt>
+<dd><p class="first">N-dimensional array (must have same shape as self.volume), or 
+vectorized image data (must have same length as current conjunction</p>
+<blockquote class="last">
+<div>mask).</div></blockquote>
+</dd>
+<dt>output: The format of the returned image representation. Must be one of:</dt>
+<dd>&#8216;vector&#8217;: A 1D vectorized array
+&#8216;array&#8217;: An N-dimensional array, with shape = self.volume.shape
+&#8216;image&#8217;: A NiBabel image</dd>
+</dl>
+</div></blockquote>
+<p>Returns: An object containing image data; see output options above.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.mask.Masker.mask">
+<tt class="descname">mask</tt><big>(</big><em>image</em>, <em>nan_to_num=True</em>, <em>layers=None</em>, <em>compute_mask=True</em>, <em>in_global_mask=False</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/mask.html#Masker.mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.mask.Masker.mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Vectorize an image and mask out all invalid voxels.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first docutils">
+<dt>images: The image to vectorize and mask. Input can be any object handled </dt>
+<dd>by get_image().</dd>
+<dt>layers: Which mask layers to use (specified as int, string, or list of </dt>
+<dd>ints and strings). When None, applies the conjunction of all layers.</dd>
+</dl>
+<p>nan_to_num: boolean indicating whether to convert NaNs to 0.
+compute_mask: If True, will recompute the current mask from scratch.</p>
+<blockquote>
+<div>When False, reuses the existing current_mask. Mainly useful when 
+iterating over input images and/or output formats.</div></blockquote>
+<dl class="last docutils">
+<dt>in_global_mask: Whether to return the resulting masked vector in the globally </dt>
+<dd>masked space (i.e., n_voxels = len(self.global_mask)). If False (default),
+returns in the full image space (i.e., n_voxels = len(self.volume)).</dd>
+</dl>
+</dd>
+<dt>Returns:</dt>
+<dd>A 1D NumPy array of in-mask voxels.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.mask.Masker.remove">
+<tt class="descname">remove</tt><big>(</big><em>layers</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/mask.html#Masker.remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.mask.Masker.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove one or more layers from the stack of masking layers.
+Args:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>layers: An int, string or list of strings and/or ints. Ints are interpreted </dt>
+<dd>as indices in the stack to remove; strings are interpreted as names of 
+layers to remove.</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.mask.Masker.reset">
+<tt class="descname">reset</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/base/mask.html#Masker.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.mask.Masker.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset/remove all layers, keeping only the initial volume.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.mask.Masker.unmask">
+<tt class="descname">unmask</tt><big>(</big><em>data</em>, <em>layers=None</em>, <em>output='array'</em>, <em>compute_mask=True</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/mask.html#Masker.unmask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.mask.Masker.unmask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reconstruct a masked vector into the original 3D volume. 
+Args:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>data: The 1D vector to reconstruct. (Can also be a 2D vector where </dt>
+<dd>the second dimension is time, but then output will always
+be set to &#8216;array&#8217;&#8211;i.e., a 4D image will be returned.)</dd>
+<dt>layers: Which mask layers to use (specified as int, string, or list of </dt>
+<dd>ints and strings). When None, applies the conjunction of all layers.
+Note that the layers specified here must exactly match the layers 
+used in the mask() operation, otherwise the shape of the mask will 
+be incorrect and bad things will happen.</dd>
+<dt>output: What kind of object to return. See options in get_image(). By </dt>
+<dd>default, returns an N-dimensional array of reshaped data.</dd>
+<dt>compute_mask: If True, will recompute the current mask from scratch.</dt>
+<dd>When False, reuses the existing current_mask. Mainly useful when 
+iterating over input images and/or output formats.</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-neurosynth.base.transformations">
+<span id="neurosynth-base-transformations-module"></span><h2>neurosynth.base.transformations module<a class="headerlink" href="#module-neurosynth.base.transformations" title="Permalink to this headline">¶</a></h2>
+<p>Various transformations between coordinate frames, atlas spaces, etc.</p>
+<dl class="class">
+<dt id="neurosynth.base.transformations.Transformer">
+<em class="property">class </em><tt class="descclassname">neurosynth.base.transformations.</tt><tt class="descname">Transformer</tt><big>(</big><em>transforms=None</em>, <em>target='MNI'</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/transformations.html#Transformer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.transformations.Transformer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>The Transformer class supports transformations between different
+image spaces.</p>
+<dl class="method">
+<dt id="neurosynth.base.transformations.Transformer.add">
+<tt class="descname">add</tt><big>(</big><em>name</em>, <em>mat</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/transformations.html#Transformer.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.transformations.Transformer.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a named linear transformation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.base.transformations.Transformer.apply">
+<tt class="descname">apply</tt><big>(</big><em>name</em>, <em>foci</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/transformations.html#Transformer.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.transformations.Transformer.apply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a named transformation to a set of foci.</p>
+<p>If the named transformation doesn&#8217;t exist, return foci untransformed.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="neurosynth.base.transformations.mat_to_xyz">
+<tt class="descclassname">neurosynth.base.transformations.</tt><tt class="descname">mat_to_xyz</tt><big>(</big><em>foci</em>, <em>mat_dims=None</em>, <em>xyz_dims=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/transformations.html#mat_to_xyz"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.transformations.mat_to_xyz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert an N x 3 array of matrix indices to XYZ coordinates.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neurosynth.base.transformations.t88_to_mni">
+<tt class="descclassname">neurosynth.base.transformations.</tt><tt class="descname">t88_to_mni</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/base/transformations.html#t88_to_mni"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.transformations.t88_to_mni" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert Talairach to MNI coordinates using the Lancaster transform.
+Adapted from BrainMap scripts; see <a class="reference external" href="http://brainmap.org/icbm2tal/">http://brainmap.org/icbm2tal/</a>
+Details are described in Lancaster et al. (2007)
+(<a class="reference external" href="http://brainmap.org/new/pubs/LancasterHBM07.pdf">http://brainmap.org/new/pubs/LancasterHBM07.pdf</a>).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neurosynth.base.transformations.transform">
+<tt class="descclassname">neurosynth.base.transformations.</tt><tt class="descname">transform</tt><big>(</big><em>foci</em>, <em>mat</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/transformations.html#transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.transformations.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert coordinates from one space to another using provided
+transformation matrix.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neurosynth.base.transformations.xyz_to_mat">
+<tt class="descclassname">neurosynth.base.transformations.</tt><tt class="descname">xyz_to_mat</tt><big>(</big><em>foci</em>, <em>xyz_dims=None</em>, <em>mat_dims=None</em><big>)</big><a class="reference internal" href="_modules/neurosynth/base/transformations.html#xyz_to_mat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.base.transformations.xyz_to_mat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert an N x 3 array of XYZ coordinates to matrix indices.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-neurosynth.base">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-neurosynth.base" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="neurosynth.tests.html" title="neurosynth.tests package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="neurosynth.analysis.html" title="neurosynth.analysis package"
+             >previous</a> |</li>
+        <li><a href="index.html">neurosynth  documentation</a> &raquo;</li>
+          <li><a href="neurosynth.html" >neurosynth package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Tal Yarkoni.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

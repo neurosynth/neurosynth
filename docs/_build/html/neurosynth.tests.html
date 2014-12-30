@@ -1,0 +1,362 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neurosynth.tests package &mdash; neurosynth  documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="neurosynth  documentation" href="index.html" />
+    <link rel="up" title="neurosynth package" href="neurosynth.html" />
+    <link rel="prev" title="neurosynth.base package" href="neurosynth.base.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="neurosynth.base.html" title="neurosynth.base package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">neurosynth  documentation</a> &raquo;</li>
+          <li><a href="neurosynth.html" accesskey="U">neurosynth package</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">neurosynth.tests package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-neurosynth.tests.test_analysis">neurosynth.tests.test_analysis module</a></li>
+<li><a class="reference internal" href="#module-neurosynth.tests.test_base">neurosynth.tests.test_base module</a></li>
+<li><a class="reference internal" href="#module-neurosynth.tests.test_kraut">neurosynth.tests.test_kraut module</a></li>
+<li><a class="reference internal" href="#module-neurosynth.tests.utils">neurosynth.tests.utils module</a></li>
+<li><a class="reference internal" href="#module-neurosynth.tests">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="neurosynth.base.html"
+                        title="previous chapter">neurosynth.base package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/neurosynth.tests.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="neurosynth-tests-package">
+<h1>neurosynth.tests package<a class="headerlink" href="#neurosynth-tests-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-neurosynth.tests.test_analysis">
+<span id="neurosynth-tests-test-analysis-module"></span><h2>neurosynth.tests.test_analysis module<a class="headerlink" href="#module-neurosynth.tests.test_analysis" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="neurosynth.tests.test_analysis.TestAnalysis">
+<em class="property">class </em><tt class="descclassname">neurosynth.tests.test_analysis.</tt><tt class="descname">TestAnalysis</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_analysis.html#TestAnalysis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_analysis.TestAnalysis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></tt></p>
+<dl class="method">
+<dt id="neurosynth.tests.test_analysis.TestAnalysis.setUp">
+<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_analysis.html#TestAnalysis.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_analysis.TestAnalysis.setUp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new Dataset and add features.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_analysis.TestAnalysis.test_apply_grid_to_image">
+<tt class="descname">test_apply_grid_to_image</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_analysis.html#TestAnalysis.test_apply_grid_to_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_analysis.TestAnalysis.test_apply_grid_to_image" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_analysis.TestAnalysis.test_coactivation">
+<tt class="descname">test_coactivation</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_analysis.html#TestAnalysis.test_coactivation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_analysis.TestAnalysis.test_coactivation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test seed-based coactivation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_analysis.TestAnalysis.test_decoder">
+<tt class="descname">test_decoder</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_analysis.html#TestAnalysis.test_decoder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_analysis.TestAnalysis.test_decoder" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_analysis.TestAnalysis.test_get_random_voxels">
+<tt class="descname">test_get_random_voxels</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_analysis.html#TestAnalysis.test_get_random_voxels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_analysis.TestAnalysis.test_get_random_voxels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test random voxel retrieval.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_analysis.TestAnalysis.test_meta_analysis">
+<tt class="descname">test_meta_analysis</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_analysis.html#TestAnalysis.test_meta_analysis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_analysis.TestAnalysis.test_meta_analysis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test full meta-analysis stream.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_analysis.TestAnalysis.test_roi_averaging">
+<tt class="descname">test_roi_averaging</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_analysis.html#TestAnalysis.test_roi_averaging"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_analysis.TestAnalysis.test_roi_averaging" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test averaging within region labels in a mask.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_analysis.TestAnalysis.test_two_way_chi_sq">
+<tt class="descname">test_two_way_chi_sq</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_analysis.html#TestAnalysis.test_two_way_chi_sq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_analysis.TestAnalysis.test_two_way_chi_sq" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-neurosynth.tests.test_base">
+<span id="neurosynth-tests-test-base-module"></span><h2>neurosynth.tests.test_base module<a class="headerlink" href="#module-neurosynth.tests.test_base" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="neurosynth.tests.test_base.TestBase">
+<em class="property">class </em><tt class="descclassname">neurosynth.tests.test_base.</tt><tt class="descname">TestBase</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></tt></p>
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.setUp">
+<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.setUp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new Dataset and add features.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_dataset_initializes">
+<tt class="descname">test_dataset_initializes</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_dataset_initializes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_dataset_initializes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test whether dataset initializes properly.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_dataset_save_and_load">
+<tt class="descname">test_dataset_save_and_load</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_dataset_save_and_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_dataset_save_and_load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_either_dataset_or_manual_image_vars">
+<tt class="descname">test_either_dataset_or_manual_image_vars</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_either_dataset_or_manual_image_vars"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_either_dataset_or_manual_image_vars" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_export_to_json">
+<tt class="descname">test_export_to_json</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_export_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_export_to_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_feature_addition">
+<tt class="descname">test_feature_addition</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_feature_addition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_feature_addition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add feature data from multiple sources to FeatureTable.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_feature_search">
+<tt class="descname">test_feature_search</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_feature_search"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_feature_search" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test feature-based Mappable search. Tests both the FeatureTable method
+and the Dataset wrapper.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_feature_table_loads">
+<tt class="descname">test_feature_table_loads</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_feature_table_loads"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_feature_table_loads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test FeatureTable initialization.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_get_feature_counts">
+<tt class="descname">test_get_feature_counts</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_get_feature_counts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_get_feature_counts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_get_feature_data">
+<tt class="descname">test_get_feature_data</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_get_feature_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_get_feature_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test retrieval of Mappable x feature data.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_get_feature_names">
+<tt class="descname">test_get_feature_names</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_get_feature_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_get_feature_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_get_features_by_ids">
+<tt class="descname">test_get_features_by_ids</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_get_features_by_ids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_get_features_by_ids" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_get_image_data">
+<tt class="descname">test_get_image_data</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_get_image_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_get_image_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test retrieval of voxel x Mappable data.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_get_mappables">
+<tt class="descname">test_get_mappables</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_get_mappables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_get_mappables" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_grid_creation">
+<tt class="descname">test_grid_creation</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_grid_creation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_grid_creation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_image_table_loads">
+<tt class="descname">test_image_table_loads</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_image_table_loads"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_image_table_loads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test ImageTable initialization.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_img_to_json">
+<tt class="descname">test_img_to_json</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_img_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_img_to_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_selection_by_expression">
+<tt class="descname">test_selection_by_expression</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_selection_by_expression"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_selection_by_expression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests the expression-based search using the lexer/parser. 
+Note that this functionality is optional, so only run the test if 
+ply is available.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_selection_by_mask">
+<tt class="descname">test_selection_by_mask</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_selection_by_mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_selection_by_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test mask-based Mappable selection.
+Only one peak in the test dataset (in study5) should be within the sgACC.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_selection_by_peaks">
+<tt class="descname">test_selection_by_peaks</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_selection_by_peaks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_selection_by_peaks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test peak-based Mappable selection.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_trim_image_table">
+<tt class="descname">test_trim_image_table</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_trim_image_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_trim_image_table" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestBase.test_unmask">
+<tt class="descname">test_unmask</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestBase.test_unmask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestBase.test_unmask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test unmasking on 1d and 2d vectors (going back to 3d and 4d)</p>
+<p>TODO: test directly on Masker class and its functions, and on
+some smaller example data.  But then it should get into a separate
+TestCase to not &#8216;reload&#8217; the same Dataset.
+So for now let&#8217;s just reuse loaded Dataset and provide
+rudimentary testing</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="neurosynth.tests.test_base.TestMasker">
+<em class="property">class </em><tt class="descclassname">neurosynth.tests.test_base.</tt><tt class="descname">TestMasker</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestMasker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestMasker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></tt></p>
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestMasker.setUp">
+<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestMasker.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestMasker.setUp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new Dataset and add features.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neurosynth.tests.test_base.TestMasker.test_add_and_remove_masks">
+<tt class="descname">test_add_and_remove_masks</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/test_base.html#TestMasker.test_add_and_remove_masks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.test_base.TestMasker.test_add_and_remove_masks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-neurosynth.tests.test_kraut">
+<span id="neurosynth-tests-test-kraut-module"></span><h2>neurosynth.tests.test_kraut module<a class="headerlink" href="#module-neurosynth.tests.test_kraut" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-neurosynth.tests.utils">
+<span id="neurosynth-tests-utils-module"></span><h2>neurosynth.tests.utils module<a class="headerlink" href="#module-neurosynth.tests.utils" title="Permalink to this headline">¶</a></h2>
+<p>Some handy functionality to be used by the Neurosynth test suite</p>
+<dl class="function">
+<dt id="neurosynth.tests.utils.get_resource_path">
+<tt class="descclassname">neurosynth.tests.utils.</tt><tt class="descname">get_resource_path</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/utils.html#get_resource_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.utils.get_resource_path" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="neurosynth.tests.utils.get_test_data_path">
+<tt class="descclassname">neurosynth.tests.utils.</tt><tt class="descname">get_test_data_path</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/utils.html#get_test_data_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.utils.get_test_data_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the path to test datasets, terminated with separator (/ vs )</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neurosynth.tests.utils.get_test_dataset">
+<tt class="descclassname">neurosynth.tests.utils.</tt><tt class="descname">get_test_dataset</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neurosynth/tests/utils.html#get_test_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neurosynth.tests.utils.get_test_dataset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-neurosynth.tests">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-neurosynth.tests" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="neurosynth.base.html" title="neurosynth.base package"
+             >previous</a> |</li>
+        <li><a href="index.html">neurosynth  documentation</a> &raquo;</li>
+          <li><a href="neurosynth.html" >neurosynth package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Tal Yarkoni.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

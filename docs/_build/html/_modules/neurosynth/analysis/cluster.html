@@ -1,0 +1,379 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neurosynth.analysis.cluster &mdash; neurosynth  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="neurosynth  documentation" href="../../../index.html" />
+    <link rel="up" title="neurosynth" href="../../neurosynth.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neurosynth  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../neurosynth.html" accesskey="U">neurosynth</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for neurosynth.analysis.cluster</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+<span class="kn">from</span> <span class="nn">neurosynth.base.dataset</span> <span class="kn">import</span> <span class="n">Dataset</span>
+<span class="kn">from</span> <span class="nn">neurosynth.analysis</span> <span class="kn">import</span> <span class="nb">reduce</span> <span class="k">as</span> <span class="n">nsr</span>
+<span class="kn">from</span> <span class="nn">neurosynth.base.mask</span> <span class="kn">import</span> <span class="n">Masker</span>
+<span class="kn">from</span> <span class="nn">neurosynth.base</span> <span class="kn">import</span> <span class="n">imageutils</span>
+<span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">cluster</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;neurosynth.cluster&#39;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Clusterer</span><span class="p">:</span>
+<div class="viewcode-block" id="Clusterer"><a class="viewcode-back" href="../../../neurosynth.analysis.html#neurosynth.analysis.cluster.Clusterer">[docs]</a>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="s">&#39;.&#39;</span><span class="p">,</span>  <span class="n">grid_scale</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+            <span class="n">features</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">feature_threshold</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">global_mask</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">roi_mask</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> 
+            <span class="n">distance_mask</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">min_voxels_per_study</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">min_studies_per_voxel</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> 
+            <span class="n">distance_metric</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialize Clusterer.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            dataset: The dataset to use for clustering. Either a Dataset instance or a numpy</span>
+<span class="sd">                array with voxels in rows and features in columns.</span>
+<span class="sd">            algorithm: Optional algorithm to use for clustering. If None, an algorithm </span>
+<span class="sd">                must be passed to the cluster() method later.</span>
+<span class="sd">            output_directory: Directory to use for writing all outputs.</span>
+<span class="sd">            grid_scale: Optional integer. If provided, a 3D grid will be applied to the </span>
+<span class="sd">                image data, with values in all voxels in each grid cell being averaged </span>
+<span class="sd">                prior to clustering analysis. This is an effective means of dimension </span>
+<span class="sd">                reduction in cases where the data are otherwise too large for clustering.</span>
+<span class="sd">            features: Optional features to use for selecting a subset of the studies in the </span>
+<span class="sd">                Dataset instance. If dataset is a numpy matrix, will be ignored.</span>
+<span class="sd">            feature_threshold: float; the threshold to use for feature selection. Will be </span>
+<span class="sd">                ignored if features is None.</span>
+<span class="sd">            global_mask: An image defining the space to use for all analyses. Only necessary</span>
+<span class="sd">                if dataset is a numpy array.</span>
+<span class="sd">            roi_mask: An image that determines which voxels to cluster. All non-zero voxels</span>
+<span class="sd">                will be included in the clustering analysis. When roi_mask is None, all </span>
+<span class="sd">                voxels in the global_mask (i.e., the whole brain) will be clustered. roi_mask</span>
+<span class="sd">                can be an image filename, a nibabel image, or an already-masked array with </span>
+<span class="sd">                the same dimensions as the global_mask.</span>
+<span class="sd">            distance_mask: An image defining the voxels to base the distance matrix </span>
+<span class="sd">                computation on. All non-zero voxels will be used to compute the distance</span>
+<span class="sd">                matrix. For example, if the roi_mask contains voxels in only the insula, </span>
+<span class="sd">                and distance_mask contains voxels in only the cerebellum, then voxels in </span>
+<span class="sd">                the insula will be clustered based on the similarity of their coactvation </span>
+<span class="sd">                with all and only cerebellum voxels.</span>
+<span class="sd">            min_voxels_per_study: An optional integer. If provided, all voxels with fewer </span>
+<span class="sd">                than this number of studies will be removed from analysis.</span>
+<span class="sd">            min_studies_per_voxel: An optional integer. If provided, all studies with fewer </span>
+<span class="sd">                than this number of active voxels will be removed from analysis.</span>
+<span class="sd">            distance_metric: Optional string providing the distance metric to use for </span>
+<span class="sd">                computation of a distance matrix. When None, no distance matrix is computed</span>
+<span class="sd">                and we assume that clustering will be done on the raw data.</span>
+<span class="sd">            **kwargs: Additional keyword arguments to pass to the clustering algorithm.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span> <span class="o">=</span> <span class="n">output_dir</span>
+
+        <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_set_clustering_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">):</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span>
+
+            <span class="k">if</span> <span class="n">global_mask</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">global_mask</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">masker</span>
+
+            <span class="k">if</span> <span class="n">features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">get_ids_by_features</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">feature_threshold</span><span class="p">,</span> 
+                            <span class="n">get_image_data</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">get_image_data</span><span class="p">()</span>
+
+            <span class="c"># if min_studies_per_voxel is not None:</span>
+            <span class="c">#     logger.info(&quot;Thresholding voxels based on number of studies.&quot;)</span>
+            <span class="c">#     sum_vox = data.sum(1)</span>
+            <span class="c">#     # Save the indices for later reconstruction</span>
+            <span class="c">#     active_vox = np.where(sum_vox &gt; min_studies_per_voxel)[0]  </span>
+            <span class="c">#     n_active_vox = active_vox.shape[0]</span>
+
+            <span class="c"># if min_voxels_per_study is not None:</span>
+            <span class="c">#     logger.info(&quot;Thresholding studies based on number of voxels.&quot;)</span>
+            <span class="c">#     sum_studies = data.sum(0)</span>
+            <span class="c">#     active_studies = np.where(sum_studies &gt; min_voxels_per_study)[0]</span>
+            <span class="c">#     n_active_studies = active_studies.shape[0]</span>
+
+            <span class="c"># if min_studies_per_voxel is not None:</span>
+            <span class="c">#     logger.info(&quot;Selecting voxels with more than %d studies.&quot; % min_studies_per_voxel)</span>
+            <span class="c">#     data = data[active_vox, :]</span>
+
+            <span class="c"># if min_voxels_per_study is not None:</span>
+            <span class="c">#     logger.info(&quot;Selecting studies with more than %d voxels.&quot; % min_voxels_per_study)</span>
+            <span class="c">#     data = data[:, active_studies]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">dataset</span>
+
+            <span class="k">if</span> <span class="n">global_mask</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;If dataset is a numpy array, a valid global_mask (filename, &quot;</span> <span class="o">+</span>
+                    <span class="s">&quot;Mask instance, or nibabel image) must be passed.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">global_mask</span><span class="p">,</span> <span class="n">Masker</span><span class="p">):</span>
+            <span class="n">global_mask</span> <span class="o">=</span> <span class="n">Masker</span><span class="p">(</span><span class="n">global_mask</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">masker</span> <span class="o">=</span> <span class="n">global_mask</span>
+
+        <span class="k">if</span> <span class="n">distance_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">distance_mask</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">grid_scale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_data</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">nsr</span><span class="o">.</span><span class="n">apply_grid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">masker</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">grid_scale</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">vox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">get_current_mask</span><span class="p">(</span><span class="n">in_global_mask</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">vox</span><span class="p">,:]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">roi_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">roi_mask</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">grid_scale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">nsr</span><span class="o">.</span><span class="n">apply_grid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">masker</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">grid_scale</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">vox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">get_current_mask</span><span class="p">(</span><span class="n">in_global_mask</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">vox</span><span class="p">,:]</span>
+            
+        <span class="k">if</span> <span class="n">distance_metric</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_distance_matrix</span><span class="p">(</span><span class="n">distance_metric</span><span class="o">=</span><span class="n">distance_metric</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">create_distance_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distance_metric</span><span class="o">=</span><span class="s">&#39;jaccard&#39;</span><span class="p">,</span> <span class="n">affinity</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">figure_file</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> 
+<div class="viewcode-block" id="Clusterer.create_distance_matrix"><a class="viewcode-back" href="../../../neurosynth.analysis.html#neurosynth.analysis.cluster.Clusterer.create_distance_matrix">[docs]</a>                                <span class="n">distance_file</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Creates a distance matrix of each grid roi across studies in Neurosynth Dataset.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            distance_metric: The distance metric to use; see scipy documentation for available </span>
+<span class="sd">                metrics. Defaults to Jaccard Distance.</span>
+<span class="sd">            affinity: If True, converts distance to affinity matrix (1 - distance).</span>
+<span class="sd">            figure_file: Filename for output image of the clustered data. If None, no image is written.</span>
+<span class="sd">            distance_file: Filename for output of the distance matrix. If None, matrix is not saved.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">sklearn.metrics.pairwise</span> <span class="kn">import</span> <span class="n">pairwise_distances</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Creating distance matrix using &#39;</span> <span class="o">+</span> <span class="n">distance_metric</span><span class="p">)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_data</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;target_data&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="bp">None</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">pairwise_distances</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">distance_metric</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Distance matrix computation took </span><span class="si">%.1f</span><span class="s"> seconds.&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">t</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">figure_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span><span class="n">aspect</span><span class="o">=</span><span class="s">&#39;auto&#39;</span><span class="p">,</span><span class="n">interpolation</span><span class="o">=</span><span class="s">&#39;nearest&#39;</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">figure_file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">distance_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">distance_file</span><span class="p">,</span> <span class="n">dist</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">affinity</span><span class="p">:</span>
+            <span class="n">dist</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distance_matrix</span> <span class="o">=</span> <span class="n">dist</span>
+
+
+    <span class="k">def</span> <span class="nf">cluster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">save_images</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">precomputed_distances</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> </div>
+<div class="viewcode-block" id="Clusterer.cluster"><a class="viewcode-back" href="../../../neurosynth.analysis.html#neurosynth.analysis.cluster.Clusterer.cluster">[docs]</a>            <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            algorithm: Optional clustering algorithm to use (see _set_clustering_algorithm</span>
+<span class="sd">                for details). If None (default), use algorithm passed to the Clusterer</span>
+<span class="sd">                instance at initialization.</span>
+<span class="sd">            n_clusters: Number of clusters to extract. Can be an integer or a list</span>
+<span class="sd">                of integers to iterate.</span>
+<span class="sd">            save_images: Boolean indicating whether or not to save images to file.</span>
+<span class="sd">            precomputed_distances: Indicates whether or not to use precomputed distances in </span>
+<span class="sd">                the clustering. If True, the distance_matrix stored in the instance will be </span>
+<span class="sd">                used; when False (default), the raw data will be used.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_set_clustering_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;clusterer&#39;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;You must provide a valid clustering algorithm.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n_clusters</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">n_clusters</span> <span class="o">=</span> <span class="p">[</span><span class="n">n_clusters</span><span class="p">]</span>
+
+        <span class="n">clusterer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clusterer</span>
+
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">n_clusters</span><span class="p">:</span>
+            <span class="c"># Set n_clusters for algorithms that allow it</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">clusterer</span><span class="p">,</span> <span class="s">&#39;n_clusters&#39;</span><span class="p">):</span>
+                <span class="n">clusterer</span><span class="o">.</span><span class="n">n_clusters</span> <span class="o">=</span> <span class="n">k</span>
+
+            <span class="c"># Now figure out if we need to pass in raw data or a distance matrix.</span>
+            <span class="k">if</span> <span class="n">precomputed_distances</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;distance_matrix&#39;</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;No precomputed distance matrix exists. Either set precomputed_distances to False, &quot;</span> <span class="o">+</span>
+                                    <span class="s">&quot;or call the create_distance_matrix method before trying to cluster.&quot;</span><span class="p">)</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_matrix</span>
+
+                <span class="c"># Tell clusterer not to compute a distance/affinity matrix</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">clusterer</span><span class="p">,</span> <span class="s">&#39;affinity&#39;</span><span class="p">):</span>  <span class="c"># SpectralClustering and AffinityPropagation</span>
+                    <span class="n">clusterer</span><span class="o">.</span><span class="n">affinity</span> <span class="o">=</span> <span class="s">&#39;precomputed&#39;</span>
+                <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">clusterer</span><span class="p">,</span> <span class="s">&#39;metric&#39;</span><span class="p">):</span>  <span class="c"># DBSCAN</span>
+                    <span class="n">clusterer</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="s">&#39;precomputed&#39;</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">clusterer</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">save_images</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_create_cluster_images</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_set_clustering_algorithm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span></div>
+        <span class="sd">&quot;&quot;&quot; Set the algorithm to use in subsequent cluster analyses.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            algorithm: The clustering algorithm to use. Either a string or an (uninitialized)</span>
+<span class="sd">                scikit-learn clustering object. If string, must be one of &#39;ward&#39;, &#39;spectral&#39;, </span>
+<span class="sd">                &#39;kmeans&#39;, or &#39;minik&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+
+            <span class="n">algs</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s">&#39;ward&#39;</span><span class="p">:</span> <span class="n">cluster</span><span class="o">.</span><span class="n">Ward</span><span class="p">,</span>
+                <span class="s">&#39;spectral&#39;</span><span class="p">:</span> <span class="n">cluster</span><span class="o">.</span><span class="n">SpectralClustering</span><span class="p">,</span>
+                <span class="s">&#39;kmeans&#39;</span><span class="p">:</span> <span class="n">cluster</span><span class="o">.</span><span class="n">KMeans</span><span class="p">,</span>
+                <span class="s">&#39;minik&#39;</span><span class="p">:</span> <span class="n">cluster</span><span class="o">.</span><span class="n">MiniBatchKMeans</span><span class="p">,</span>
+                <span class="s">&#39;affprop&#39;</span><span class="p">:</span> <span class="n">cluster</span><span class="o">.</span><span class="n">AffinityPropagation</span><span class="p">,</span>
+                <span class="s">&#39;dbscan&#39;</span><span class="p">:</span> <span class="n">cluster</span><span class="o">.</span><span class="n">DBSCAN</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">algs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Invalid clustering algorithm name. Valid options are &#39;ward&#39;,&quot;</span> <span class="o">+</span> 
+                    <span class="s">&quot;&#39;spectral&#39;, &#39;kmeans&#39;, &#39;minik&#39;, &#39;affprop&#39;, or &#39;dbscan&#39;.&quot;</span><span class="p">)</span>
+
+            <span class="n">algorithm</span> <span class="o">=</span> <span class="n">algs</span><span class="p">[</span><span class="n">algorithm</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">clusterer</span> <span class="o">=</span> <span class="n">algorithm</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">plot_distance_by_cluster</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Clusterer.plot_distance_by_cluster"><a class="viewcode-back" href="../../../neurosynth.analysis.html#neurosynth.analysis.cluster.Clusterer.plot_distance_by_cluster">[docs]</a>        <span class="sd">&#39;&#39;&#39; Creates a figure of distance matrix sorted by cluster solution. &#39;&#39;&#39;</span>
+        <span class="n">lab</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+        <span class="n">lab</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;cluster&#39;</span><span class="p">]</span>
+        <span class="n">lab</span><span class="p">[</span><span class="s">&#39;cluster&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="n">csort</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">lab</span><span class="p">[</span><span class="s">&#39;cluster&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">orderedc</span> <span class="o">=</span> <span class="n">distance_matrix</span><span class="p">[:,</span><span class="n">csort</span><span class="p">]</span>
+        <span class="n">orderedc</span> <span class="o">=</span> <span class="n">orderedc</span><span class="p">[</span><span class="n">csort</span><span class="p">,:]</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">orderedc</span><span class="p">,</span><span class="n">aspect</span><span class="o">=</span><span class="s">&#39;auto&#39;</span><span class="p">,</span><span class="n">interpolation</span><span class="o">=</span><span class="s">&#39;nearest&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">figname</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">plot_silhouette_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Clusterer.plot_silhouette_scores"><a class="viewcode-back" href="../../../neurosynth.analysis.html#neurosynth.analysis.cluster.Clusterer.plot_silhouette_scores">[docs]</a>        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_create_cluster_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span></div>
+        <span class="sd">&#39;&#39;&#39; Creates a Nifti image of reconstructed cluster labels. </span>
+<span class="sd">        Args:</span>
+<span class="sd">            labels: A vector of cluster labels</span>
+<span class="sd">            output_dir: A string indicating folder to output images to. If None, </span>
+<span class="sd">                creates a &quot;ClusterImages&quot; directory below the Clusterer instance&#39;s</span>
+<span class="sd">                output directory.</span>
+<span class="sd">        Outputs:</span>
+<span class="sd">            Cluster_k.nii.gz: Will output a nifti image with cluster labels</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">labels</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c"># Reconstruct grid into original space</span>
+        <span class="c"># TODO: replace with masker.unmask()</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;grid&#39;</span><span class="p">):</span>
+            <span class="n">regions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">)</span>
+            <span class="n">unique_regions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">regions</span><span class="p">)</span>
+            <span class="n">n_regions</span> <span class="o">=</span> <span class="n">unique_regions</span><span class="o">.</span><span class="n">size</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">regions</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_regions</span><span class="p">):</span>
+                <span class="n">m</span><span class="p">[</span><span class="n">regions</span> <span class="o">==</span> <span class="n">unique_regions</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">m</span>
+
+        <span class="k">if</span> <span class="n">output_dir</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+             <span class="n">output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="s">&#39;ClusterImages&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">output_dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+
+        <span class="n">outfile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span><span class="s">&#39;Cluster_k</span><span class="si">%d</span><span class="s">.nii.gz&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">labels</span><span class="p">))))</span>
+        <span class="n">imageutils</span><span class="o">.</span><span class="n">save_img</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">outfile</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">masker</span><span class="p">)</span>
+</pre></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neurosynth  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../neurosynth.html" >neurosynth</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Tal Yarkoni.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

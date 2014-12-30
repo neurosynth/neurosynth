@@ -1,0 +1,212 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neurosynth.analysis.reduce &mdash; neurosynth  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="neurosynth  documentation" href="../../../index.html" />
+    <link rel="up" title="neurosynth" href="../../neurosynth.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neurosynth  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../neurosynth.html" accesskey="U">neurosynth</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for neurosynth.analysis.reduce</h1><div class="highlight"><pre>
+<span class="c"># emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-</span>
+<span class="c"># ex: set sts=2 ts=2 sw=2 et:</span>
+<span class="sd">&quot;&quot;&quot; Dimensional/data reduction methods. &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">neurosynth.base.dataset</span> <span class="kn">import</span> <span class="n">Dataset</span>
+<span class="kn">from</span> <span class="nn">neurosynth.base</span> <span class="kn">import</span> <span class="n">imageutils</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;neurosynth.cluster&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="average_within_regions"><a class="viewcode-back" href="../../../neurosynth.analysis.html#neurosynth.analysis.reduce.average_within_regions">[docs]</a><span class="k">def</span> <span class="nf">average_within_regions</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">regions</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">remove_zero</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Aggregates over all voxels within each ROI in the input image.</span>
+
+<span class="sd">        Takes a Dataset and a Nifti image that defines distinct regions, and</span>
+<span class="sd">        returns a numpy matrix of  ROIs x mappables, where the value at each ROI is</span>
+<span class="sd">        the proportion of active voxels in that ROI. Each distinct ROI must have a</span>
+<span class="sd">        unique value in the image; non-contiguous voxels with the same value will</span>
+<span class="sd">        be assigned to the same ROI.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dataset: Either a Dataset instance from which image data are extracted, or a </span>
+<span class="sd">                Numpy array containing image data to use. If the latter, the array contains </span>
+<span class="sd">                voxels in rows and features/studies in columns. The number of voxels must </span>
+<span class="sd">                be equal to the length of the vectorized image mask in the </span>
+<span class="sd">            regions: An image defining the boundaries of the regions to use. Can be:</span>
+<span class="sd">                1) A string name of the NIFTI or Analyze-format image</span>
+<span class="sd">                2) A NiBabel SpatialImage</span>
+<span class="sd">                3) A 1D numpy array of the same length as the mask vector in the Dataset&#39;s</span>
+<span class="sd">                     current Masker.</span>
+<span class="sd">            threshold: An optional float in the range of 0 - 1 or integer. If passed, the array</span>
+<span class="sd">                will be binarized, with ROI values above the threshold assigned to True</span>
+<span class="sd">                and values below the threshold assigned to False. (E.g., if threshold =</span>
+<span class="sd">                0.05, only ROIs in which more than 5% of voxels are active will be</span>
+<span class="sd">                considered active.) If threshold is integer, studies will only be considered </span>
+<span class="sd">                active if they activate more than that number of voxels in the ROI.</span>
+<span class="sd">            remove_zero: An optional boolean; when True, assume that voxels with value</span>
+<span class="sd">                of 0 should not be considered as a separate ROI, and will be ignored.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A 2D numpy array with ROIs in rows and mappables in columns.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="n">regions</span><span class="p">)</span><span class="o">.</span><span class="n">__module__</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;numpy&#39;</span><span class="p">):</span>
+            <span class="n">regions</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">regions</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">):</span>
+            <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get_image_data</span><span class="p">(</span><span class="n">dense</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">regions</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">remove_zero</span><span class="p">:</span>
+                <span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">labels</span><span class="p">)]</span>
+
+        <span class="n">n_regions</span> <span class="o">=</span> <span class="n">labels</span><span class="o">.</span><span class="n">size</span>
+
+        <span class="c"># Create the ROI-coding matrix</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">regions</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">n_regions</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_regions</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                    <span class="n">m</span><span class="p">[</span><span class="n">regions</span> <span class="o">==</span> <span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">m</span><span class="p">[</span><span class="n">regions</span> <span class="o">==</span> <span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">regions</span> <span class="o">==</span> <span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="c"># Call dot() on the array itself as this will use sparse matrix </span>
+        <span class="c"># multiplication if possible.</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">m</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="k">if</span> <span class="n">threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">result</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="apply_grid"><a class="viewcode-back" href="../../../neurosynth.analysis.html#neurosynth.analysis.reduce.apply_grid">[docs]</a><span class="k">def</span> <span class="nf">apply_grid</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">masker</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Imposes a 3D grid on the brain volume and averages across all voxels that </span>
+<span class="sd">    fall within each cell.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        dataset: Data to apply grid to. Either a Dataset instance, or a numpy array</span>
+<span class="sd">            with voxels in rows and features in columns.</span>
+<span class="sd">        masker: Optional Masker instance used to map between the created grid and </span>
+<span class="sd">            the dataset. This is only needed if dataset is a numpy array; if </span>
+<span class="sd">            dataset is a Dataset instance, the Masker in the dataset will be used.</span>
+<span class="sd">        scale: int; scaling factor (in mm) to pass onto create_grid().</span>
+<span class="sd">        threshold: Optional float to pass to reduce.average_within_regions().</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple of length 2, where the first element is a numpy array of dimensions</span>
+<span class="sd">        n_cubes x n_studies, and the second element is a numpy array, with the same </span>
+<span class="sd">        dimensions as the Masker instance in the current Dataset, that maps voxel </span>
+<span class="sd">        identities onto cell IDs in the grid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">masker</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">):</span>
+            <span class="n">masker</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">masker</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;If dataset is a numpy array, a masker must be provided.&quot;</span><span class="p">)</span>
+
+    <span class="n">grid</span> <span class="o">=</span> <span class="n">imageutils</span><span class="o">.</span><span class="n">create_grid</span><span class="p">(</span><span class="n">masker</span><span class="o">.</span><span class="n">volume</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+    <span class="n">cm</span> <span class="o">=</span> <span class="n">masker</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">in_global_mask</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">average_within_regions</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">cm</span><span class="p">,</span> <span class="n">threshold</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">grid</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="get_random_voxels"><a class="viewcode-back" href="../../../neurosynth.analysis.html#neurosynth.analysis.reduce.get_random_voxels">[docs]</a><span class="k">def</span> <span class="nf">get_random_voxels</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">n_voxels</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns mappable data for a random subset of voxels.</span>
+
+<span class="sd">        May be useful as a baseline in predictive analyses--e.g., to compare performance</span>
+<span class="sd">        of a more principled feature selection method with simple random selection.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dataset: A Dataset instance</span>
+<span class="sd">            n_voxels: An integer specifying the number of random voxels to select.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A 2D numpy array with (randomly-selected) voxels in rows and mappables in columns.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">voxels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">n_vox_in_vol</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">voxels</span><span class="p">)</span>
+        <span class="n">selected</span> <span class="o">=</span> <span class="n">voxels</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">n_voxels</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get_image_data</span><span class="p">(</span><span class="n">voxels</span><span class="o">=</span><span class="n">selected</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neurosynth  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../neurosynth.html" >neurosynth</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Tal Yarkoni.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

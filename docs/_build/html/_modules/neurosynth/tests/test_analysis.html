@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neurosynth.tests.test_analysis &mdash; neurosynth  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="neurosynth  documentation" href="../../../index.html" />
+    <link rel="up" title="neurosynth" href="../../neurosynth.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neurosynth  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../neurosynth.html" accesskey="U">neurosynth</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for neurosynth.tests.test_analysis</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">unittest</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">from</span> <span class="nn">neurosynth.analysis</span> <span class="kn">import</span> <span class="n">classify</span>
+<span class="kn">from</span> <span class="nn">neurosynth.analysis</span> <span class="kn">import</span> <span class="n">cluster</span>
+<span class="kn">from</span> <span class="nn">neurosynth.analysis</span> <span class="kn">import</span> <span class="nb">reduce</span>
+<span class="kn">from</span> <span class="nn">neurosynth.analysis</span> <span class="kn">import</span> <span class="n">meta</span>
+<span class="kn">from</span> <span class="nn">neurosynth.analysis</span> <span class="kn">import</span> <span class="n">stats</span>
+<span class="kn">from</span> <span class="nn">neurosynth.tests.utils</span> <span class="kn">import</span> <span class="n">get_test_dataset</span><span class="p">,</span> <span class="n">get_test_data_path</span>
+<span class="kn">from</span> <span class="nn">numpy.testing</span> <span class="kn">import</span> <span class="n">assert_array_almost_equal</span>
+
+
+<div class="viewcode-block" id="TestAnalysis"><a class="viewcode-back" href="../../../neurosynth.tests.html#neurosynth.tests.test_analysis.TestAnalysis">[docs]</a><span class="k">class</span> <span class="nc">TestAnalysis</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="TestAnalysis.setUp"><a class="viewcode-back" href="../../../neurosynth.tests.html#neurosynth.tests.test_analysis.TestAnalysis.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a new Dataset and add features. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">get_test_dataset</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="TestAnalysis.test_meta_analysis"><a class="viewcode-back" href="../../../neurosynth.tests.html#neurosynth.tests.test_analysis.TestAnalysis.test_meta_analysis">[docs]</a>    <span class="k">def</span> <span class="nf">test_meta_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Test full meta-analysis stream. &quot;&quot;&quot;</span>
+        <span class="c"># run a meta-analysis</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;study1&#39;</span><span class="p">,</span> <span class="s">&#39;study3&#39;</span><span class="p">]</span>
+        <span class="n">ma</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">MetaAnalysis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
+        <span class="c"># save the results</span>
+        <span class="n">tempdir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">()</span>
+        <span class="n">ma</span><span class="o">.</span><span class="n">save_results</span><span class="p">(</span><span class="n">tempdir</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s">&#39;test&#39;</span><span class="p">)</span>
+        <span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="p">(</span><span class="n">tempdir</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span> <span class="o">+</span> <span class="s">&quot;test_*.nii.gz&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEquals</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">),</span> <span class="mi">9</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">tempdir</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="TestAnalysis.test_decoder"><a class="viewcode-back" href="../../../neurosynth.tests.html#neurosynth.tests.test_analysis.TestAnalysis.test_decoder">[docs]</a>    <span class="k">def</span> <span class="nf">test_decoder</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="TestAnalysis.test_coactivation"><a class="viewcode-back" href="../../../neurosynth.tests.html#neurosynth.tests.test_analysis.TestAnalysis.test_coactivation">[docs]</a>    <span class="k">def</span> <span class="nf">test_coactivation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Test seed-based coactivation. &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="TestAnalysis.test_roi_averaging"><a class="viewcode-back" href="../../../neurosynth.tests.html#neurosynth.tests.test_analysis.TestAnalysis.test_roi_averaging">[docs]</a>    <span class="k">def</span> <span class="nf">test_roi_averaging</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Test averaging within region labels in a mask. &quot;&quot;&quot;</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">get_test_data_path</span><span class="p">()</span> <span class="o">+</span> <span class="s">&#39;sgacc_mask.nii.gz&#39;</span>
+        <span class="n">regions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">masker</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">in_global_mask</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">avg_vox</span> <span class="o">=</span> <span class="nb">reduce</span><span class="o">.</span><span class="n">average_within_regions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">regions</span><span class="p">)</span>
+        <span class="n">n_studies</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">image_table</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">n_studies</span><span class="p">,</span> <span class="n">avg_vox</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">avg_vox</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="mf">0.05</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="TestAnalysis.test_get_random_voxels"><a class="viewcode-back" href="../../../neurosynth.tests.html#neurosynth.tests.test_analysis.TestAnalysis.test_get_random_voxels">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_random_voxels</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Test random voxel retrieval. &quot;&quot;&quot;</span>
+        <span class="n">n_vox</span> <span class="o">=</span> <span class="mi">100</span>
+        <span class="n">rand_vox</span> <span class="o">=</span> <span class="nb">reduce</span><span class="o">.</span><span class="n">get_random_voxels</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">n_vox</span><span class="p">)</span>
+        <span class="n">n_studies</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">image_table</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">rand_vox</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="p">(</span><span class="n">n_vox</span><span class="p">,</span> <span class="n">n_studies</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="TestAnalysis.test_apply_grid_to_image"><a class="viewcode-back" href="../../../neurosynth.tests.html#neurosynth.tests.test_analysis.TestAnalysis.test_apply_grid_to_image">[docs]</a>    <span class="k">def</span> <span class="nf">test_apply_grid_to_image</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">grid</span> <span class="o">=</span> <span class="nb">reduce</span><span class="o">.</span><span class="n">apply_grid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEquals</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="p">(</span><span class="mi">1435</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+        <span class="n">sums</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">sums</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">sums</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertGreater</span><span class="p">(</span><span class="n">sums</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">sums</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</div>
+<div class="viewcode-block" id="TestAnalysis.test_two_way_chi_sq"><a class="viewcode-back" href="../../../neurosynth.tests.html#neurosynth.tests.test_analysis.TestAnalysis.test_two_way_chi_sq">[docs]</a>    <span class="k">def</span> <span class="nf">test_two_way_chi_sq</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">two_way</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">42</span><span class="p">,</span> <span class="mi">32</span><span class="p">],</span> <span class="p">[</span><span class="mi">60</span><span class="p">,</span> <span class="mi">81</span><span class="p">]])[</span><span class="bp">None</span><span class="p">,:,:])</span>
+        <span class="c"># Test value verified using several different packages</span>
+        <span class="n">assert_array_almost_equal</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mf">0.04753082</span><span class="p">)</span>
+
+    <span class="c"># def test_clustering(self):</span>
+    <span class="c">#     clstr = cluster.Clusterer(self.dataset, grid_scale=20)</span>
+    <span class="c">#     clstr.cluster(algorithm=&#39;ward&#39;, n_clusters=3)</span>
+    <span class="c">#     t = &#39;ClusterImages/Cluster_k3.nii.gz&#39;</span>
+    <span class="c">#     self.assertTrue(os.path.exists(t))</span>
+    <span class="c">#     os.unlink(t)</span>
+    <span class="c">#     os.rmdir(&#39;ClusterImages&#39;)</span>
+
+</div></div>
+<span class="n">suite</span> <span class="o">=</span> <span class="n">unittest</span><span class="o">.</span><span class="n">TestLoader</span><span class="p">()</span><span class="o">.</span><span class="n">loadTestsFromTestCase</span><span class="p">(</span><span class="n">TestAnalysis</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">unittest</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neurosynth  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../neurosynth.html" >neurosynth</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Tal Yarkoni.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
