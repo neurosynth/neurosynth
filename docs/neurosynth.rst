@@ -13,14 +13,9 @@ Subpackages
 Submodules
 ----------
 
-neurosynth.version module
--------------------------
+.. toctree::
 
-.. automodule:: neurosynth.version
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   neurosynth.version
 
 Module contents
 ---------------

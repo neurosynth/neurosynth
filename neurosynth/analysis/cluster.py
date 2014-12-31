@@ -1,8 +1,8 @@
+""" Clustering/parcellation tools"""
 
 import numpy as np
 import logging
 from time import time
-from neurosynth.base.dataset import Dataset
 from neurosynth.analysis import reduce as nsr
 from neurosynth.analysis import meta
 from neurosynth.base.mask import Masker
@@ -14,6 +14,7 @@ from os.path import join, basename, isdir
 from copy import deepcopy
 from shutil import copyfile
 import simplejson as json
+import matplotlib.pyplot as plt
 
 logger = logging.getLogger('neurosynth.cluster')
 
@@ -260,16 +261,16 @@ class Clusterer:
         self.clusterer = algorithm(**kwargs)
 
 
-    def plot_distance_by_cluster(self):
-        ''' Creates a figure of distance matrix sorted by cluster solution. '''
-        lab = pd.DataFrame(labels)
-        lab.columns = ['cluster']
-        lab['cluster'].sort()
-        csort = list(lab['cluster'].index)
-        orderedc = distance_matrix[:,csort]
-        orderedc = orderedc[csort,:]
-        plt.imshow(orderedc,aspect='auto',interpolation='nearest')
-        plt.savefig(figname)
+    # def plot_distance_by_cluster(self):
+    #     ''' Creates a figure of distance matrix sorted by cluster solution. '''
+    #     lab = pd.DataFrame(labels)
+    #     lab.columns = ['cluster']
+    #     lab['cluster'].sort()
+    #     csort = list(lab['cluster'].index)
+    #     orderedc = distance_matrix[:,csort]
+    #     orderedc = orderedc[csort,:]
+    #     plt.imshow(orderedc,aspect='auto',interpolation='nearest')
+    #     plt.savefig(figname)
 
     # def plot_silhouette_scores(self):
     #     pass

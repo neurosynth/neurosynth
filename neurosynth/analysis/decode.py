@@ -1,12 +1,10 @@
 # emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
 # ex: set sts=2 ts=2 sw=2 et:
-""" Decoding-related methods """
+""" Decoding tools"""
 
 import numpy as np
 from neurosynth.base.mask import Masker
 from neurosynth.base import imageutils
-from neurosynth.analysis import classify
-from neurosynth.analysis import plotutils #import radar_factory
 from os import path
 
 

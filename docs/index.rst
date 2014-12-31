@@ -1,23 +1,18 @@
-.. neurosynth documentation master file, created by
-   sphinx-quickstart on Tue Dec 30 10:29:31 2014.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Neurosynth
+==========
 
-Welcome to neurosynth's documentation!
-======================================
-
-Contents:
+.. image:: https://secure.travis-ci.org/neurosynth/neurosynth.png?branch=master
+	:target: https://travis-ci.org/neurosynth/neurosynth
+.. image:: https://coveralls.io/repos/neurosynth/neurosynth/badge.png?branch=master
+	:target: https://coveralls.io/r/neurosynth/neurosynth?branch=master
+|
+Neurosynth is a Python package for large-scale synthesis of functional neuroimaging data. It's the 
+stuff that generates all the stuff you see at `http://neurosynth.org <http://neurosynth.org>`_.
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 2
 
-   neurosynth
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+    getting_started
+    reference
+    GitHub repository <https://github.com/neurosynth/neurosynth>
+    getting_help

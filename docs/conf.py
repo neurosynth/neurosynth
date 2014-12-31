@@ -30,9 +30,19 @@ import os
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',
+    'sphinx.ext.inheritance_diagram',
     'sphinxcontrib.napoleon'
 ]
+
+# autosummary_generate = True
+
+# see http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
+# numpydoc_show_class_members = False
+
+# Inheritance diagrams
+inheritance_graph_attrs = dict(rankdir="TB", ratio='fill')
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -102,10 +112,22 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinxdoc'
-# import sphinx_rtd_theme
-# html_theme = "sphinx_rtd_theme"
-# html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+
+# html_theme = 'sphinxdoc'
+
+# import alabaster
+# html_theme_path = [alabaster.get_path()]
+# extensions = ['alabaster']
+# html_theme = 'alabaster'
+# html_sidebars = {
+#    '**': [
+#        'about.html', 'navigation.html', 'searchbox.html', 'donate.html',
+#    ]
+# }
+
+import sphinx_rtd_theme
+html_theme = "sphinx_rtd_theme"
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
