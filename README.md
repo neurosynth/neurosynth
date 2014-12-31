@@ -31,6 +31,9 @@ Depending on your operating system, you may need superuser privileges (prefix th
 
 That's it! You should now be ready to roll.
 
+## Documentation
+
+Documentation, including a [full API reference](http://neurosynth.readthedocs.org/en/latest/reference.html), is available [here](http://neurosynth.readthedocs.org/en/latest/)(caution: work in progress).
 
 ## Usage
 
