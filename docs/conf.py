@@ -120,6 +120,18 @@ if os.environ.get('READTHEDOCS', None) is None:
   html_theme = "sphinx_rtd_theme"
   html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
+# ReadTheDocks doesn't support necessary C dependencies (e.g., Atlas), so we 
+# mock them out per https://docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules.
+from mock import MagicMock
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return Mock()
+
+MOCK_MODULES = ['numpy', 'scipy', 'pandas', 'ply', 'scikit-learn']
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.

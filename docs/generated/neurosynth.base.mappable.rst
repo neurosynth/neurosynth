@@ -13,7 +13,9 @@ neurosynth.base.mappable
 
    .. autosummary::
    
+      Article
       Mappable
+      Table
    
    
 
