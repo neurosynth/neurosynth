@@ -39,16 +39,15 @@ Documentation, including a [full API reference](http://neurosynth.readthedocs.or
 
 Running analyses in Neurosynth is pretty straightforward. We're working on a user manual; in the meantime, you can take a look at the code in the /examples directory for an illustration of some common uses cases (some of the examples are in IPython Notebook format; you can view these online by entering the URL of the raw example on github into the online [IPython Notebook Viewer](http://nbviewer.ipython.org)--for example [this tutorial](http://nbviewer.ipython.org/urls/raw.github.com/neurosynth/neurosynth/master/examples/neurosynth_demo.ipynb) provides a nice overview). The rest of this Quickstart guide just covers the bare minimum.
 
-The NeuroSynth dataset resides in a separate submodule. If you installed Neurosynth directly from PyPI (i.e., with pip install), and don't want to muck around with git or any source code, you can manually download the data files from the [neurosynth-data repository](http://github.com/neurosynth/neurosynth-data). The latest dataset is always stored in current_data.tar.gz in the root folder. Older datasets are also available in the archive folder.
+The NeuroSynth dataset resides in a separate submodule located [here](http://github.com/neurosynth/neurosynth-data). Probably the easiest way to get the most recent data though is from within the Neurosynth package itself:
 
-Alternatively, if you cloned Neurosynth from GitHub, you can initialize the data repo as a submodule under data/ like so:
+	import neurosynth as ns
+	ns.dataset.download(path='.', unpack=True)
 
-    > git submodule init
-    > git submodule update
 
-You now have (among other things) a current_data.tar.gz file sitting under /data.
+...which should download the latest database files and save them to the current directory. Alternatively, you can manually download the data files from the [neurosynth-data repository](http://github.com/neurosynth/neurosynth-data). The latest dataset is always stored in current_data.tar.gz in the root folder. Older datasets are also available in the archive folder.
 
-The dataset archive contained 2 files: database.txt and features.txt. These contain the activations and meta-analysis tags for Neurosynth, respectively.
+The dataset archive (current_data.tar.gz) contains 2 files: database.txt and features.txt. These contain the activations and meta-analysis tags for Neurosynth, respectively.
 
 Once you have the data in place, you can generate a new Dataset instance from the database.txt file:
 
