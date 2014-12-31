@@ -16,7 +16,7 @@ import urllib2
 
 logger = logging.getLogger('neurosynth.dataset')
 
-def download(path='.', unpack=False):
+def download(path='.', url=None, unpack=False):
     """ Download the latest data files.
     Args:
         path (str): Location to save the retrieved data files. Defaults to
@@ -24,9 +24,11 @@ def download(path='.', unpack=False):
         unpack (bool): If True, unzips the data file post-download.
     """
 
-    url = 'https://github.com/neurosynth/neurosynth-data/blob/master/current_data.tar.gz?raw=true'
+    if url is None:
+        url = 'https://github.com/neurosynth/neurosynth-data/blob/master/current_data.tar.gz?raw=true'
     if os.path.exists(path) and os.path.isdir(path):
-        filename = os.path.join(path, 'neurosynth_data.tar.gz')
+        basename = os.path.basename(url).split('?')[0]
+        filename = os.path.join(path, basename)
     else:
         filename = path
 

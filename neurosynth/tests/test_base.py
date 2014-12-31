@@ -22,7 +22,8 @@ class TestBase(unittest.TestCase):
 
     def test_dataset_download(self):
         tmpdir = tempfile.mkdtemp()
-        ns.base.dataset.download(tmpdir, unpack=True)
+        url = 'https://raw.githubusercontent.com/neurosynth/neurosynth/master/neurosynth/tests/data/test_data.tar.gz'
+        ns.base.dataset.download(tmpdir, url=url, unpack=True)
         files = glob(os.path.join(tmpdir, '*.txt'))
         self.assertEqual(len(files), 2)
         shutil.rmtree(tmpdir)
