@@ -5,13 +5,54 @@
 import logging
 import re
 import os
+import sys
 import numpy as np
 import pandas as pd
 from scipy import sparse
 import mappable
 from neurosynth.base import mask, imageutils, transformations
+import urllib2
 
 logger = logging.getLogger('neurosynth.dataset')
+
+def download(path='.', unpack=False):
+    """ Download the latest data files.
+    Args:
+        path (str): Location to save the retrieved data files. Defaults to
+            current directory.
+        unpack (bool): If True, unzips the data file post-download.
+    """
+
+    url = 'https://github.com/neurosynth/neurosynth-data/blob/master/current_data.tar.gz?raw=true'
+    if os.path.exists(path) and os.path.isdir(path):
+        filename = os.path.join(path, 'neurosynth_data.tar.gz')
+    else:
+        filename = path
+
+    f = open(filename, 'wb')
+
+    u = urllib2.urlopen(url)
+    meta = u.info()
+    file_size = int(meta.getheaders("Content-Length")[0])
+    print("Downloading the latest Neurosynth files: {0} bytes: {1}".format(url, file_size))
+
+    bytes_dl = 0
+    block_size = 8192
+    while True:
+        buffer = u.read(block_size)
+        if not buffer: break
+        bytes_dl += len(buffer)
+        f.write(buffer)
+        p = float(bytes_dl) / file_size
+        status = r"{0}  [{1:.2%}]".format(bytes_dl, p)
+        status = status + chr(8)*(len(status)+1)
+        sys.stdout.write(status)
+
+    f.close()
+
+    if unpack:
+        import tarfile
+        tarfile.open(filename, 'r:gz').extractall(os.path.dirname(filename))
 
 
 class Dataset(object):

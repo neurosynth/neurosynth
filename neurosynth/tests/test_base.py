@@ -4,11 +4,12 @@ import pandas as pd
 import tempfile
 import os
 import shutil
-
+from glob import glob
 from neurosynth.tests.utils import get_test_dataset, get_test_data_path, get_resource_path
 from neurosynth.base.dataset import Dataset, ImageTable
 from neurosynth.base import imageutils
 from neurosynth.base.mask import Masker
+import neurosynth as ns
 from numpy.testing import assert_almost_equal
 import json
 
@@ -18,6 +19,13 @@ class TestBase(unittest.TestCase):
     def setUp(self):
         """ Create a new Dataset and add features. """
         self.dataset = get_test_dataset()
+
+    def test_dataset_download(self):
+        tmpdir = tempfile.mkdtemp()
+        ns.base.dataset.download(tmpdir, unpack=True)
+        files = glob(os.path.join(tmpdir, '*.txt'))
+        self.assertEqual(len(files), 2)
+        shutil.rmtree(tmpdir)
 
     def test_dataset_save_and_load(self):
         # smoke test of saving and loading
