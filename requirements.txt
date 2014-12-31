@@ -4,4 +4,3 @@ scipy
 pandas>=0.13
 ply
 scikit-learn
-sphinxcontrib-napoleon
