@@ -16,6 +16,19 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath("../neurosynth/analysis"))
 sys.path.insert(0, os.path.abspath("../neurosynth/base"))
+
+# ReadTheDocks doesn't support necessary C dependencies (e.g., Atlas), so we
+# mock them out per https://docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules.
+from mock import Mock as MagicMock
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return Mock()
+
+MOCK_MODULES = ['numpy', 'scipy', 'pandas', 'ply', 'scikit-learn', 'nibabel']
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -41,9 +54,6 @@ extensions = [
 
 # see http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
 # numpydoc_show_class_members = False
-
-# Inheritance diagrams
-inheritance_graph_attrs = dict(rankdir="TB", ratio='fill')
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
