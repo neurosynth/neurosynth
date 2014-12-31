@@ -58,14 +58,14 @@ class Mappable(object):
         return s
 
 
-# class Article(Mappable):
+class Article(Mappable):
 
-#     def __init__(self, data, transformer=None):
-#         super(Article, self).__init__(data, transformer)
+    def __init__(self, data, transformer=None):
+        super(Article, self).__init__(data, transformer)
 
 
-# class Table(Mappable):
+class Table(Mappable):
 
-#     def __init__(self, data, transformer=None, article=None):
-#         self.article = article
-#         super(Table, self).__init__(data, transformer)
+    def __init__(self, data, transformer=None, article=None):
+        self.article = article
+        super(Table, self).__init__(data, transformer)
