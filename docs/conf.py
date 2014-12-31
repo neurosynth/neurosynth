@@ -19,14 +19,22 @@ sys.path.insert(0, os.path.abspath("../neurosynth/base"))
 
 # ReadTheDocks doesn't support necessary C dependencies (e.g., Atlas), so we
 # mock them out per https://docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules.
-from mock import Mock as MagicMock
+try:
+    from unittest.mock import MagicMock
+except ImportError:
+    from mock import MagicMock
 
 class Mock(MagicMock):
     @classmethod
     def __getattr__(cls, name):
             return Mock()
 
-MOCK_MODULES = ['numpy', 'scipy', 'pandas', 'ply', 'scikit-learn', 'nibabel']
+# Ugh.
+MOCK_MODULES = ['numpy', 'scipy', 'pandas', 'ply', 'sklearn', 'nibabel', 
+'matplotlib', 'sklearn.feature_selection.univariate_selection',
+'scipy.stats', 'sklearn.feature_selection', 'sklearn.preprocessing',
+'sklearn.metrics', 'sklearn.svm', 'sklearn.ensemble', 'sklearn.dummy',
+'sklearn.grid_search', 'numpy.testing']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # If extensions (or modules to document with autodoc) are in another directory,

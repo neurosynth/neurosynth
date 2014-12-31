@@ -14,7 +14,7 @@ from os.path import join, basename, isdir
 from copy import deepcopy
 from shutil import copyfile
 import simplejson as json
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 
 logger = logging.getLogger('neurosynth.cluster')
 
