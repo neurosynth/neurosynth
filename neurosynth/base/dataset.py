@@ -11,6 +11,7 @@ import pandas as pd
 from scipy import sparse
 import mappable
 from neurosynth.base import mask, imageutils, transformations
+from neurosynth.utils import deprecated
 import urllib2
 
 logger = logging.getLogger('neurosynth.dataset')
@@ -232,6 +233,8 @@ class Dataset(object):
         else:
             return [m for m in self.mappables if m.id in ids]
 
+    @deprecated("get_ids_by_features() is deprecated and will be removed in " \
+        "0.5. Please use get_studies(features=...).")
     def get_ids_by_features(self, features, threshold=0.001, func=np.sum,
                             get_image_data=False, get_weights=False):
         """ A wrapper for FeatureTable.get_ids().
@@ -250,12 +253,16 @@ class Dataset(object):
             features, threshold, func, get_weights)
         return self.get_image_data(ids) if get_image_data else ids
 
+    @deprecated("get_ids_by_expression() is deprecated and will be removed in " \
+        "0.5. Please use get_studies(expression=...).")
     def get_ids_by_expression(self, expression, threshold=0.001, func=np.sum,
                               get_image_data=False):
         ids = self.feature_table.get_ids_by_expression(
             expression, threshold, func)
         return self.get_image_data(ids) if get_image_data else ids
 
+    @deprecated("get_ids_by_mask() is deprecated and will be removed in " \
+        "0.5. Please use get_studies(mask=...).")
     def get_ids_by_mask(self, mask, threshold=0.0, get_image_data=False):
         """ Return all mappable objects that activate within the bounds
         defined by the mask image. 
@@ -280,6 +287,8 @@ class Dataset(object):
         else:
             return [self.image_table.ids[ind] for ind in indices]
 
+    @deprecated("get_ids_by_peaks() is deprecated and will be removed in " \
+        "0.5. Please use get_studies(peaks=...).")
     def get_ids_by_peaks(self, peaks, r=10, threshold=0.0,
                          get_image_data=False):
         """ A wrapper for get_ids_by_mask. Takes a set of xyz coordinates and
