@@ -71,11 +71,13 @@ class Parser(object):
 
     def p_list_and(self, p):
         'list : list AND list'
-        p[0] = pd.concat([p[1], p[3]], axis=1).dropna().apply(self.func, axis=1)
+        p[0] = pd.concat(
+            [p[1], p[3]], axis=1).dropna().apply(self.func, axis=1)
 
     def p_list_or(self, p):
         'list : list OR list'
-        p[0] = pd.concat([p[1], p[3]], axis=1).fillna(0.0).apply(self.func, axis=1)
+        p[0] = pd.concat(
+            [p[1], p[3]], axis=1).fillna(0.0).apply(self.func, axis=1)
 
     def p_list_lt(self, p):
         'list : list LT freq'
@@ -93,7 +95,9 @@ class Parser(object):
     def p_list_feature(self, p):
         '''list : feature
             | WORD '''
-        p[0] = self.dataset.get_ids_by_features(p[1], self.threshold, self.func, get_weights=True)
+        p[0] = self.dataset.get_studies(
+            features=p[1], frequency_threshold=self.threshold, func=self.func,
+            return_type='weights')
 
     def p_list_expr(self, p):
         'list : LPAR list RPAR'

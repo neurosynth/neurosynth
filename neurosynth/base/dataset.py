@@ -509,7 +509,8 @@ class Dataset(object):
         result = {}
         for f in self.get_feature_names():
             result[f] = len(
-                self.get_ids_by_features([f], func=func, threshold=threshold))
+                self.get_studies(features=[f], func=func, 
+                    frequency_threshold=threshold))
         return result
 
     @classmethod

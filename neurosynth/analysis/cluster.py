@@ -79,8 +79,9 @@ class Clusterer:
         self.masker = dataset.masker if global_mask is None else Masker(global_mask)
 
         if features is not None:
-            data = self.dataset.get_ids_by_features(features, threshold=feature_threshold, 
-                                    get_image_data=True)
+            data = self.dataset.get_studies(
+                features=features, frequency_threshold=feature_threshold, 
+                return_type='data')
         else:
             data = self.dataset.get_image_data()
 
@@ -321,7 +322,8 @@ class Clusterer:
                 img = np.zeros_like(labels)
                 img[labels==c] = 1
                 img = self.masker.unmask(img)
-                ids = self.dataset.get_ids_by_mask(img, 0.25)
+                ids = self.dataset.get_studies(mask=img, 
+                    activation_threshold=0.25)
                 ma = meta.MetaAnalysis(self.dataset, ids)
                 ma.save_results(coact_dir, 'cluster_%d' % c)
 

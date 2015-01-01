@@ -69,7 +69,7 @@ We can now do various kinds of analyses with the data. For example, we can use t
 
 We can use these features--either in isolation or in combination--to select articles for inclusion in a meta-analysis. For example, suppose we want to run a meta-analysis of emotion studies. We could operationally define a study of emotion as one in which the authors used words starting with 'emo' with high frequency:
 
-	> ids = dataset.get_ids_by_features('emo*', threshold=0.001)
+	> ids = dataset.get_studies(features='emo*', frequency_threshold=0.001)
 
 Here we're asking for a list of IDs of all studies that use words starting with 'emo' (e.g.,'emotion', 'emotional', 'emotionally', etc.) at a frequency of 1 in 1,000 words or greater (in other words, if an article has 5,000 words of text, it will only be included in our set if it uses words starting with 'emo' at least 5 times).
 

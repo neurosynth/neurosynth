@@ -39,7 +39,7 @@ def analyze_features(dataset, features, image_type='pFgA_z', threshold=0.001, q=
         result = []
 
     for i, f in enumerate(features):
-        ids = dataset.get_ids_by_features(f, threshold=threshold)
+        ids = dataset.get_studies(features=f, frequency_threshold=threshold)
         ma = MetaAnalysis(dataset, ids, q=q)
         if save is None:
             result[:, i] = ma.images[image_type]
