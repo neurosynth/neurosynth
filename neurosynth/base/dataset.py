@@ -506,7 +506,7 @@ class Dataset(object):
     def get_feature_counts(self, threshold=0.001):
         """ Returns a dictionary, where the keys are the feature names
         and the values are the number of studies tagged with the feature. """
-        counts = np.sum(self.get_feature_data() > threshold, 1)
+        counts = np.sum(self.get_feature_data() >= threshold, 0)
         return dict(zip(self.get_feature_names(), list(counts)))
 
 
