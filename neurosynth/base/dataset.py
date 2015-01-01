@@ -503,15 +503,12 @@ class Dataset(object):
         else:
             return self.feature_table.feature_names
 
-    def get_feature_counts(self, func=np.sum, threshold=0.001):
+    def get_feature_counts(self, threshold=0.001):
         """ Returns a dictionary, where the keys are the feature names
         and the values are the number of studies tagged with the feature. """
-        result = {}
-        for f in self.get_feature_names():
-            result[f] = len(
-                self.get_studies(features=[f], func=func, 
-                    frequency_threshold=threshold))
-        return result
+        counts = np.sum(self.get_feature_data() > threshold, 1)
+        return dict(zip(self.get_feature_names(), list(counts)))
+
 
     @classmethod
     def load(cls, filename):
