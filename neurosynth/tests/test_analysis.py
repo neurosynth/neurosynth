@@ -3,9 +3,11 @@ import numpy as np
 import tempfile
 import os
 import shutil
+from neurosynth import Dataset
 from neurosynth.analysis import classify
 from neurosynth.analysis import cluster
 from neurosynth.analysis import reduce
+from neurosynth.analysis import decode
 from neurosynth.analysis import meta
 from neurosynth.analysis import stats
 from neurosynth.analysis import network
@@ -32,7 +34,17 @@ class TestAnalysis(unittest.TestCase):
         shutil.rmtree(tempdir)
 
     def test_decoder(self):
-        pass
+        t = tempfile.mktemp()
+        test_data_path = get_test_data_path()
+        dataset = Dataset(test_data_path + 'test_real_dataset.txt')
+        dataset.add_features(test_data_path + 'test_real_features.txt')
+        dec = decode.Decoder(dataset, features=['pain', 'emotion'])
+        img = os.path.join(test_data_path, 'sgacc_mask.nii.gz')
+        dec.decode(img, save=t)
+        self.assertTrue(os.path.exists(t))
+        results = dec.decode(img)
+        self.assertEqual(results.shape, (2, 1))
+        os.unlink(t)
 
     def test_coactivation(self):
         """ Test seed-based coactivation. """
