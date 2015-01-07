@@ -8,9 +8,10 @@ from neurosynth.analysis import cluster
 from neurosynth.analysis import reduce
 from neurosynth.analysis import meta
 from neurosynth.analysis import stats
+from neurosynth.analysis import network
 from neurosynth.tests.utils import get_test_dataset, get_test_data_path
 from numpy.testing import assert_array_almost_equal
-
+from glob import glob
 
 class TestAnalysis(unittest.TestCase):
 
@@ -26,7 +27,6 @@ class TestAnalysis(unittest.TestCase):
         # save the results
         tempdir = tempfile.mkdtemp()
         ma.save_results(tempdir + os.path.sep, prefix='test')
-        from glob import glob
         files = glob(tempdir + os.path.sep + "test_*.nii.gz")
         self.assertEquals(len(files), 9)
         shutil.rmtree(tempdir)
@@ -36,7 +36,14 @@ class TestAnalysis(unittest.TestCase):
 
     def test_coactivation(self):
         """ Test seed-based coactivation. """
-        pass
+        tempdir = tempfile.mkdtemp()
+        seed_img = get_test_data_path() + 'sgacc_mask.nii.gz'
+        network.coactivation(self.dataset, seed_img, output_dir=tempdir,
+            prefix='test', r=20)
+        filter = os.path.join(tempdir, 'test*.nii.gz')
+        files = glob(filter)
+        self.assertEquals(len(files), 9)
+        shutil.rmtree(tempdir)
 
     def test_roi_averaging(self):
         """ Test averaging within region labels in a mask. """

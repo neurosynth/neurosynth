@@ -34,10 +34,8 @@ def coactivation(dataset, seed, threshold=0.0, output_dir='.', prefix='', r=6):
     if isinstance(seed, basestring):
         ids = dataset.get_studies(mask=seed, activation_threshold=threshold)
     else:
-        ids = dataset.get_studies(peaks=seed, r=r, 
+        ids = dataset.get_studies(peaks=seed, r=r,
           activation_threshold=threshold)
 
     ma = meta.MetaAnalysis(dataset, ids)
-    if outroot is None:
-        outroot = seed.split('.')[0] + "_coact"
     ma.save_results(output_dir, prefix)
