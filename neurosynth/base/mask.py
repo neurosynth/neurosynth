@@ -1,6 +1,5 @@
 # emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
 # ex: set sts=2 ts=2 sw=2 et:
-""" Masker class and associated utility functions. """
 
 import numpy as np
 import pandas as pd
@@ -227,19 +226,23 @@ class Masker(object):
         self.n_vox_in_mask = len(np.where(self.current_mask)[0])
 
 
-    def get_current_mask(self, output='vector', compute_mask=True, in_global_mask=False):
+    def get_current_mask(self, output='vector', compute_mask=True, in_global_mask=True):
         """ Convenience method for getting current mask.
         Args:
             output: Format of output.
             compute_mask: Whether to refresh the current mask or not.
-            in_global_mask: If True, returns a vector with the same dimensionality as 
-                the global mask (i.e., self.volume).
+            layer: The index or name of the layer that defines the dimensionality of the 
+                returned mask. Defaults to 0 (the global mask, which is the first layer 
+                in the stack). Only used if output == 'vector'.
         """
         if in_global_mask:
             output = 'vector'
         if compute_mask:
             self._set_mask()
         mask = self.get_image(self.current_mask, output)
+        # if output == 'vector' and layers:
+            # return mask[]
+        # return mask
         return mask[self.global_mask] if in_global_mask else mask
 
 
