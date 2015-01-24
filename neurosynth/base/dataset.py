@@ -322,7 +322,7 @@ class Dataset(object):
 
         # Mask-based selection
         if mask is not None:
-            mask = self.masker.mask(mask).astype(bool)
+            mask = self.masker.mask(mask, in_global_mask=True).astype(bool)
             num_vox = np.sum(mask)
             prop_mask_active = self.image_table.data.T.dot(mask).astype(float)
             if isinstance(activation_threshold, float):

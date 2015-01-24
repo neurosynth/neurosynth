@@ -1,34 +1,41 @@
-
+""" Clustering/parcellation functionality. """
 import numpy as np
 import logging
 from time import time
-from neurosynth.base.dataset import Dataset
-from neurosynth.analysis import reduce as nsr
 from neurosynth.analysis import meta
 from neurosynth.base.mask import Masker
 from neurosynth.base import imageutils
 from sklearn import cluster
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.decomposition import RandomizedPCA, FastICA
 import os
 import re
 from os.path import join, basename, isdir
 from copy import deepcopy
 from shutil import copyfile
 import simplejson as json
+import matplotlib.pyplot as plt
 
 logger = logging.getLogger('neurosynth.cluster')
 
 class Clusterer:
 
-    def __init__(self, dataset, method='studies', global_mask=None, roi_mask=None,
+    def __init__(self, dataset, cluster_on='studies', global_mask=None, roi_mask=None,
             reference_mask=None, features=None, feature_threshold=0.0,
             min_voxels_per_study=None, min_studies_per_voxel=None,
-            voxel_parcellation='ward', n_parcels=500, distance_metric='correlation',
+            dimension_reduction='ward', n_components=500, distance_metric='correlation',
             clustering_method='ward', output_dir='.', prefix=None,
             parcellation_kwargs={}, clustering_kwargs={}):
         """ Initialize Clusterer.
         Args:
-            dataset: The Dataset instance to use for clustering.
+            dataset (Dataset): The Dataset instance to use for clustering.
+            cluster_on (str): The kind of data to use as the basis for voxel
+                clustering--i.e., what defines features passed to the clustering
+                algorithm. Valid options:
+                    'studies': features are individual studies.
+                    'coactivation': uses a precomputed distance matrix based on
+                        coactivation of all voxels in the roi_mask across all
+                        observations in the reference_data.
             global_mask: An image defining the space to use for all analyses. If None, the 
                 mask found in the Dataset will be used.
             roi_mask: An image that determines which voxels to cluster. All non-zero voxels
@@ -50,7 +57,7 @@ class Clusterer:
                 than this number of studies will be removed from analysis.
             min_studies_per_voxel: An optional integer. If provided, all studies with fewer 
                 than this number of active voxels will be removed from analysis. 
-            voxel_parcellation: Either a scikit-learn object with a fit_transform method,
+            dimension_reduction: Either a scikit-learn object with a fit_transform method,
                 or the name of the parcellation method to use for reducing the dimensionality 
                 of the reference mask. Valid options include:
                     None: no parcellation
@@ -60,7 +67,7 @@ class Clusterer:
                     'grid': downsample the reference mask to an isometric grid
                 Defaults to 'ward'. Note that parcellation will only be used if method 
                 is set to 'coactivation' (i.e., it will be ignored by default).
-            n_parcels: Number of parcels to request, if using a voxel_parcellation method.
+            n_components: Number of components to request, if using a dimension_reduction method.
                 Meaning depends on parcellation algorithm.
             distance_metric: Optional string providing the distance metric to use for 
                 computation of a distance matrix. When None, no distance matrix is computed
@@ -82,11 +89,10 @@ class Clusterer:
 
         # Save all arguments for metadata output
         self.args = {}
-        for a in (['clustering_method', 'output_dir', 'features', 'feature_threshold',
-                    'global_mask', 'roi_mask', 'reference_mask', 'min_voxels_per_study',
-                    'min_studies_per_voxel', 'distance_metric', 'voxel_parcellation',
-                    'n_parcels'
-                    ] + clustering_kwargs.keys() + parcellation_kwargs.keys()):
+        for a in (['output_dir', 'features', 'feature_threshold',
+                    'global_mask', 'roi_mask', 'reference_mask',
+                    'distance_metric'] +
+                    clustering_kwargs.keys() + parcellation_kwargs.keys()):
             self.args[a] = locals()[a]
 
         self.set_algorithm(clustering_method, **clustering_kwargs)
@@ -112,32 +118,55 @@ class Clusterer:
             logger.info("Thresholding studies based on number of voxels.")
             active_studies = np.where(data.sum(0) > min_voxels_per_study)[0]
             data = data[:, active_studies]
-        
-        if method == 'coactivation':
-            # Set reference voxels, defaulting to whole brain
-            if reference_mask is not None:
-                self.masker.add(reference_mask)
-            ref_vox = self.masker.get_current_mask()
-            self.reference_data = data[ref_vox,:]
-            if reference_mask is not None: self.masker.remove(-1)
 
-            # Dimensionality reduction
-            if voxel_parcellation is not None:
-                if hasattr(voxel_parcellation, 'fit_transform'):
-                    self.reference_data = voxel_parcellation.fit_transform(self.reference_data.T).T
-                elif voxel_parcellation == 'grid':
-                        self.reference_data, _ = nsr.apply_grid(self.reference_data, masker=self.masker, scale=grid_scale, threshold=None)
-                else:
-                    vox = self.masker.get_current_mask()
-                    self.reference_data = self.data[vox,:]
-        
+        self.data = data
+
+        self.set_reference_data(method=cluster_on, mask=reference_mask)
+
+        # Dimensionality reduction
+        if dimension_reduction is not None:
+            self.dimension_reduction(dimension_reduction, n_components)
+
         # Set the voxels to cluster
-        if roi_mask is not None: self.masker.add(roi_mask)
+        if roi_mask is not None:
+            self.masker.add(roi_mask)
         self.roi_data = data[self.masker.get_current_mask(), :]
         # if roi_mask is not None: self.masker.remove(-1)
         if distance_metric is not None:
             self.create_distance_matrix(distance_metric=distance_metric)
 
+    def set_reference_data(self, method, mask):
+        self.reference_data = self.data
+        # Set reference voxels, defaulting to whole brain
+        if mask is not None:
+            self.masker.add(mask)
+            ref_vox = self.masker.get_current_mask()
+            self.reference_data = self.reference_data[ref_vox,:]
+            self.masker.remove(-1)
+
+    def dimension_reduction(self, reducer, n_components=100):
+        """ Reduces the dimensionalty of the currently loaded reference data.
+        Args:
+            reducer (str or sklearn object): The reduction method to use. Can be
+            either a string (one of 'pca', 'ica', or 'ward') or an object that
+            follows sklearn's TransformerMixin pattern.
+            n_components: Number of components to extract, if applicable. When
+                method is an object, this argument is ignored.
+        """
+        if isinstance(reduce, basestring):
+
+            _valid = {
+                'pca': RandomizedPCA,
+                'ica': FastICA,
+            }
+            if reducer not in _valid:
+                raise ValueError("Dimensionality reduction method must be one "
+                    "of %s; '%s' is not a valid value." %
+                    (str(_valid.keys), reducer))
+
+            reducer = _valid[reducer](n_components=n_components)
+
+        self.reference_data = reducer.fit_transform(self.reference_data.T).T
 
     def create_distance_matrix(self, distance_metric='correlation', affinity=False, figure_file=None, 
                                 distance_file=None):
@@ -202,7 +231,9 @@ class Clusterer:
 
                 # Tell clusterer not to compute a distance/affinity matrix
                 if hasattr(clusterer, 'affinity'):  # SpectralClustering and AffinityPropagation
-                    clusterer.affinity = 'precomputed'
+                #     clusterer.affinity = 'precomputed'
+                    # print clusterer.affinity
+                    pass
                 elif hasattr(clusterer, 'metric'):  # DBSCAN
                     clusterer.metric = 'precomputed'
 
