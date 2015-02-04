@@ -48,8 +48,8 @@ def analyze_features(dataset, features=None, image_type='pFgA_z',
         if output_dir is None:
             result[:, i] = ma.images[image_type]
         else:
-            prefix = f if prefix is None else prefix + '_' + f
-            ma.save_results(output_dir=output_dir, prefix=prefix)
+            pfx = f if prefix is None else prefix + '_' + f
+            ma.save_results(output_dir=output_dir, prefix=pfx)
 
     if output_dir is None:
         return result
