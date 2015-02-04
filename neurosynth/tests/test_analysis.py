@@ -32,6 +32,13 @@ class TestAnalysis(unittest.TestCase):
         files = glob(tempdir + os.path.sep + "test_*.nii.gz")
         self.assertEquals(len(files), 9)
         shutil.rmtree(tempdir)
+        # test the analyze_features() wrapper
+        tempdir = tempfile.mkdtemp()
+        meta.analyze_features(
+            self.dataset, output_dir=tempdir, prefix="meep")
+        files = glob(tempdir + os.path.sep + "meep*.nii.gz")
+        self.assertEquals(len(files), 9*5)
+        shutil.rmtree(tempdir)
 
     def test_decoder(self):
         t = tempfile.mktemp()
