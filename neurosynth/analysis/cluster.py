@@ -20,7 +20,7 @@ logger = logging.getLogger('neurosynth.cluster')
 
 class Clusterer:
 
-    def __init__(self, dataset, cluster_on='studies', global_mask=None, roi_mask=None,
+    def __init__(self, dataset, cluster_on='coactivation', global_mask=None, roi_mask=None,
             reference_mask=None, features=None, feature_threshold=0.0,
             min_voxels_per_study=None, min_studies_per_voxel=None,
             dimension_reduction='ward', n_components=500, distance_metric='correlation',
@@ -144,7 +144,7 @@ class Clusterer:
             self.reference_data = self.reference_data[ref_vox,:]
             self.masker.remove(-1)
 
-    def dimension_reduction(self, reducer, n_components=100):
+    def dimension_reduction(self, reducer, n_components=100, save=False):
         """ Reduces the dimensionalty of the currently loaded reference data.
         Args:
             reducer (str or sklearn object): The reduction method to use. Can be
@@ -152,8 +152,9 @@ class Clusterer:
             follows sklearn's TransformerMixin pattern.
             n_components: Number of components to extract, if applicable. When
                 method is an object, this argument is ignored.
+            save: if True, writes out images of the components.
         """
-        if isinstance(reduce, basestring):
+        if isinstance(reducer, basestring):
 
             _valid = {
                 'pca': RandomizedPCA,
@@ -167,6 +168,16 @@ class Clusterer:
             reducer = _valid[reducer](n_components=n_components)
 
         self.reference_data = reducer.fit_transform(self.reference_data.T).T
+
+        if True:
+            print "Saving components..."
+            for i in range(n_components):
+                comp = reducer.components_[i, :]
+                outf = join(self.output_dir, 'ICA_component_%d.nii.gz' % i)
+                print comp.min(), comp.max(), comp.dtype, type(comp), comp.shape
+                imageutils.save_img((comp-comp.mean())/comp.std(), outf, self.masker)
+
+
 
     def create_distance_matrix(self, distance_metric='correlation', affinity=False, figure_file=None, 
                                 distance_file=None):
