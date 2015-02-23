@@ -56,7 +56,7 @@ class Masker(object):
                 self._add_named_layer(name, image)
 
         else:
-            if not isinstance(layers, (list, dict)):
+            if not isinstance(layers, list):
                 layers = [layers]
             for image in layers:
                 name = 'layer_%d' % len(self.stack)
@@ -74,16 +74,19 @@ class Masker(object):
         Args:
             layers: An int, string or list of strings and/or ints. Ints are interpreted 
                 as indices in the stack to remove; strings are interpreted as names of 
-                layers to remove.
+                layers to remove. Negative ints will also work--i.e., remove(-1) will
+                drop the last layer added.
         """
         if not isinstance(layers, list):
             layers = [layers]
-            for l in layers:
-                if isinstance(l, basestring):
-                    self.stack.remove(l)
-                else:
-                    l = self.stack.pop(l)
-                self.layers.pop(l)
+        for l in layers:
+            if isinstance(l, basestring):
+                if l not in self.layers:
+                    raise ValueError("There's no image/layer named '%s' in the masking stack!" % l)
+                self.stack.remove(l)
+            else:
+                l = self.stack.pop(l)
+            del self.layers[l]
 
 
     def get_image(self, image, output='vector'):
@@ -112,7 +115,7 @@ class Masker(object):
             raise ValueError("Input image must be a string, a NiBabel image, or a " + 
                 "numpy array.")
 
-        if image.shape == self.volume.shape:
+        if image.shape[:3] == self.volume.shape:
             if output == 'image':
                 return nb.nifti1.Nifti1Image(image, None, self.get_header())
             elif output == 'array':
@@ -193,12 +196,12 @@ class Masker(object):
             # but we generate x,y,z,t volume
             image = np.zeros(self.full.shape + (n_volumes,))
             image[self.current_mask, :] = data
-            return np.reshape(image, self.volume.shape + (n_volumes,))
+            image = np.reshape(image, self.volume.shape + (n_volumes,))
         else:
             img = self.full.copy()
             image = np.zeros(self.full.shape)
             image[self.current_mask] = data
-            return self.get_image(image, output)
+        return self.get_image(image, output)
 
 
     def _set_mask(self, layers=None, include_global_mask=True):
@@ -223,19 +226,23 @@ class Masker(object):
         self.n_vox_in_mask = len(np.where(self.current_mask)[0])
 
 
-    def get_current_mask(self, output='image', compute_mask=True, in_global_mask=False):
+    def get_current_mask(self, output='vector', compute_mask=True, in_global_mask=True):
         """ Convenience method for getting current mask.
         Args:
             output: Format of output.
             compute_mask: Whether to refresh the current mask or not.
-            in_global_mask: If True, returns a vector with the same dimensionality as 
-                the global mask (i.e., self.volume).
+            layer: The index or name of the layer that defines the dimensionality of the 
+                returned mask. Defaults to 0 (the global mask, which is the first layer 
+                in the stack). Only used if output == 'vector'.
         """
         if in_global_mask:
             output = 'vector'
         if compute_mask:
             self._set_mask()
         mask = self.get_image(self.current_mask, output)
+        # if output == 'vector' and layers:
+            # return mask[]
+        # return mask
         return mask[self.global_mask] if in_global_mask else mask
 
 

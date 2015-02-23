@@ -1,8 +1,9 @@
 # emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
 # ex: set sts=2 ts=2 sw=2 et:
+""" Parsing expression grammar for feature-based study selection. """
 
-import ply.lex as lex
-import ply.yacc as yacc
+from ply import lex
+from ply import yacc
 import pandas as pd
 import logging
 
@@ -12,14 +13,12 @@ logger = logging.getLogger('neurosynth.lexparser')
 class Lexer(object):
 
     tokens = (
-        'FEATURE', 'FLOAT', 'ANDNOT', 'OR', 'AND', 'CONTRAST', 'LPAR', 'RPAR', 'LT', 'RT'
+        'WORD', 'FLOAT', 'ANDNOT', 'OR', 'AND', 'LPAR', 'RPAR', 'LT', 'RT'
     )
 
-    t_FEATURE = r'[a-zA-Z\_\-\*]+'
     t_ANDNOT = r'\&\~'
     t_AND = r'\&'
     t_OR = r'\|'
-    # t_CONTRAST = r'\%'
     t_LPAR = r'\('
     t_RPAR = r'\)'
     t_LT = r'\<'
@@ -29,6 +28,10 @@ class Lexer(object):
 
     def __init__(self, dataset=None):
         self.dataset = dataset
+
+    def t_WORD(self, t):
+        r'[a-zA-Z\_\-\*]+'
+        return t
 
     def t_FLOAT(self, t):
         r'[0-9\.]+'
@@ -68,11 +71,13 @@ class Parser(object):
 
     def p_list_and(self, p):
         'list : list AND list'
-        p[0] = pd.concat([p[1], p[3]], axis=1).dropna().apply(self.func, axis=1)
+        p[0] = pd.concat(
+            [p[1], p[3]], axis=1).dropna().apply(self.func, axis=1)
 
     def p_list_or(self, p):
         'list : list OR list'
-        p[0] = pd.concat([p[1], p[3]], axis=1).fillna(0.0).apply(self.func, axis=1)
+        p[0] = pd.concat(
+            [p[1], p[3]], axis=1).fillna(0.0).apply(self.func, axis=1)
 
     def p_list_lt(self, p):
         'list : list LT freq'
@@ -82,9 +87,17 @@ class Parser(object):
         'list : list RT freq'
         p[0] = p[1][p[1] >= p[3]]
 
+    def p_feature_words(self, p):
+        '''feature : WORD WORD
+                | feature WORD'''
+        p[0] = ' '.join([p[1], p[2]])
+
     def p_list_feature(self, p):
-        'list : FEATURE'
-        p[0] = self.dataset.get_ids_by_features(p[1], self.threshold, self.func, get_weights=True)
+        '''list : feature
+            | WORD '''
+        p[0] = self.dataset.get_studies(
+            features=p[1], frequency_threshold=self.threshold, func=self.func,
+            return_type='weights')
 
     def p_list_expr(self, p):
         'list : LPAR list RPAR'
@@ -96,6 +109,9 @@ class Parser(object):
 
     def build(self, **kwargs):
         self.parser = yacc.yacc(module=self, **kwargs)
+
+    def p_error(self, p):
+        print p
 
     def parse(self, input):
         return self.parser.parse(input)

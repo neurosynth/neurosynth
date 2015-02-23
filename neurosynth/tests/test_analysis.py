@@ -3,14 +3,17 @@ import numpy as np
 import tempfile
 import os
 import shutil
+from neurosynth import Dataset
 from neurosynth.analysis import classify
 from neurosynth.analysis import cluster
 from neurosynth.analysis import reduce
+from neurosynth.analysis import decode
 from neurosynth.analysis import meta
 from neurosynth.analysis import stats
+from neurosynth.analysis import network
 from neurosynth.tests.utils import get_test_dataset, get_test_data_path
 from numpy.testing import assert_array_almost_equal
-
+from glob import glob
 
 class TestAnalysis(unittest.TestCase):
 
@@ -26,17 +29,40 @@ class TestAnalysis(unittest.TestCase):
         # save the results
         tempdir = tempfile.mkdtemp()
         ma.save_results(tempdir + os.path.sep, prefix='test')
-        from glob import glob
         files = glob(tempdir + os.path.sep + "test_*.nii.gz")
         self.assertEquals(len(files), 9)
         shutil.rmtree(tempdir)
+        # test the analyze_features() wrapper
+        tempdir = tempfile.mkdtemp()
+        meta.analyze_features(
+            self.dataset, output_dir=tempdir, prefix="meep")
+        files = glob(tempdir + os.path.sep + "meep*.nii.gz")
+        self.assertEquals(len(files), 9*5)
+        shutil.rmtree(tempdir)
 
     def test_decoder(self):
-        pass
+        t = tempfile.mktemp()
+        test_data_path = get_test_data_path()
+        dataset = Dataset(test_data_path + 'test_real_dataset.txt')
+        dataset.add_features(test_data_path + 'test_real_features.txt')
+        dec = decode.Decoder(dataset, features=['pain', 'emotion'])
+        img = os.path.join(test_data_path, 'sgacc_mask.nii.gz')
+        dec.decode(img, save=t)
+        self.assertTrue(os.path.exists(t))
+        results = dec.decode(img)
+        self.assertEqual(results.shape, (2, 1))
+        os.unlink(t)
 
     def test_coactivation(self):
         """ Test seed-based coactivation. """
-        pass
+        tempdir = tempfile.mkdtemp()
+        seed_img = get_test_data_path() + 'sgacc_mask.nii.gz'
+        network.coactivation(self.dataset, seed_img, output_dir=tempdir,
+            prefix='test', r=20)
+        filter = os.path.join(tempdir, 'test*.nii.gz')
+        files = glob(filter)
+        self.assertEquals(len(files), 9)
+        shutil.rmtree(tempdir)
 
     def test_roi_averaging(self):
         """ Test averaging within region labels in a mask. """

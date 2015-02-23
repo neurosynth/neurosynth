@@ -1,6 +1,6 @@
 # emacs: -*- mode: python-mode; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
 # ex: set sts=4 ts=4 sw=4 et:
-""" Network analysis-related methods """
+""" Network analysis-related tools"""
 
 from neurosynth.analysis import meta
 
@@ -32,11 +32,10 @@ def coactivation(dataset, seed, threshold=0.0, output_dir='.', prefix='', r=6):
     """
 
     if isinstance(seed, basestring):
-        ids = dataset.get_ids_by_mask(seed, threshold=threshold)
+        ids = dataset.get_studies(mask=seed, activation_threshold=threshold)
     else:
-        ids = dataset.get_ids_by_peaks(seed, r=r, threshold=threshold)
+        ids = dataset.get_studies(peaks=seed, r=r,
+          activation_threshold=threshold)
 
     ma = meta.MetaAnalysis(dataset, ids)
-    if outroot is None:
-        outroot = seed.split('.')[0] + "_coact"
     ma.save_results(output_dir, prefix)

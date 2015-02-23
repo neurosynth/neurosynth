@@ -1,12 +1,10 @@
 # emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
 # ex: set sts=2 ts=2 sw=2 et:
-""" Decoding-related methods """
+""" Decoding tools"""
 
 import numpy as np
 from neurosynth.base.mask import Masker
 from neurosynth.base import imageutils
-from neurosynth.analysis import classify
-from neurosynth.analysis import plotutils #import radar_factory
 from os import path
 
 
@@ -74,15 +72,17 @@ class Decoder:
           each image is a column. The meaning of the values depends on the
           decoding method used. """
 
-        if isinstance(images, basestring) or isinstance(images, list):
+        if isinstance(images, basestring):
+            images = [images]
+
+        if isinstance(images, list):
             imgs_to_decode = imageutils.load_imgs(images, self.masker)
         else:
             imgs_to_decode = images
 
         methods = {
             'pearson': self._pearson_correlation(imgs_to_decode),
-            # 'nb': self._naive_bayes(imgs_to_decode),
-            'pattern': self._pattern_expression(imgs_to_decode)
+            'dot': self._dot_product(imgs_to_decode)
         }
 
         result = np.around(methods[self.method], round)
@@ -194,9 +194,8 @@ class Decoder:
         x, y = x / np.sqrt((x ** 2).sum(0)), y / np.sqrt((y ** 2).sum(0))
         return x.T.dot(y).T
 
-    def _pattern_expression(self, imgs_to_decode):
-        """ Decode images using pattern expression. For explanation, see:
-        http://wagerlab.colorado.edu/wiki/doku.php/help/fmri_help/pattern_expression_and_connectivity
+    def _dot_product(self, imgs_to_decode):
+        """ Decoding using the dot product.
         """
         return np.dot(imgs_to_decode.T, self.feature_images).T
 

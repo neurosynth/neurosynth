@@ -1,10 +1,9 @@
 # emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
 # ex: set sts=2 ts=2 sw=2 et:
-""" Miscellaneous image-related functions. """
+""" Miscellaneous image-related utility functions. """
 
 import json
 import logging
-
 import nibabel as nb
 from nibabel import nifti1
 import numpy as np
@@ -36,30 +35,6 @@ def map_peaks_to_image(peaks, r=4, vox_dims=(2, 2, 2), dims=(91, 109, 91), heade
         valid = valid[:, ::-1]
         data[tuple(valid.T)] = 1
     return nifti1.Nifti1Image(data, None, header=header)
-
-
-def convolve_image(img, r=4, header=None, method='mean', save=None):
-    """ Take an image and multiples every non-zero value found by a hard
-    sphere of radius r. Where multiple values overlap, use either sum or
-    mean. """
-    img = nb.load(img)
-    data = img.get_data()
-    dims = data.shape
-    result = np.zeros(dims)
-    counts = np.zeros(dims)
-    nonzero = np.nonzero(data)
-    for point in zip(*nonzero):
-        fill = tuple(get_sphere(point, r, dims=dims).T)
-        # fill = tuple(fill)
-        result[fill] += data[point]
-        counts[fill] += 1
-    result = np.divide(result, counts)
-    result = np.nan_to_num(result)
-    if save is None:
-        return result
-    else:
-        img = nifti1.Nifti1Image(result, None, img.get_header())
-        img.to_filename(save)
 
 
 def load_imgs(filenames, masker, nan_to_num=True):

@@ -3,9 +3,3 @@
 
 __all__ = ['dataset', 'mask', 'imageutils',
            'mappable', 'transformations', 'lexparser']
-
-# Verify nibabel version right here since nothing would work
-import nibabel as nib
-from distutils.version import LooseVersion
-if LooseVersion(nib.__version__) < LooseVersion("1.2.0"):
-    raise ImportError("Neurosynth requires nibabel >= 1.2.0")

@@ -7,7 +7,7 @@ import sys
 if len(set(('test', 'easy_install')).intersection(sys.argv)) > 0:
     import setuptools
 
-from distutils.core import setup
+from setuptools import setup
 
 extra_setuptools_args = {}
 if 'setuptools' in sys.modules:
@@ -28,6 +28,7 @@ setup(name="neurosynth",
       maintainer='Tal Yarkoni',
       maintainer_email='tyarkoni@gmail.com',
       url='http://github.com/neurosynth/neurosynth',
+      download_url = 'https://github.com/neurosynth/neurosynth/tarball/%s' % __version__,
       packages=["neurosynth",
                   "neurosynth.base",
                   "neurosynth.analysis",

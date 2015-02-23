@@ -104,7 +104,7 @@ def get_studies_by_regions(dataset, masks, threshold=0.08,
     # Get a list of studies that activate for each mask file--i.e.,  a list of
     # lists
 
-    grouped_ids = [dataset.get_ids_by_mask(m, threshold=threshold)
+    grouped_ids = [dataset.get_studies(mask=m, activation_threshold=threshold)
                    for m in loaded_masks]
 
     # Flattened ids

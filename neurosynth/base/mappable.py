@@ -1,10 +1,6 @@
 # emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
 # ex: set sts=2 ts=2 sw=2 et:
-""" Base Mappable object and all objects that inherit from Mappable.
-
-A Mappable object is defined by the presence of one or more Peaks that can
-be meaningfully represented as a spatial image.
-"""
+""" Classes representing article-like data that can be mapped to images. """
 
 import logging
 import json
