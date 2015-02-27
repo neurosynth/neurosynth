@@ -8,7 +8,7 @@ from scipy import special
 from scipy.stats import ss
 
 
-def pearson(self, x, y):
+def pearson(x, y):
     """ Correlates row vector x with each row vector in 2D array y. """
     data = np.vstack((x, y))
     ms = data.mean(axis=1)[(slice(None, None, None), None)]

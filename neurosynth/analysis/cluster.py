@@ -13,7 +13,7 @@ import re
 from os.path import join, basename, isdir
 from copy import deepcopy
 from shutil import copyfile
-import simplejson as json
+import json
 import matplotlib.pyplot as plt
 
 logger = logging.getLogger('neurosynth.cluster')
@@ -99,7 +99,7 @@ class Clusterer:
 
         self.dataset = dataset
 
-        self.masker = dataset.masker if global_mask is None else Masker(global_mask)
+        self.masker = deepcopy(dataset.masker) if global_mask is None else Masker(global_mask)
 
         # Condition study inclusion on specific features
         if features is not None:

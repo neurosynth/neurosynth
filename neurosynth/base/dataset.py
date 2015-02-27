@@ -11,6 +11,7 @@ import pandas as pd
 from scipy import sparse
 import mappable
 from neurosynth.base import mask, imageutils, transformations
+from neurosynth.base import lexparser as lp
 from neurosynth.utils import deprecated
 import urllib2
 
@@ -844,7 +845,6 @@ class FeatureTable(object):
 
     def get_ids_by_expression(self, expression, threshold=0.001, func=np.sum):
         """ Use a PEG to parse expression and return mappables."""
-        from neurosynth.base import lexparser as lp
         lexer = lp.Lexer()
         lexer.build()
         parser = lp.Parser(

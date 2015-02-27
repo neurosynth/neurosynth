@@ -6,6 +6,7 @@ from ply import lex
 from ply import yacc
 import pandas as pd
 import logging
+import numpy as np
 
 logger = logging.getLogger('neurosynth.lexparser')
 
@@ -57,7 +58,7 @@ class Lexer(object):
 
 class Parser(object):
 
-    def __init__(self, lexer, dataset, threshold=0.001, func='sum'):
+    def __init__(self, lexer, dataset, threshold=0.001, func=sum):
 
         self.lexer = lexer
         self.dataset = dataset
@@ -115,3 +116,4 @@ class Parser(object):
 
     def parse(self, input):
         return self.parser.parse(input)
+
