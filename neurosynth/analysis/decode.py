@@ -91,7 +91,7 @@ class Decoder:
 
             if names is None:
                 if type(images).__module__ == np.__name__:
-                    names = ['image_%d' for i in range(images.shape[1])]
+                    names = ['image_%d' % i for i in range(images.shape[1])]
                 else:
                     names = images
 
