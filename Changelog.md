@@ -1,4 +1,20 @@
-## 0.3.2 (November 7, 2014
+## 0.3.3 (March 9, 2015)
+- Added Sphinx docs and readthedocs integration (http://neurosynth.readthedocs.org)
+- Improved study selection interface; get_ids_by_*  methods replaced with a single get_studies() method
+- Added ability to download data files from within Neurosynth codebase
+- Base package now imports key modules into primary namespace (e.g., from Neurosynth import Dataset)
+- Expression parsing/study selection now handles N-gram features
+- Added deprecation warnings
+- Bug fixes/minor improvements:
+	- Fixed loss-of-precision error in FDR-thresholded maps
+	- Fixed unmasking of 4d volumes
+	- Much faster feature count computation
+	- Expanded test coverage; now includes real data in tests
+	- More consistent output location arguments across codebase
+	- Deleted legacy/unused code
+	- Fixed naming issue when decoder is fed an array of images
+
+## 0.3.2 (November 7, 2014)
 - Dataset, FeatureTable, and ImageTable all now use pandas everywhere
 - New datasets in data submodule
 - Improved test coverage of Dataset
