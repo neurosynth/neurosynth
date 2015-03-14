@@ -5,6 +5,7 @@
 import numpy as np
 from neurosynth.base.mask import Masker
 from neurosynth.base import imageutils
+from neurosynth.analysis.reduce import average_within_regions
 from os import path
 
 
@@ -47,8 +48,11 @@ class Decoder:
 
         self.method = method.lower()
 
-        self.load_features(features, image_type=image_type, threshold=threshold)
-
+        if self.method == 'mask':
+            self.feature_names = self.dataset.get_feature_names()
+        else:
+            self.load_features(features, image_type=image_type,
+                               threshold=threshold)
 
     def decode(self, images, save=None, round=4, names=None):
         """ Decodes a set of images.
@@ -81,11 +85,12 @@ class Decoder:
             imgs_to_decode = images
 
         methods = {
-            'pearson': self._pearson_correlation(imgs_to_decode),
-            'dot': self._dot_product(imgs_to_decode)
+            'pearson': self._pearson_correlation,
+            'dot': self._dot_product,
+            'roi': self._roi_association
         }
 
-        result = np.around(methods[self.method], round)
+        result = np.around(methods[self.method](imgs_to_decode), round)
 
         if save is not None:
 
@@ -190,13 +195,32 @@ class Decoder:
           correlation between the i'th feature and the j'th image across all voxels.
         """
         x, y = imgs_to_decode.astype(float), self.feature_images.astype(float)
-        x, y = x - x.mean(0), y - y.mean(0)
-        x, y = x / np.sqrt((x ** 2).sum(0)), y / np.sqrt((y ** 2).sum(0))
-        return x.T.dot(y).T
+        return self._xy_corr(x, y)
+
 
     def _dot_product(self, imgs_to_decode):
         """ Decoding using the dot product.
         """
         return np.dot(imgs_to_decode.T, self.feature_images).T
 
+    def _roi_association(self, imgs_to_decode, value='z'):
+        """ Computes the strength of association between activation in a mask
+        and presence/absence of a semantic feature. This is essentially a
+        generalization of the voxel-wise reverse inference z-score to the
+        multivoxel case.
+        """
+        imgs_to_decode = imgs_to_decode.squeeze()
+        x = average_within_regions(self.dataset, imgs_to_decode).astype(float)
+        y = self.dataset.feature_table.data.values
+        r = self._xy_corr(x.T, y)
+        print y.shape
+        if value == 'r':
+            return r
+        elif value == 'z':
+            f_r = np.arctanh(r)
+            return f_r*np.sqrt(y.shape[0]-3)
 
+    def _xy_corr(self, x, y):
+        x, y = x - x.mean(0), y - y.mean(0)
+        x, y = x / np.sqrt((x ** 2).sum(0)), y / np.sqrt((y ** 2).sum(0))
+        return x.T.dot(y).T
