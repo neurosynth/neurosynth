@@ -43,7 +43,7 @@ class Masker(object):
         self.n_vox_in_vol = len(np.where(self.current_mask)[0])
 
 
-    def add(self, layers):
+    def add(self, layers, above=None, below=None):
         """ Add one or more layers to the stack of masking layers. 
         Args:
             layers: A string, NiBabel image, list, or dict.
@@ -51,23 +51,26 @@ class Masker(object):
                 based on the current position in stack; if a dict, uses key as the name 
                 and value as the mask image.
         """
+
+        def add_named_layer(name, image):
+            image = self.get_image(image, output='vector')
+            if above is not None:
+                image[image<above] = 0.
+            if below is not None:
+                image[image>below] = 0.
+            self.layers[name] = image
+            self.stack.append(name)
+
         if isinstance(layers, dict):
             for (name, image) in layers.items():
-                self._add_named_layer(name, image)
+                add_named_layer(name, image)
 
         else:
             if not isinstance(layers, list):
                 layers = [layers]
             for image in layers:
                 name = 'layer_%d' % len(self.stack)
-                self._add_named_layer(name, image)
-
-
-    def _add_named_layer(self, name, image):
-        image = self.get_image(image, output='vector')
-        self.layers[name] = image
-        self.stack.append(name)
-
+                add_named_layer(name, image)
 
     def remove(self, layers):
         """ Remove one or more layers from the stack of masking layers.
