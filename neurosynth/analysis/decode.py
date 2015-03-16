@@ -9,7 +9,6 @@ from neurosynth.analysis.reduce import average_within_regions
 from os import path
 import pandas as pd
 
-
 class Decoder:
 
     def __init__(self, dataset=None, method='pearson', features=None, mask=None, image_type='pFgA_z', threshold=0.001):
@@ -49,8 +48,8 @@ class Decoder:
 
         self.method = method.lower()
 
-        if self.method == 'roi' and features is None:
-            self.feature_names = self.dataset.get_feature_names()
+        if self.method == 'roi':
+            self.feature_names = features
         else:
             self.load_features(features, image_type=image_type,
                                threshold=threshold)
@@ -225,4 +224,3 @@ class Decoder:
         x, y = x - x.mean(0), y - y.mean(0)
         x, y = x / np.sqrt((x ** 2).sum(0)), y / np.sqrt((y ** 2).sum(0))
         return x.T.dot(y).T
-

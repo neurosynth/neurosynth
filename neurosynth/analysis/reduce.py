@@ -13,21 +13,24 @@ def average_within_regions(dataset, regions, threshold=None, remove_zero=True):
         """ Aggregates over all voxels within each ROI in the input image.
 
         Takes a Dataset and a Nifti image that defines distinct regions, and
-        returns a numpy matrix of  ROIs x mappables, where the value at each ROI is
-        the proportion of active voxels in that ROI. Each distinct ROI must have a
-        unique value in the image; non-contiguous voxels with the same value will
-        be assigned to the same ROI.
+        returns a numpy matrix of  ROIs x mappables, where the value at each ROI
+        is the proportion of active voxels in that ROI. Each distinct ROI must
+        have a unique value in the image; non-contiguous voxels with the same
+        value will be assigned to the same ROI.
 
         Args:
-            dataset: Either a Dataset instance from which image data are extracted, or a 
-                Numpy array containing image data to use. If the latter, the array contains 
-                voxels in rows and features/studies in columns. The number of voxels must 
-                be equal to the length of the vectorized image mask in the 
-            regions: An image defining the boundaries of the regions to use. Can be:
+            dataset: Either a Dataset instance from which image data are
+                extracted, or a Numpy array containing image data to use. If the
+                latter, the array contains voxels in rows and features/studies
+                in columns. The number of voxels must be equal to the length of
+                the vectorized image mask in the regions image.
+            regions: An image defining the boundaries of the regions to use. Can
+                be one of:
                 1) A string name of the NIFTI or Analyze-format image
                 2) A NiBabel SpatialImage
-                3) A 1D numpy array of the same length as the mask vector in the Dataset's
-                     current Masker.
+                3) A list of NiBabel images
+                4) A 1D numpy array of the same length as the mask vector in the
+                    Dataset's current Masker.
             threshold: An optional float in the range of 0 - 1 or integer. If passed, the array
                 will be binarized, with ROI values above the threshold assigned to True
                 and values below the threshold assigned to False. (E.g., if threshold =
@@ -46,20 +49,31 @@ def average_within_regions(dataset, regions, threshold=None, remove_zero=True):
         if isinstance(dataset, Dataset):
             dataset = dataset.get_image_data(dense=False)
 
-        labels = np.unique(regions)
-
-        if remove_zero:
-                labels = labels[np.nonzero(labels)]
-
-        n_regions = labels.size
-
-        # Create the ROI-coding matrix
-        m = np.zeros((regions.size, n_regions))
-        for i in range(n_regions):
+        # If multiple images are passed, give each one a unique value
+        if regions.ndim == 2:
+            m = regions
+            for i in range(regions.shape[1]):
+                _nz = np.nonzero(m[:,i])[0]
                 if isinstance(threshold, int):
-                    m[regions == labels[i], i] = 1.0
+                    m[_nz, i] = 1.0
                 else:
-                    m[regions == labels[i], i] = 1.0 / np.sum(regions == labels[i])
+                    m[_nz, i] = 1.0 / np.count_nonzero(m[:,i])
+
+        # Otherwise create an ROI-coding matrix
+        else:
+            labels = np.unique(regions)
+
+            if remove_zero:
+                    labels = labels[np.nonzero(labels)]
+
+            n_regions = labels.size
+
+            m = np.zeros((regions.size, n_regions))
+            for i in range(n_regions):
+                    if isinstance(threshold, int):
+                        m[regions == labels[i], i] = 1.0
+                    else:
+                        m[regions == labels[i], i] = 1.0 / np.sum(regions == labels[i])
 
         # Call dot() on the array itself as this will use sparse matrix 
         # multiplication if possible.
