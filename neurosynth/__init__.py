@@ -6,14 +6,14 @@
 __all__ = ["analysis", "base", "set_logging_level", "__version__"]
 
 # Easier access to key modules/classes
-from base import dataset, imageutils, lexparser, mappable, mask, transformations
-from analysis import classify, cluster, decode, meta, network, reduce
 from base.dataset import Dataset
 from base.mappable import Mappable
 from base.mask import Masker
 from analysis.cluster import Clusterer
 from analysis.meta import MetaAnalysis
 from analysis.decode import Decoder
+from base import dataset, imageutils, lexparser, mappable, mask, transformations
+from analysis import classify, cluster, decode, meta, network, reduce
 
 import logging
 import sys
