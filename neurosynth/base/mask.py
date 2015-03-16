@@ -39,7 +39,7 @@ class Masker(object):
         """ Reset/remove all layers, keeping only the initial volume. """
         self.layers = {}
         self.stack = []
-        self._set_mask()
+        self.set_mask()
         self.n_vox_in_vol = len(np.where(self.current_mask)[0])
 
 
@@ -72,6 +72,8 @@ class Masker(object):
                 name = 'layer_%d' % len(self.stack)
                 add_named_layer(name, image)
 
+        self.set_mask()
+
     def remove(self, layers):
         """ Remove one or more layers from the stack of masking layers.
         Args:
@@ -90,6 +92,8 @@ class Masker(object):
             else:
                 l = self.stack.pop(l)
             del self.layers[l]
+
+        self.set_mask()
 
 
     def get_image(self, image, output='vector'):
@@ -137,7 +141,7 @@ class Masker(object):
         return nb.nifti1.Nifti1Image(image, None, self.get_header())
 
 
-    def mask(self, image, nan_to_num=True, layers=None, compute_mask=True, in_global_mask=False):
+    def mask(self, image, nan_to_num=True, layers=None, in_global_mask=False):
         """ Vectorize an image and mask out all invalid voxels.
 
         Args:
@@ -146,23 +150,18 @@ class Masker(object):
             layers: Which mask layers to use (specified as int, string, or list of 
                 ints and strings). When None, applies the conjunction of all layers.
             nan_to_num: boolean indicating whether to convert NaNs to 0.
-            compute_mask: If True, will recompute the current mask from scratch. 
-                When False, reuses the existing current_mask. Mainly useful when 
-                iterating over input images and/or output formats.
             in_global_mask: Whether to return the resulting masked vector in the globally 
                 masked space (i.e., n_voxels = len(self.global_mask)). If False (default),
                 returns in the full image space (i.e., n_voxels = len(self.volume)).
         Returns:
           A 1D NumPy array of in-mask voxels.
         """
+        self.set_mask(layers)
         image = self.get_image(image, output='vector')
-
-        if compute_mask:
-            self._set_mask(layers)
 
         if in_global_mask:
             masked_data = image[self.global_mask]
-            masked_data[~self.get_current_mask(in_global_mask=True)] = 0
+            masked_data[~self.get_mask(in_global_mask=True)] = 0
         else:
             masked_data = image[self.current_mask]
 
@@ -172,7 +171,7 @@ class Masker(object):
         return masked_data
 
 
-    def unmask(self, data, layers=None, output='array', compute_mask=True):
+    def unmask(self, data, layers=None, output='array'):
         """ Reconstruct a masked vector into the original 3D volume. 
         Args:
             data: The 1D vector to reconstruct. (Can also be a 2D vector where 
@@ -185,12 +184,8 @@ class Masker(object):
                 be incorrect and bad things will happen.
             output: What kind of object to return. See options in get_image(). By 
                 default, returns an N-dimensional array of reshaped data.
-            compute_mask: If True, will recompute the current mask from scratch.
-                When False, reuses the existing current_mask. Mainly useful when 
-                iterating over input images and/or output formats.
         """
-        if compute_mask:
-            self._set_mask(layers)
+        self.set_mask(layers)
         if data.ndim == 2:
             n_volumes = data.shape[1]
             # Assume 1st dimension is voxels, 2nd is time
@@ -207,46 +202,35 @@ class Masker(object):
         return self.get_image(image, output)
 
 
-    def _set_mask(self, layers=None, include_global_mask=True):
+    def get_mask(self, layers=None, output='vector', in_global_mask=True):
         """ Set the current mask by taking the conjunction of all specified layers.
         Args:
             layers: Which layers to include. See documentation for add() for format.
             include_global_mask: Whether or not to automatically include the global 
                 mask (i.e., self.volume) in the conjunction.
         """
+        if in_global_mask:
+            output = 'vector'
+
         if layers is None:
             layers = self.layers.keys()
         elif not isinstance(layers, list):
             layers = [layers]
         
         layers = map(lambda x: x if isinstance(x, basestring) else self.stack[x], layers)
+        layers = [self.layers[l] for l in layers if l in self.layers]
 
-        layers = [self.layers[l] for l in layers]
-        if include_global_mask:
-            layers.append(self.full)  # Always include the original volume
+        # Always include the original volume
+        layers.append(self.full)
         layers = np.vstack(layers).T.astype(bool)
-        self.current_mask = layers.all(axis=1)
-        self.n_vox_in_mask = len(np.where(self.current_mask)[0])
-
-
-    def get_current_mask(self, output='vector', compute_mask=True, in_global_mask=True):
-        """ Convenience method for getting current mask.
-        Args:
-            output: Format of output.
-            compute_mask: Whether to refresh the current mask or not.
-            layer: The index or name of the layer that defines the dimensionality of the 
-                returned mask. Defaults to 0 (the global mask, which is the first layer 
-                in the stack). Only used if output == 'vector'.
-        """
-        if in_global_mask:
-            output = 'vector'
-        if compute_mask:
-            self._set_mask()
-        mask = self.get_image(self.current_mask, output)
-        # if output == 'vector' and layers:
-            # return mask[]
-        # return mask
+        mask = layers.all(axis=1)
+        mask = self.get_image(mask, output)
         return mask[self.global_mask] if in_global_mask else mask
+
+
+    def set_mask(self, layers=None):
+        self.current_mask = self.get_mask(layers, in_global_mask=False)
+        self.n_vox_in_mask = len(np.where(self.current_mask)[0])
 
 
     def get_header(self):
