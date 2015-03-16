@@ -7,6 +7,7 @@ from neurosynth.base.mask import Masker
 from neurosynth.base import imageutils
 from neurosynth.analysis.reduce import average_within_regions
 from os import path
+import pandas as pd
 
 
 class Decoder:
@@ -48,13 +49,13 @@ class Decoder:
 
         self.method = method.lower()
 
-        if self.method == 'mask':
+        if self.method == 'roi' and features is None:
             self.feature_names = self.dataset.get_feature_names()
         else:
             self.load_features(features, image_type=image_type,
                                threshold=threshold)
 
-    def decode(self, images, save=None, round=4, names=None):
+    def decode(self, images, save=None, round=4, names=None, **kwargs):
         """ Decodes a set of images.
 
         Args:
@@ -90,25 +91,23 @@ class Decoder:
             'roi': self._roi_association
         }
 
-        result = np.around(methods[self.method](imgs_to_decode), round)
+        result = np.around(methods[self.method](imgs_to_decode, **kwargs), round)
+
+        # if save is not None:
+
+        if names is None:
+            if type(images).__module__ == np.__name__:
+                names = ['image_%d' % i for i in range(images.shape[1])]
+            elif self.method == 'roi':
+                names = ['cluster_%d' % i for i in range(result.shape[1])]
+            else:
+                names = images
+
+        result = pd.DataFrame(result, columns=names, index=self.feature_names)
 
         if save is not None:
-
-            if names is None:
-                if type(images).__module__ == np.__name__:
-                    names = ['image_%d' % i for i in range(images.shape[1])]
-                else:
-                    names = images
-
-            rownames = np.array(
-                self.feature_names, dtype='|S32')[:, np.newaxis]
-
-            f = open(save, 'w')
-            f.write('\t'.join(['Feature'] + names) + '\n')
-            np.savetxt(f, np.hstack((
-                rownames, result)), fmt='%s', delimiter='\t')
-        else:
-            return result
+            result.to_csv(save, index_label='Feature')
+        return result
 
     def set_method(self, method):
         """ Set decoding method. """
@@ -157,7 +156,7 @@ class Decoder:
             self.dataset, self.feature_names, image_type=image_type, threshold=threshold)
         # Apply a mask if one was originally passed
         if self.masker.layers:
-            in_mask = self.masker.get_current_mask(in_global_mask=True)
+            in_mask = self.masker.get_mask(in_global_mask=True)
             self.feature_images = self.feature_images[in_mask,:]
 
     def _load_features_from_images(self, images, names=None):
@@ -203,7 +202,7 @@ class Decoder:
         """
         return np.dot(imgs_to_decode.T, self.feature_images).T
 
-    def _roi_association(self, imgs_to_decode, value='z'):
+    def _roi_association(self, imgs_to_decode, value='z', binarize=None):
         """ Computes the strength of association between activation in a mask
         and presence/absence of a semantic feature. This is essentially a
         generalization of the voxel-wise reverse inference z-score to the
@@ -211,9 +210,11 @@ class Decoder:
         """
         imgs_to_decode = imgs_to_decode.squeeze()
         x = average_within_regions(self.dataset, imgs_to_decode).astype(float)
-        y = self.dataset.feature_table.data.values
+        y = self.dataset.feature_table.data[self.feature_names].values
+        if binarize is not None:
+            y[y > binarize] = 1.
+            y[y < 1.] = 0.
         r = self._xy_corr(x.T, y)
-        print y.shape
         if value == 'r':
             return r
         elif value == 'z':
@@ -224,3 +225,4 @@ class Decoder:
         x, y = x - x.mean(0), y - y.mean(0)
         x, y = x / np.sqrt((x ** 2).sum(0)), y / np.sqrt((y ** 2).sum(0))
         return x.T.dot(y).T
+
