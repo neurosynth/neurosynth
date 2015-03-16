@@ -1,3 +1,4 @@
+matplotlib
 nibabel>=1.2
 numpy>=1.9
 scipy
