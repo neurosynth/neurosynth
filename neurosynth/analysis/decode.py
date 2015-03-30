@@ -8,7 +8,6 @@ from neurosynth.base import imageutils
 from neurosynth.analysis.reduce import average_within_regions
 from os import path
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 
 class Decoder:
@@ -260,6 +259,9 @@ class Decoder:
             fig, axes = plt.subplots(n_panels, 1, sharex=False, sharey=False,
                                  subplot_kw=dict(polar=True))
             fig.set_size_inches((6, 6 * n_panels))
+        # A bit silly to import seaborn just for this...
+        # should extract just the color_palette functionality.
+        import seaborn as sns
         colors = sns.color_palette(palette, n_panels)
         for i in range(n_panels):
             if overplot:
