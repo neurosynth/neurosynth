@@ -16,16 +16,24 @@ Dependencies:
 * NumPy/SciPy
 * pandas
 * NiBabel
-* [ply](http://www.dabeaz.com/ply/) (optional, for complex structured queries)
+* [ply](http://www.dabeaz.com/ply/)
 * scikit-learn (optional, used in some classification functions)
+
+We recommend installing the core scientific packages (NumPy, SciPy, pandas, sklearn) via a distribution like [https://store.continuum.io/cshop/anaconda/](Anaconda), which will keep clutter and conflicts to a minimum. The other packages can be installed with pip using the requirements file:
+
+	> pip install -r requirements.txt
+
+Or by name:
+
+	> pip install nibabel ply
 
 Assuming you have those packages in working order, the easiest way to install Neurosynth is from the command line with pip:
 
 	> pip install neurosynth
 
-Alternatively (for the latest dev version), download or clone the package from github, then install it from source:
+Alternatively, if you want the latest development version, you can install directly from the github repo:
 
-	> python setup.py install
+	> pip install git+https://github.com/neurosynth/neurosynth.git
 
 Depending on your operating system, you may need superuser privileges (prefix the above line with 'sudo').
 
