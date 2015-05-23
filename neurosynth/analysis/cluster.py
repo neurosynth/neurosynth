@@ -85,6 +85,9 @@ class Clusterer:
         """
         
         self.output_dir = output_dir
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
         self.prefix = prefix
 
         # Save all arguments for metadata output
@@ -355,7 +358,7 @@ class Clusterer:
         if not isdir(output_dir):
             os.makedirs(output_dir)
 
-        outfile = join(output_dir,prefix + self.algorithm + '_k' + str(n_clusters) + 'cluster_labels.nii.gz')
+        outfile = join(output_dir, 'cluster_labels.nii.gz')
         imageutils.save_img(labels, outfile, self.masker)
 
         # Generate a coactivation map for each cluster
