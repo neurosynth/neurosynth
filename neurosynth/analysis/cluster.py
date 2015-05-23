@@ -137,12 +137,16 @@ class Clusterer:
 
     def set_reference_data(self, method, mask):
         self.reference_data = self.data
-        # Set reference voxels, defaulting to whole brain
+        # Set reference voxels, defaulting to global_mask
         if mask is not None:
             self.masker.add(mask)
             ref_vox = self.masker.get_current_mask()
             self.reference_data = self.reference_data[ref_vox,:]
             self.masker.remove(-1)
+        else: ## Use current mask
+            ref_vox = self.masker.get_current_mask()
+            self.reference_data = self.reference_data[ref_vox,:]
+
 
     def dimension_reduction(self, reducer, n_components=100, save=False):
         """ Reduces the dimensionalty of the currently loaded reference data.
