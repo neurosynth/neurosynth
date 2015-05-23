@@ -130,7 +130,7 @@ class Clusterer:
         # Set the voxels to cluster
         if roi_mask is not None:
             self.masker.add(roi_mask)
-        self.roi_data = data[self.masker.get_current_mask(), :]
+        self.roi_data = data[self.masker.get_mask(), :]
         # if roi_mask is not None: self.masker.remove(-1)
         if distance_metric is not None:
             self.create_distance_matrix(distance_metric=distance_metric)
@@ -140,11 +140,11 @@ class Clusterer:
         # Set reference voxels, defaulting to global_mask
         if mask is not None:
             self.masker.add(mask)
-            ref_vox = self.masker.get_current_mask()
+            ref_vox = self.masker.get_mask()
             self.reference_data = self.reference_data[ref_vox,:]
             self.masker.remove(-1)
         else: ## Use current mask
-            ref_vox = self.masker.get_current_mask()
+            ref_vox = self.masker.get_mask()
             self.reference_data = self.reference_data[ref_vox,:]
 
 
