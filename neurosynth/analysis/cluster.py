@@ -213,6 +213,7 @@ class Clusterer:
 
     def cluster(self, algorithm=None, n_clusters=10, save_images=True, 
                 precomputed_distances=False, bundle=False, coactivation_maps=False,
+                scorer=None, n_perm=10,
                 **kwargs):
         """
         Args:
@@ -225,6 +226,8 @@ class Clusterer:
             precomputed_distances: Indicates whether or not to use precomputed distances in 
                 the clustering. If True, the distance_matrix stored in the instance will be 
                 used; when False (default), the raw data will be used.
+            scorer: Optional scoring function for clustering solution. (e.g. Silhouette score)
+            n_perm: Optional number of permutations to perform on a random distance matrix 
             kwargs: Optional arguments to pass onto the scikit-learn clustering object.
         """
         if algorithm is not None:
@@ -234,6 +237,12 @@ class Clusterer:
             n_clusters = [n_clusters]
 
         clusterer = self.clusterer
+
+        if scorer:
+            scores = []
+
+        if n_perm:
+            perm_scores = []
 
         for k in n_clusters:
             # Set n_clusters for algorithms that allow it
@@ -260,6 +269,13 @@ class Clusterer:
 
             labels = clusterer.fit_predict(X) + 1
 
+            if scorer:
+                scores.append(scorer(X, labels))
+
+            # if n_perm: ## Needs to receate distance matrix. So this might have to change the distance matrid function to output a matrix which gets saved
+            #     for i in range(0, n_perm):
+
+
             if save_images:
                 self._create_cluster_images(labels, coactivation_maps)
 
@@ -280,6 +296,10 @@ class Clusterer:
 
                 # Write metadata
                 json.dump(metadata, open(join(self.output_dir, 'metadata.json'), 'w'))
+
+        with open(join(self.output_dir, 'scores.txt'), 'w') as scorefile:
+            scorefile.write(",".join([str(i) for i in scores]))
+
 
 
 
