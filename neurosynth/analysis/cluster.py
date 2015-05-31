@@ -104,7 +104,6 @@ class Clusterer:
 
         self.masker = deepcopy(dataset.masker) if global_mask is None else Masker(global_mask)
 
-        print "Getting data"
         # Condition study inclusion on specific features
         if features is not None:
             data = self.dataset.get_ids_by_features(features, threshold=feature_threshold, 
@@ -112,7 +111,6 @@ class Clusterer:
         else:
             data = self.dataset.get_image_data()
 
-        print "Got data"
 
         # Trim data based on minimum number of voxels or studies
         if min_studies_per_voxel is not None:
@@ -133,6 +131,7 @@ class Clusterer:
         if dimension_reduction is not None:
             self.dimension_reduction(dimension_reduction, n_components)
 
+
         # Set the voxels to cluster
         if roi_mask is not None:
             self.masker.add(roi_mask)
@@ -152,6 +151,10 @@ class Clusterer:
         else: ## Use current mask
             ref_vox = self.masker.get_mask()
             self.reference_data = self.reference_data[ref_vox,:]
+
+    def randomize_data(self):
+        self.reference_data = np.apply_along_axis(np.random.permutation, 0, self.reference_data)
+        self.roi_data = np.apply_along_axis(np.random.permutation, 0, self.roi_data)
 
 
     def dimension_reduction(self, reducer, n_components=100, save=False):
@@ -179,7 +182,7 @@ class Clusterer:
 
         self.reference_data = reducer.fit_transform(self.reference_data.T).T
 
-        if True:
+        if save is True:
             print "Saving components..."
             for i in range(n_components):
                 comp = reducer.components_[i, :]
@@ -202,6 +205,8 @@ class Clusterer:
         t = time()
         logger.info('Creating distance matrix using ' + distance_metric)
         Y = self.reference_data if hasattr(self, 'reference_data') else None
+
+
         dist = pairwise_distances(self.roi_data, Y=Y, metric=distance_metric)
         logger.info('Distance matrix computation took %.1f seconds.' % (time()-t))
         if figure_file is not None:
@@ -216,7 +221,7 @@ class Clusterer:
 
     def cluster(self, algorithm=None, n_clusters=10, save_images=True, 
                 precomputed_distances=False, bundle=False, coactivation_maps=False,
-                scorer=None, n_perm=10,
+                scorer=None,
                 **kwargs):
         """
         Args:
@@ -244,9 +249,6 @@ class Clusterer:
         if scorer:
             scores = []
 
-        if n_perm:
-            perm_scores = []
-
         for k in n_clusters:
             # Set n_clusters for algorithms that allow it
             if hasattr(clusterer, 'n_clusters'):
@@ -257,7 +259,9 @@ class Clusterer:
                 if not hasattr(self, 'distance_matrix'):
                     raise ValueError("No precomputed distance matrix exists. Either set precomputed_distances to False, " +
                                     "or call the create_distance_matrix method before trying to cluster.")
+
                 X = self.distance_matrix
+                
 
                 # Tell clusterer not to compute a distance/affinity matrix
                 if hasattr(clusterer, 'affinity'):  # SpectralClustering and AffinityPropagation
@@ -274,9 +278,6 @@ class Clusterer:
 
             if scorer:
                 scores.append(scorer(X, labels))
-
-            # if n_perm: ## Needs to receate distance matrix. So this might have to change the distance matrid function to output a matrix which gets saved
-            #     for i in range(0, n_perm):
 
 
             if save_images:
@@ -344,7 +345,7 @@ class Clusterer:
     #     plt.imshow(orderedc,aspect='auto',interpolation='nearest')
     #     plt.savefig(figname)
 
-    # def plot_silhouette_scores(self):
+    # def plotsihouette_scores(self):
     #     pass
 
     def _create_cluster_images(self, labels, coactivation_maps):
