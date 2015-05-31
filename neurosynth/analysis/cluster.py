@@ -104,6 +104,7 @@ class Clusterer:
 
         self.masker = deepcopy(dataset.masker) if global_mask is None else Masker(global_mask)
 
+        print "Getting data"
         # Condition study inclusion on specific features
         if features is not None:
             data = self.dataset.get_ids_by_features(features, threshold=feature_threshold, 
