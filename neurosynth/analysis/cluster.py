@@ -111,6 +111,8 @@ class Clusterer:
         else:
             data = self.dataset.get_image_data()
 
+        print "Got data"
+
         # Trim data based on minimum number of voxels or studies
         if min_studies_per_voxel is not None:
             logger.info("Thresholding voxels based on number of studies.")
