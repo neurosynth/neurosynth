@@ -318,13 +318,7 @@ class Clusterer:
         if isinstance(algorithm, basestring):
 
             algs = {
-                'ward': cluster.Ward,
-                'spectral': cluster.SpectralClustering,
-                'agglomerative': cluster.AgglomerativeClustering,
                 'kmeans': cluster.KMeans,
-                'minik': cluster.MiniBatchKMeans,
-                'affprop': cluster.AffinityPropagation,
-                'dbscan': cluster.DBSCAN
             }
 
             if algorithm not in algs.keys():
