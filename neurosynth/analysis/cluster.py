@@ -221,7 +221,7 @@ class Clusterer:
 
     def cluster(self, algorithm=None, n_clusters=10, save_images=True, 
                 precomputed_distances=False, bundle=False, coactivation_maps=False,
-                scorer=None,
+                scorer=None, n_jobs=1,
                 **kwargs):
         """
         Args:
@@ -240,6 +240,9 @@ class Clusterer:
         """
         if algorithm is not None:
             self.set_algorithm(algorithm, **kwargs)
+
+        if n_jobs is not None:
+            self.clusterer.set_params(n_jobs = n_jobs)
 
         if isinstance(n_clusters, int):
             n_clusters = [n_clusters]
