@@ -297,8 +297,9 @@ class Clusterer:
                 # Write metadata
                 json.dump(metadata, open(join(self.output_dir, 'metadata.json'), 'w'))
 
-        with open(join(self.output_dir, 'scores.txt'), 'w') as scorefile:
-            scorefile.write(",".join([str(i) for i in scores]))
+        if scorer:
+            with open(join(self.output_dir, 'scores.txt'), 'w') as scorefile:
+                scorefile.write(",".join([str(i) for i in scores]))
 
 
 
