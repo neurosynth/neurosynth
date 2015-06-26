@@ -226,56 +226,56 @@ class Decoder:
         x, y = x / np.sqrt((x ** 2).sum(0)), y / np.sqrt((y ** 2).sum(0))
         return x.T.dot(y).T
 
-    def plot_polar(self, data, n_top=3, overplot=False, labels=None,
-                   palette='husl'):
+def plot_polar(data, n_top=3, overplot=False, labels=None,
+               palette='husl'):
 
-        r = np.linspace(0, 10, num=100)
-        n_panels = data.shape[1]
+    r = np.linspace(0, 10, num=100)
+    n_panels = data.shape[1]
 
-        if labels is None:
-            labels = []
-            for i in range(n_panels):
-                labels.extend(data.iloc[:, i].order(ascending=False) \
-                    .index[:n_top])
-            labels = np.unique(labels)
-
-        data = data.loc[labels,:]
-
-        # Use hierarchical clustering to order
-        from scipy.spatial.distance import pdist
-        from scipy.cluster.hierarchy import linkage, leaves_list
-        dists = pdist(data, metric='correlation')
-        pairs = linkage(dists)
-        order = leaves_list(pairs)
-        data = data.iloc[order,:]
-        labels = [labels[i] for i in order]
-
-
-        theta = np.linspace(0.0, 2 * np.pi, len(labels), endpoint=False)
-        if overplot:
-            fig, ax = plt.subplots(1, 1, subplot_kw=dict(polar=True))
-            fig.set_size_inches(10, 10)
-        else:
-            fig, axes = plt.subplots(n_panels, 1, sharex=False, sharey=False,
-                                 subplot_kw=dict(polar=True))
-            fig.set_size_inches((6, 6 * n_panels))
-        # A bit silly to import seaborn just for this...
-        # should extract just the color_palette functionality.
-        import seaborn as sns
-        colors = sns.color_palette(palette, n_panels)
+    if labels is None:
+        labels = []
         for i in range(n_panels):
-            if overplot:
-                alpha = 0.2
-            else:
-                ax = axes[i]
-                alpha = 0.8
-            ax.set_ylim(data.values.min(), data.values.max())
-            d = data.iloc[:,i].values
-            ax.fill(theta, d, ec='k', alpha=alpha, color=colors[i], linewidth=2)
-            ax.set_xticks(theta)
-            ax.set_xticklabels(labels, fontsize=18)
-            [lab.set_fontsize(18) for lab in ax.get_yticklabels()]
-            ax.set_title('Cluster %d' % i, fontsize=22, y=1.12)
-        plt.tight_layout()
-        return plt
+            labels.extend(data.iloc[:, i].order(ascending=False) \
+                .index[:n_top])
+        labels = np.unique(labels)
+
+    data = data.loc[labels,:]
+
+    # Use hierarchical clustering to order
+    from scipy.spatial.distance import pdist
+    from scipy.cluster.hierarchy import linkage, leaves_list
+    dists = pdist(data, metric='correlation')
+    pairs = linkage(dists)
+    order = leaves_list(pairs)
+    data = data.iloc[order,:]
+    labels = [labels[i] for i in order]
+
+
+    theta = np.linspace(0.0, 2 * np.pi, len(labels), endpoint=False)
+    if overplot:
+        fig, ax = plt.subplots(1, 1, subplot_kw=dict(polar=True))
+        fig.set_size_inches(10, 10)
+    else:
+        fig, axes = plt.subplots(n_panels, 1, sharex=False, sharey=False,
+                             subplot_kw=dict(polar=True))
+        fig.set_size_inches((6, 6 * n_panels))
+    # A bit silly to import seaborn just for this...
+    # should extract just the color_palette functionality.
+    import seaborn as sns
+    colors = sns.color_palette(palette, n_panels)
+    for i in range(n_panels):
+        if overplot:
+            alpha = 0.2
+        else:
+            ax = axes[i]
+            alpha = 0.8
+        ax.set_ylim(data.values.min(), data.values.max())
+        d = data.iloc[:,i].values
+        ax.fill(theta, d, ec='k', alpha=alpha, color=colors[i], linewidth=2)
+        ax.set_xticks(theta)
+        ax.set_xticklabels(labels, fontsize=18)
+        [lab.set_fontsize(18) for lab in ax.get_yticklabels()]
+        ax.set_title('Cluster %d' % i, fontsize=22, y=1.12)
+    plt.tight_layout()
+    return plt
 
