@@ -3,8 +3,6 @@ import numpy as np
 import tempfile
 import os
 import shutil
-from neurosynth import Dataset
-from neurosynth.analysis import classify
 from neurosynth.analysis import cluster
 from neurosynth.analysis import reduce
 from neurosynth.analysis import decode
@@ -15,11 +13,14 @@ from neurosynth.tests.utils import get_test_dataset, get_test_data_path
 from numpy.testing import assert_array_almost_equal
 from glob import glob
 
+
 class TestAnalysis(unittest.TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         """ Create a new Dataset and add features. """
         self.dataset = get_test_dataset()
+        self.real_dataset = get_test_dataset(prefix='test_real')
 
     def test_meta_analysis(self):
         """ Test full meta-analysis stream. """
@@ -43,9 +44,9 @@ class TestAnalysis(unittest.TestCase):
     def test_decoder(self):
         t = tempfile.mktemp()
         test_data_path = get_test_data_path()
-        dataset = Dataset(test_data_path + 'test_real_dataset.txt')
-        dataset.add_features(test_data_path + 'test_real_features.txt')
-        dec = decode.Decoder(dataset, features=['pain', 'emotion'])
+        # dataset = Dataset(test_data_path + 'test_real_dataset.txt')
+        # dataset.add_features(test_data_path + 'test_real_features.txt')
+        dec = decode.Decoder(self.real_dataset, features=['pain', 'emotion'])
         img = os.path.join(test_data_path, 'sgacc_mask.nii.gz')
         dec.decode(img, save=t)
         self.assertTrue(os.path.exists(t))
@@ -58,7 +59,7 @@ class TestAnalysis(unittest.TestCase):
         tempdir = tempfile.mkdtemp()
         seed_img = get_test_data_path() + 'sgacc_mask.nii.gz'
         network.coactivation(self.dataset, seed_img, output_dir=tempdir,
-            prefix='test', r=20)
+                             prefix='test', r=20)
         filter = os.path.join(tempdir, 'test*.nii.gz')
         files = glob(filter)
         self.assertEquals(len(files), 9)
@@ -88,17 +89,17 @@ class TestAnalysis(unittest.TestCase):
         self.assertGreater(sums[4], sums[0])
 
     def test_two_way_chi_sq(self):
-        p = stats.two_way(np.array([[42, 32], [60, 81]])[None,:,:])
+        p = stats.two_way(np.array([[42, 32], [60, 81]])[None, :, :])
         # Test value verified using several different packages
         assert_array_almost_equal(p, 0.04753082)
 
-    # def test_clustering(self):
-    #     clstr = cluster.Clusterer(self.dataset, grid_scale=20)
-    #     clstr.cluster(algorithm='ward', n_clusters=3)
-    #     t = 'ClusterImages/Cluster_k3.nii.gz'
-    #     self.assertTrue(os.path.exists(t))
-    #     os.unlink(t)
-    #     os.rmdir('ClusterImages')
+    def test_clustering(self):
+        roi_mask = os.path.join(get_test_data_path(), 'sgacc_mask.nii.gz')
+        clusters = cluster.magic(self.real_dataset, 3, roi_mask=roi_mask,
+                                 reduce_reference='pca', n_components=5,
+                                 min_studies_per_voxel=1)
+        n_unique = len(np.unique(clusters.get_data()))
+        self.assertEqual(n_unique, 4)
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestAnalysis)

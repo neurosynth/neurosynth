@@ -1,376 +1,110 @@
-""" Clustering/parcellation functionality. """
-import numpy as np
-import logging
-from time import time
-from neurosynth.analysis import meta
-from neurosynth.base.mask import Masker
-from neurosynth.base import imageutils
-from sklearn import cluster
-from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.decomposition import RandomizedPCA, FastICA
-import os
-import re
-from os.path import join, basename, isdir
+# from abc import ABCMeta, abstractmethod
+# from neurosynth import masker
 from copy import deepcopy
-from shutil import copyfile
-import json
-import matplotlib.pyplot as plt
+import numpy as np
+from six import string_types
+from sklearn import decomposition as sk_decomp
+from sklearn import cluster as sk_cluster
+from sklearn.metrics import pairwise_distances
+from os.path import exists, join
+from os import makedirs
+from neurosynth.base.imageutils import save_img
+from nibabel import nifti1
 
-logger = logging.getLogger('neurosynth.cluster')
 
-class Clusterer:
+class Clusterable(object):
 
-    def __init__(self, dataset, cluster_on='coactivation', global_mask=None, roi_mask=None,
-            reference_mask=None, features=None, feature_threshold=0.0,
-            min_voxels_per_study=None, min_studies_per_voxel=None,
-            dimension_reduction='ward', n_components=500, distance_metric='correlation',
-            clustering_method='ward', output_dir='.', prefix=None,
-            parcellation_kwargs={}, clustering_kwargs={}):
-        """ Initialize Clusterer.
-        Args:
-            dataset (Dataset): The Dataset instance to use for clustering.
-            cluster_on (str): The kind of data to use as the basis for voxel
-                clustering--i.e., what defines features passed to the clustering
-                algorithm. Valid options:
-                    'studies': features are individual studies.
-                    'coactivation': uses a precomputed distance matrix based on
-                        coactivation of all voxels in the roi_mask across all
-                        observations in the reference_data.
-            global_mask: An image defining the space to use for all analyses. If None, the 
-                mask found in the Dataset will be used.
-            roi_mask: An image that determines which voxels to cluster. All non-zero voxels
-                will be included in the clustering analysis. When roi_mask is None, all 
-                voxels in the global_mask (i.e., the whole brain) will be clustered. roi_mask
-                can be an image filename, a nibabel image, or an already-masked array with 
-                the same dimensions as the global_mask.
-            reference_mask: An image defining the voxels to base the distance matrix 
-                computation on. All non-zero voxels will be used to compute the distance
-                matrix. For example, if the roi_mask contains voxels in only the insula, 
-                and reference_mask contains voxels in only the cerebellum, then voxels in 
-                the insula will be clustered based on the similarity of their coactvation 
-                with all and only cerebellum voxels.
-            features: Optional features to use for selecting a subset of the studies in the 
-                Dataset instance. If dataset is a numpy matrix, will be ignored.
-            feature_threshold: float; the threshold to use for feature selection. Will be 
-                ignored if features is None.
-            min_voxels_per_study: An optional integer. If provided, all voxels with fewer 
-                than this number of studies will be removed from analysis.
-            min_studies_per_voxel: An optional integer. If provided, all studies with fewer 
-                than this number of active voxels will be removed from analysis. 
-            dimension_reduction: Either a scikit-learn object with a fit_transform method,
-                or the name of the parcellation method to use for reducing the dimensionality 
-                of the reference mask. Valid options include:
-                    None: no parcellation
-                    'ward': spatially constrained hierarchical clustering; see Thirion
-                        et al (2014)
-                    'pca': principal component analysis
-                    'grid': downsample the reference mask to an isometric grid
-                Defaults to 'ward'. Note that parcellation will only be used if method 
-                is set to 'coactivation' (i.e., it will be ignored by default).
-            n_components: Number of components to request, if using a dimension_reduction method.
-                Meaning depends on parcellation algorithm.
-            distance_metric: Optional string providing the distance metric to use for 
-                computation of a distance matrix. When None, no distance matrix is computed
-                and we assume that clustering will be done on the raw data. Valid options 
-                are any of the strings accepted by sklearn's pairwise_distances method.
-                Defaults to 'correlation'. Note that for some clustering methods (e.g., k-means), 
-                no distance matrix will be computed, and this argument will be ignored.
-            clustering_method: Algorithm to use for clustering. Must be one of 'ward', 'spectral',
-                'agglomerative', 'dbscan', 'kmeans', or 'minik'. If None, can be set 
-                later via set_algorithm() or cluster().
-            output_directory: Directory to use for writing all outputs.
-            prefix: Optional prefix to prepend to all outputted directories/files.
-            parcellation_kwargs: Optional keyword arguments to pass to parcellation object.
-            clustering_kwargs: Optional keyword arguments to pass to clustering object.
-        """
-        
-        self.output_dir = output_dir
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
-        self.prefix = prefix
-
-        # Save all arguments for metadata output
-        self.args = {}
-        for a in (['output_dir', 'features', 'feature_threshold',
-                    'global_mask', 'roi_mask', 'reference_mask',
-                    'distance_metric'] +
-                    clustering_kwargs.keys() + parcellation_kwargs.keys()):
-            self.args[a] = locals()[a]
-
-        self.set_algorithm(clustering_method, **clustering_kwargs)
+    def __init__(self, dataset, mask=None, min_voxels=None, min_studies=None,
+                 features=None, feature_threshold=None):
 
         self.dataset = dataset
-
-        self.masker = deepcopy(dataset.masker) if global_mask is None else Masker(global_mask)
+        self.masker = deepcopy(dataset.masker)
 
         # Condition study inclusion on specific features
         if features is not None:
-            data = self.dataset.get_ids_by_features(features, threshold=feature_threshold, 
-                get_image_data=True)
+            data = dataset.get_ids_by_features(features,
+                                               threshold=feature_threshold,
+                                               get_image_data=True)
         else:
-            data = self.dataset.get_image_data()
+            data = dataset.image_table.data
 
         # Trim data based on minimum number of voxels or studies
-        if min_studies_per_voxel is not None:
-            logger.info("Thresholding voxels based on number of studies.")
-            av = self.masker.unmask(data.sum(1) > min_studies_per_voxel, output='vector')
-            self.masker.add(av)
+        if min_studies is not None:
+            av = self.masker.unmask(
+                data.sum(1) >= min_studies, output='vector')
+            self.masker.add({'voxels': av})
 
-        if min_voxels_per_study is not None:
-            logger.info("Thresholding studies based on number of voxels.")
-            active_studies = np.where(data.sum(0) > min_voxels_per_study)[0]
-            data = data[:, active_studies]
+        if min_voxels is not None:
+            data = data[:, np.array(data.sum(0) >= min_voxels).squeeze()]
 
-        self.data = data
-
-        self.set_reference_data(method=cluster_on, mask=reference_mask)
-
-        # Dimensionality reduction
-        if dimension_reduction is not None:
-            self.dimension_reduction(dimension_reduction, n_components)
-
-        # Set the voxels to cluster
-        if roi_mask is not None:
-            self.masker.add(roi_mask)
-        self.roi_data = data[self.masker.get_mask(), :]
-        # if roi_mask is not None: self.masker.remove(-1)
-        if distance_metric is not None:
-            self.create_distance_matrix(distance_metric=distance_metric)
-
-    def set_reference_data(self, method, mask):
-        self.reference_data = self.data
-        # Set reference voxels, defaulting to global_mask
         if mask is not None:
-            self.masker.add(mask)
-            ref_vox = self.masker.get_mask()
-            self.reference_data = self.reference_data[ref_vox,:]
-            self.masker.remove(-1)
-        else: ## Use current mask
-            ref_vox = self.masker.get_mask()
-            self.reference_data = self.reference_data[ref_vox,:]
+            self.masker.add({'roi': mask})
+
+        self.data = data[self.masker.get_mask(['voxels', 'roi']), :].toarray()
+
+    def transform(self, transformer, transpose=False):
+        data = self.data.T if transpose else self.data
+        self.data = transformer.fit_transform(data)
+        return self
 
 
-    def dimension_reduction(self, reducer, n_components=100, save=False):
-        """ Reduces the dimensionalty of the currently loaded reference data.
-        Args:
-            reducer (str or sklearn object): The reduction method to use. Can be
-            either a string (one of 'pca', 'ica', or 'ward') or an object that
-            follows sklearn's TransformerMixin pattern.
-            n_components: Number of components to extract, if applicable. When
-                method is an object, this argument is ignored.
-            save: if True, writes out images of the components.
-        """
-        if isinstance(reducer, basestring):
+def magic(dataset, n_clusters, method='coactivation', roi_mask=None,
+          coactivation_mask=None, coactivation_features=None,
+          min_voxels_per_study=None, min_studies_per_voxel=None,
+          reduce_reference='pca', n_components=100, roi_sign=None,
+          distance_metric='correlation',
+          clustering_method='kmeans', output_dir=None, prefix=None,
+          clustering_kwargs={}, features=None, feature_threshold=0.05,
+          filename=None):
 
-            _valid = {
-                'pca': RandomizedPCA,
-                'ica': FastICA,
-            }
-            if reducer not in _valid:
-                raise ValueError("Dimensionality reduction method must be one "
-                    "of %s; '%s' is not a valid value." %
-                    (str(_valid.keys), reducer))
+    roi = Clusterable(dataset, roi_mask, min_voxels=min_voxels_per_study,
+                      min_studies=min_studies_per_voxel, features=features,
+                      feature_threshold=feature_threshold)
 
-            reducer = _valid[reducer](n_components=n_components)
+    if method == 'coactivation':
+        reference = Clusterable(dataset, coactivation_mask,
+                                min_voxels=min_voxels_per_study,
+                                min_studies=min_studies_per_voxel,
+                                features=features,
+                                feature_threshold=feature_threshold)
+    elif method == 'studies':
+        reference = roi
 
-        self.reference_data = reducer.fit_transform(self.reference_data.T).T
+    if reduce_reference is not None:
+        if isinstance(reduce_reference, string_types):
+            reduce_reference = {
+                'pca': sk_decomp.RandomizedPCA,
+                'ica': sk_decomp.FastICA
+            }[reduce_reference](n_components)
 
-        if True:
-            print "Saving components..."
-            for i in range(n_components):
-                comp = reducer.components_[i, :]
-                outf = join(self.output_dir, 'ICA_component_%d.nii.gz' % i)
-                print comp.min(), comp.max(), comp.dtype, type(comp), comp.shape
-                imageutils.save_img((comp-comp.mean())/comp.std(), outf, self.masker)
+        transpose = (method == 'coactivation')
+        reference = reference.transform(reduce_reference, transpose=transpose)
+        if transpose:
+            reference.data = reference.data.T
 
+    distances = pairwise_distances(roi.data, reference.data,
+                                   metric=distance_metric)
 
+    if isinstance(clustering_method, string_types):
+        clustering_method = {
+            'kmeans': sk_cluster.KMeans
+        }[clustering_method](n_clusters, **clustering_kwargs)
 
-    def create_distance_matrix(self, distance_metric='correlation', affinity=False, figure_file=None, 
-                                distance_file=None):
-        """ Creates a distance matrix of each grid roi across studies in Neurosynth Dataset.
-        Args:
-            distance_metric: The distance metric to use; see scipy documentation for available 
-                metrics. Defaults to Jaccard Distance.
-            affinity: If True, converts distance to affinity matrix (1 - distance).
-            figure_file: Filename for output image of the clustered data. If None, no image is written.
-            distance_file: Filename for output of the distance matrix. If None, matrix is not saved.
-        """
-        t = time()
-        logger.info('Creating distance matrix using ' + distance_metric)
-        Y = self.reference_data if hasattr(self, 'reference_data') else None
-        dist = pairwise_distances(self.roi_data, Y=Y, metric=distance_metric)
-        logger.info('Distance matrix computation took %.1f seconds.' % (time()-t))
-        if figure_file is not None:
-            plt.imshow(dist,aspect='auto',interpolation='nearest')
-            plt.savefig(figure_file)
-        if distance_file is not None:
-            np.savetxt(distance_file, dist)
-        if affinity:
-            dist = 1.0 - dist
-        self.distance_matrix = dist
+    labels = clustering_method.fit_predict(distances) + 1.
 
+    header = roi.masker.get_header()
+    header.set_data_dtype(float)
+    header['cal_max'] = labels.max()
+    header['cal_min'] = labels.min()
+    img = nifti1.Nifti1Image(roi.masker.unmask(labels), None, header)
 
-    def cluster(self, algorithm=None, n_clusters=10, save_images=True, 
-                precomputed_distances=False, bundle=False, coactivation_maps=False,
-                **kwargs):
-        """
-        Args:
-            algorithm: Algorithm to use for clustering. Must be one of 'ward', 'spectral',
-                'agglomerative', 'dbscan', 'kmeans', or 'minik'. If None, uses the algorithm
-                passed at initialization.
-            n_clusters: Number of clusters to extract. Can be an integer or a list
-                of integers to iterate.
-            save_images: Boolean indicating whether or not to save images to file.
-            precomputed_distances: Indicates whether or not to use precomputed distances in 
-                the clustering. If True, the distance_matrix stored in the instance will be 
-                used; when False (default), the raw data will be used.
-            kwargs: Optional arguments to pass onto the scikit-learn clustering object.
-        """
-        if algorithm is not None:
-            self.set_algorithm(algorithm, **kwargs)
-
-        if isinstance(n_clusters, int):
-            n_clusters = [n_clusters]
-
-        clusterer = self.clusterer
-
-        for k in n_clusters:
-            # Set n_clusters for algorithms that allow it
-            if hasattr(clusterer, 'n_clusters'):
-                clusterer.n_clusters = k
-
-            # Now figure out if we need to pass in raw data or a distance matrix.
-            if precomputed_distances:
-                if not hasattr(self, 'distance_matrix'):
-                    raise ValueError("No precomputed distance matrix exists. Either set precomputed_distances to False, " +
-                                    "or call the create_distance_matrix method before trying to cluster.")
-                X = self.distance_matrix
-
-                # Tell clusterer not to compute a distance/affinity matrix
-                if hasattr(clusterer, 'affinity'):  # SpectralClustering and AffinityPropagation
-                #     clusterer.affinity = 'precomputed'
-                    # print clusterer.affinity
-                    pass
-                elif hasattr(clusterer, 'metric'):  # DBSCAN
-                    clusterer.metric = 'precomputed'
-
-            else:
-                X = self.roi_data
-
-            labels = clusterer.fit_predict(X) + 1
-
-            if save_images:
-                self._create_cluster_images(labels, coactivation_maps)
-
-            if bundle:
-                # Generate metadata
-                metadata = deepcopy(self.args)
-                metadata.update({
-                    'n_clusters': k,
-                    'precomputed_distances': precomputed_distances,
-                    })
-
-                # Copy mask images
-                for img in ['global_mask', 'roi_mask', 'reference_mask']:
-                    if metadata[img] is not None:
-                        ext = re.search('.nii(.gz)*$', metadata[img]).group()
-                        copyfile(metadata[img], join(self.output_dir, img + ext))
-                        metadata[img] = basename(metadata[img]) # Strip path
-
-                # Write metadata
-                json.dump(metadata, open(join(self.output_dir, 'metadata.json'), 'w'))
-
-
-
-    def set_algorithm(self, algorithm, **kwargs):
-        """ Set the algorithm to use in subsequent cluster analyses.
-        Args:
-            algorithm: The clustering algorithm to use. Either a string or an (uninitialized)
-                scikit-learn clustering object. If string, must be one of 'ward', 'spectral', 
-                'agglomerative', 'dbscan', 'kmeans', or 'minik'.
-            kwargs: Additional keyword arguments to pass onto the scikit-learn clustering
-                object.
-        """
-
-        self.algorithm = algorithm
-
-        if isinstance(algorithm, basestring):
-
-            algs = {
-                'ward': cluster.Ward,
-                'spectral': cluster.SpectralClustering,
-                'agglomerative': cluster.AgglomerativeClustering,
-                'kmeans': cluster.KMeans,
-                'minik': cluster.MiniBatchKMeans,
-                'affprop': cluster.AffinityPropagation,
-                'dbscan': cluster.DBSCAN
-            }
-
-            if algorithm not in algs.keys():
-                raise ValueError("Invalid clustering algorithm name. Valid options are 'ward'," + 
-                    "'spectral', 'kmeans', 'minik', 'agglomerative', 'affprop', or 'dbscan'.")
-
-            algorithm = algs[algorithm]
-
-        self.clusterer = algorithm(**kwargs)
-
-
-    # def plot_distance_by_cluster(self):
-    #     ''' Creates a figure of distance matrix sorted by cluster solution. '''
-    #     lab = pd.DataFrame(labels)
-    #     lab.columns = ['cluster']
-    #     lab['cluster'].sort()
-    #     csort = list(lab['cluster'].index)
-    #     orderedc = distance_matrix[:,csort]
-    #     orderedc = orderedc[csort,:]
-    #     plt.imshow(orderedc,aspect='auto',interpolation='nearest')
-    #     plt.savefig(figname)
-
-    # def plot_silhouette_scores(self):
-    #     pass
-
-    def _create_cluster_images(self, labels, coactivation_maps):
-        ''' Creates a Nifti image of reconstructed cluster labels. 
-        Args:
-            labels: A vector of cluster labels
-        Outputs:
-            Cluster_k.nii.gz: Will output a nifti image with cluster labels
-        '''
-        # Reconstruct grid into original space
-        # TODO: replace with masker.unmask()
-        if hasattr(self, 'grid'):
-            regions = self.masker.mask(self.grid)
-            unique_regions = np.unique(regions)
-            n_regions = unique_regions.size
-            m = np.zeros(regions.size)
-            for i in range(n_regions):
-                m[regions == unique_regions[i]] = labels[i] + 1
-
-            labels = m
-
-        clusters = np.unique(labels)
-        n_clusters = len(clusters)
-
-        prefix = '' if self.prefix is None else self.prefix + '_'
-        output_dir = join(self.output_dir, prefix + self.algorithm + '_k' + str(n_clusters))
-
-        if not isdir(output_dir):
-            os.makedirs(output_dir)
-
-        outfile = join(output_dir, 'cluster_labels.nii.gz')
-        imageutils.save_img(labels, outfile, self.masker)
-
-        # Generate a coactivation map for each cluster
-        if coactivation_maps:
-            coact_dir = join(output_dir, 'coactivation')
-            if not isdir(coact_dir):
-                os.makedirs(coact_dir)
-            for c in clusters:
-                img = np.zeros_like(labels)
-                img[labels==c] = 1
-                img = self.masker.unmask(img)
-                ids = self.dataset.get_ids_by_mask(img, 0.25)
-                ma = meta.MetaAnalysis(self.dataset, ids)
-                ma.save_results(coact_dir, 'cluster_%d' % c)
-
+    if output_dir is not None:
+        if not exists(output_dir):
+            makedirs(output_dir)
+        if filename is None:
+            raise ValueError('If output_dir is provided, a valid filename '
+                             'argument must also be passed.')
+        outfile = join(output_dir, 'test_cluster_img.nii.gz')
+        img.to_filename(outfile)
+    else:
+        return img
