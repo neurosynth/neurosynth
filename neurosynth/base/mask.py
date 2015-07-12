@@ -174,11 +174,12 @@ class Masker(object):
     def unmask(self, data, layers=None, output='array'):
         """ Reconstruct a masked vector into the original 3D volume. 
         Args:
-            data: The 1D vector to reconstruct. (Can also be a 2D vector where 
+            data: The 1D vector to reconstruct. (Can also be a 2D vector where
                 the second dimension is time, but then output will always
                 be set to 'array'--i.e., a 4D image will be returned.)
-            layers: Which mask layers to use (specified as int, string, or list of 
-                ints and strings). When None, applies the conjunction of all layers.
+            layers: Which mask layers to use (specified as int, string, or list
+                of ints and strings). When None, applies the conjunction of all
+                layers.
                 Note that the layers specified here must exactly match the layers 
                 used in the mask() operation, otherwise the shape of the mask will 
                 be incorrect and bad things will happen.
@@ -189,14 +190,12 @@ class Masker(object):
         if data.ndim == 2:
             n_volumes = data.shape[1]
             # Assume 1st dimension is voxels, 2nd is time
-            assert(len(data) == self.n_vox_in_vol)
-            assert(self.full.ndim == 1)
             # but we generate x,y,z,t volume
             image = np.zeros(self.full.shape + (n_volumes,))
             image[self.current_mask, :] = data
             image = np.reshape(image, self.volume.shape + (n_volumes,))
         else:
-            img = self.full.copy()
+            # img = self.full.copy()
             image = np.zeros(self.full.shape)
             image[self.current_mask] = data
         return self.get_image(image, output)
