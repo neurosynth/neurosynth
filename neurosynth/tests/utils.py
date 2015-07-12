@@ -19,8 +19,8 @@ def get_test_data_path():
     return join(dirname(__file__), 'data') + pathsep
 
 
-def get_test_dataset():
+def get_test_dataset(prefix='test'):
     test_data_path = get_test_data_path()
-    dataset = Dataset(test_data_path + 'test_dataset.txt')
-    dataset.add_features(test_data_path + 'test_features.txt')
+    dataset = Dataset(test_data_path + '%s_dataset.txt' % prefix)
+    dataset.add_features(test_data_path + '%s_features.txt' % prefix)
     return dataset
