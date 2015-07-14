@@ -372,7 +372,7 @@ class Dataset(object):
     @deprecated("get_ids_by_features() is deprecated and will be removed in "
                 "0.5. Please use get_studies(features=...).")
     def get_ids_by_features(self, features, threshold=0.001, func=np.sum,
-                            get_image_data=False, get_weights=False):
+                            get_image_data=False, get_weights=False, dense=True):
         """ A wrapper for FeatureTable.get_ids().
 
         Args:
@@ -387,7 +387,7 @@ class Dataset(object):
         """
         ids = self.feature_table.get_ids(
             features, threshold, func, get_weights)
-        return self.get_image_data(ids) if get_image_data else ids
+        return self.get_image_data(ids, dense=dense) if get_image_data else ids
 
     @deprecated("get_ids_by_expression() is deprecated and will be removed in "
                 "0.5. Please use get_studies(expression=...).")

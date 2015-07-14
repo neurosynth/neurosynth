@@ -24,7 +24,7 @@ class Clusterable(object):
         if features is not None:
             data = dataset.get_ids_by_features(features,
                                                threshold=feature_threshold,
-                                               get_image_data=True)
+                                               get_image_data=True, dense=False)
         else:
             data = dataset.image_table.data
 
