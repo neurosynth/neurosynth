@@ -95,9 +95,9 @@ class TestAnalysis(unittest.TestCase):
 
     def test_clustering(self):
         roi_mask = os.path.join(get_test_data_path(), 'sgacc_mask.nii.gz')
-        clusters = cluster.magic(self.real_dataset, 3, roi_mask=roi_mask,
+        clusters = cluster.magic(self.real_dataset, roi_mask=roi_mask,
                                  reduce_reference='pca', n_components=5,
-                                 min_studies_per_voxel=1)
+                                 min_studies_per_voxel=1, n_clusters=3)
         n_unique = len(np.unique(clusters.get_data()))
         self.assertEqual(n_unique, 4)
 
