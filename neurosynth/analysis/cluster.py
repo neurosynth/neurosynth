@@ -41,8 +41,8 @@ class Clusterable(object):
         # Condition study inclusion on specific features
         if features is not None:
             ids = dataset.get_studies(features=features,
-                                      feature_threshold=feature_threshold)
-            data = dataset.get_image_data(ids, dense=True)
+                                      frequency_threshold=feature_threshold)
+            data = dataset.get_image_data(ids, dense=False)
         else:
             data = dataset.image_table.data
 

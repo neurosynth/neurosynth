@@ -12,6 +12,7 @@ from neurosynth.analysis import network
 from neurosynth.tests.utils import get_test_dataset, get_test_data_path
 from numpy.testing import assert_array_almost_equal
 from glob import glob
+import nibabel as nb
 
 
 class TestAnalysis(unittest.TestCase):
@@ -100,6 +101,19 @@ class TestAnalysis(unittest.TestCase):
                                  min_studies_per_voxel=1, n_clusters=3)
         n_unique = len(np.unique(clusters.get_data()))
         self.assertEqual(n_unique, 4)
+
+        d = tempfile.mkdtemp()
+        from sklearn.decomposition import RandomizedPCA
+        from sklearn.cluster import KMeans
+        pca = RandomizedPCA(20)
+        clust = KMeans(3)
+        cluster.magic(
+            self.real_dataset, method='studies', roi_mask=roi_mask,
+            features=['emotion', 'pain'], feature_threshold=0.0,
+            reduce_reference=pca, clustering_algorithm=clust,
+            distance_metric='jaccard', output_dir=d, filename='test.nii.gz')
+        img = nb.load(os.path.join(d, 'test.nii.gz'))
+        self.assertEqual(len(np.unique(img.get_data())), 4)
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestAnalysis)
