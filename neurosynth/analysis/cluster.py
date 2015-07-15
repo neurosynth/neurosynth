@@ -8,7 +8,6 @@ from sklearn import cluster as sk_cluster
 from sklearn.metrics import pairwise_distances
 from os.path import exists, join
 from os import makedirs
-from neurosynth.base.imageutils import save_img
 from nibabel import nifti1
 
 
@@ -22,9 +21,9 @@ class Clusterable(object):
 
         # Condition study inclusion on specific features
         if features is not None:
-            data = dataset.get_ids_by_features(features,
-                                               threshold=feature_threshold,
-                                               get_image_data=True, dense=False)
+            ids = dataset.get_studies(features=features,
+                                      feature_threshold=feature_threshold)
+            data = dataset.get_image_data(ids, dense=True)
         else:
             data = dataset.image_table.data
 
