@@ -1,5 +1,3 @@
-# emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
-# ex: set sts=2 ts=2 sw=2 et:
 """ Miscellaneous image-related utility functions. """
 
 import json
@@ -22,10 +20,12 @@ def get_sphere(coords, r=4, vox_dims=(2, 2, 2), dims=(91, 109, 91)):
     sphere = cube[:, np.sum(np.dot(np.diag(
         vox_dims), cube) ** 2, 0) ** .5 <= r]
     sphere = np.round(sphere.T + coords)
-    return sphere[(np.min(sphere, 1) >= 0) & (np.max(np.subtract(sphere, dims), 1) <= -1),:].astype(int)
+    return sphere[(np.min(sphere, 1) >= 0) &
+                  (np.max(np.subtract(sphere, dims), 1) <= -1), :].astype(int)
 
 
-def map_peaks_to_image(peaks, r=4, vox_dims=(2, 2, 2), dims=(91, 109, 91), header=None):
+def map_peaks_to_image(peaks, r=4, vox_dims=(2, 2, 2), dims=(91, 109, 91),
+                       header=None):
     """ Take a set of discrete foci (i.e., 2-D array of xyz coordinates)
     and generate a corresponding image, convolving each focus with a
     hard sphere of radius r."""
@@ -41,7 +41,8 @@ def load_imgs(filenames, masker, nan_to_num=True):
     """ Load multiple images from file into an ndarray.
 
     Args:
-      filenames: A single filename or list of filenames pointing to valid images.
+      filenames: A single filename or list of filenames pointing to valid
+        images.
       masker: A Masker instance.
       nan_to_num: Optional boolean indicating whether to convert NaNs to zero.
 
@@ -70,13 +71,20 @@ def save_img(data, filename, masker, header=None):
 
 
 def threshold_img(data, threshold, mask=None, mask_out='below'):
-    """ Threshold data, setting all values in the array above/below threshold to zero.
-    Optionally, can provide a mask (a 1D array with the same length as data), in which
-    case the threshold is first applied to the mask, and the resulting indices are used
-    to threshold the data. This is primarily useful when, e.g., applying a statistical
-    threshold to a z-value image based on a p-value threshold. The mask_out argument
-    indicates whether to zero out values 'below' the threshold (default) or 'above' the
-    threshold. Note: use 'above' when masking based on p values. """
+    """ Threshold data, setting all values in the array above/below threshold
+    to zero.
+    Args:
+        data (ndarray): The image data to threshold.
+        threshold (float): Numeric threshold to apply to image.
+        mask (ndarray): Optional 1D-array with the same length as the data. If
+            passed, the threshold is first applied to the mask, and the
+            resulting indices are used to threshold the data. This is primarily
+            useful when, e.g., applying a statistical threshold to a z-value
+            image based on a p-value threshold.
+        mask_out (str): Thresholding direction. Can be 'below' the threshold
+            (default) or 'above' the threshold. Note: use 'above' when masking
+            based on p values.
+    """
     if mask is not None:
         mask = threshold_img(mask, threshold, mask_out=mask_out)
         return data * mask.astype(bool)
@@ -86,26 +94,29 @@ def threshold_img(data, threshold, mask=None, mask_out='below'):
         data[data > threshold] = 0
     return data
 
+
 def create_grid(image, scale=4, apply_mask=True, save_file=None):
     """ Creates an image containing labeled cells in a 3D grid.
     Args:
-        image: String or nibabel image. The image used to define the grid dimensions.
-            Also used to define the mask to apply to the grid. Only voxels with 
-            non-zero values in the mask will be retained; all other voxels will be zeroed out 
-            in the returned image.
-        scale: The scaling factor which controls the grid size. Value reflects diameter of cube
-            in voxels.
-        apply_mask: Boolean indicating whether or not to zero out voxels not in image.
-        save_file: Optional string giving the path to save image to. Image written out is
-            a standard Nifti image. If save_file is None, no image is written.
+        image: String or nibabel image. The image used to define the grid
+            dimensions. Also used to define the mask to apply to the grid.
+            Only voxels with non-zero values in the mask will be retained; all
+            other voxels will be zeroed out in the returned image.
+        scale: The scaling factor which controls the grid size. Value reflects
+            diameter of cube in voxels.
+        apply_mask: Boolean indicating whether or not to zero out voxels not in
+            image.
+        save_file: Optional string giving the path to save image to. Image
+            written out is a standard Nifti image. If save_file is None, no
+            image is written.
     Returns:
-        A nibabel image with the same dimensions as the input image. All voxels in each cell
-        in the 3D grid are assigned the same non-zero label.
+        A nibabel image with the same dimensions as the input image. All voxels
+        in each cell in the 3D grid are assigned the same non-zero label.
     """
     if isinstance(image, basestring):
         image = nb.load(image)
 
-    #create a list of cluster centers 
+    # create a list of cluster centers
     centers = []
     x_length, y_length, z_length = image.shape
     for x in range(0, x_length, scale):
@@ -113,15 +124,17 @@ def create_grid(image, scale=4, apply_mask=True, save_file=None):
             for z in range(0, z_length, scale):
                 centers.append((x, y, z))
 
-    #create a box around each center with the diameter equal to the scaling factor
+    # create a box around each center with the diameter equal to the scaling
+    # factor
     grid = np.zeros(image.shape)
-    for (i, (x,y,z)) in enumerate(centers):
-        for mov_x in range((-scale+1)/2,(scale+1)/2):
-            for mov_y in range((-scale+1)/2,(scale+1)/2):
-                for mov_z in range((-scale+1)/2,(scale+1)/2):
+    for (i, (x, y, z)) in enumerate(centers):
+        for mov_x in range((-scale+1)/2, (scale+1)/2):
+            for mov_y in range((-scale+1)/2, (scale+1)/2):
+                for mov_z in range((-scale+1)/2, (scale+1)/2):
                     try:  # Ignore voxels outside bounds of image
                         grid[x+mov_x, y+mov_y, z+mov_z] = i+1
-                    except: pass
+                    except:
+                        pass
 
     if apply_mask:
         mask = image
@@ -140,18 +153,16 @@ def create_grid(image, scale=4, apply_mask=True, save_file=None):
 
 
 def img_to_json(img, decimals=2, swap=False, save=None):
-    """ Convert an image volume to web-ready JSON format suitable for import into
-    the Neurosynth viewer.
-
+    """ Convert an image volume to web-ready JSON format suitable for import
+    into the Neurosynth viewer.
     Args:
       img: An image filename.
       round: Optional integer giving number of decimals to round values to.
-      swap: A temporary kludge to deal with some orientation problems. For some reason
-        the switch from PyNifti to NiBabel seems to produce images that load in a
-        different orientation given the same header. In practice this can be addressed
-        by flipping the x and z axes (swap = True), but need to look into this and
-        come up with a permanent solution.
-
+      swap: A temporary kludge to deal with some orientation problems. For some
+        reason the switch from PyNifti to NiBabel seems to produce images that
+        load in a different orientation given the same header. In practice this
+        can be addressed by flipping the x and z axes (swap = True), but need
+        to look into this and come up with a permanent solution.
     Returns:
       a JSON-formatted string.
 
@@ -168,12 +179,12 @@ def img_to_json(img, decimals=2, swap=False, save=None):
     def package_json(contents=None):
         if contents is None:
             contents = {
-              'thresh': 0.0,
-              'max': 0.0,
-              'min': 0.0,
-              'dims': dims,
-              'values': [],
-              'indices': []
+                'thresh': 0.0,
+                'max': 0.0,
+                'min': 0.0,
+                'dims': dims,
+                'values': [],
+                'indices': []
             }
         # Write to file or return string
         if save is None:
@@ -208,11 +219,11 @@ def img_to_json(img, decimals=2, swap=False, save=None):
         return package_json()
 
     contents = {
-      'thresh': round(thresh, decimals),
-      'max': round(np.max(data), decimals),
-      'min': round(np.min(data), decimals),
-      'dims': dims,
-      'values': [float('%.2f' % u) for u in uniq]
+        'thresh': round(thresh, decimals),
+        'max': round(np.max(data), decimals),
+        'min': round(np.min(data), decimals),
+        'dims': dims,
+        'values': [float('%.2f' % u) for u in uniq]
     }
     ds_flat = data.ravel()
     all_inds = []

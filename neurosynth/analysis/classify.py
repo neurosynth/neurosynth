@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 """ Classification and decoding related tools """
 
 import numpy as np

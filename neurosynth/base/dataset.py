@@ -1,5 +1,3 @@
-# emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
-# ex: set sts=2 ts=2 sw=2 et:
 """ Base classes for representing and manipulating data. """
 
 import logging
@@ -66,9 +64,9 @@ class Dataset(object):
 
     """ Base Dataset class.
 
-    The core data-representing object in Neurosynth. Internally stores 
+    The core data-representing object in Neurosynth. Internally stores
     information about Mappables, including both reported activations and tagged
-    features. Provides a variety of methods for manipulating and retrieving 
+    features. Provides a variety of methods for manipulating and retrieving
     various kinds of data.
 
     The Dataset is typically initialized by passing in a database file as the
@@ -77,32 +75,32 @@ class Dataset(object):
     indicate the coordinates of the activation center or peak, the id column is
     used to group multiple activations from a single Mappable (e.g. an
     article). Typically the id should be a uniquely identifying field
-    accessible to others, e.g., a doi in the case of entire articles. The space 
-    column indicates the nominal atlas used to produce each activation. 
-    Currently all values except 'TAL' (Talairach) will be ignored. If space == 
+    accessible to others, e.g., a doi in the case of entire articles. The space
+    column indicates the nominal atlas used to produce each activation.
+    Currently all values except 'TAL' (Talairach) will be ignored. If space ==
     TAL and the transform argument is True, all activations reported in 
-    Talairach space will be converted to MNI space using the Lancaster et al 
+    Talairach space will be converted to MNI space using the Lancaster et al
     transform.
 
     Args:
-        filename (str): The name of a database file containing a list of 
+        filename (str): The name of a database file containing a list of
             activations.
-        feature_filename (str): An optional filename to construct a 
+        feature_filename (str): An optional filename to construct a
             FeatureTable from.
-        masker (str): An optional Nifti/Analyze image name defining the space 
-            to use for all operations. If no image is passed, defaults to the 
+        masker (str): An optional Nifti/Analyze image name defining the space
+            to use for all operations. If no image is passed, defaults to the
             MNI152 2 mm template packaged with FSL.
-        r (int): An optional integer specifying the radius of the smoothing 
+        r (int): An optional integer specifying the radius of the smoothing
             kernel, in mm. Defaults to 6 mm.
-        transform (bool, dict): Optional argument specifying how to handle 
-            transformation between coordinates reported in different 
-            stereotactic spaces. When True (default), activations in Talairach 
-            (T88) space will be converted to MNI space using the Lancaster et 
+        transform (bool, dict): Optional argument specifying how to handle
+            transformation between coordinates reported in different
+            stereotactic spaces. When True (default), activations in Talairach
+            (T88) space will be converted to MNI space using the Lancaster et
             al (2007) transform; no other transformations will be applied. When
             False, no transformation will be applied. Alternatively, the user
             can pass their own dictionary of named transformations to apply, in
             which case each activation will be checked against the dictionary
-            as it is read in and the specified transformation will be applied 
+            as it is read in and the specified transformation will be applied
             if found (for further details, see transformations.Transformer).
         target (str): The name of the target space within which activation
             coordinates are represented. By default, MNI.
@@ -170,14 +168,14 @@ class Dataset(object):
             lambda x: mappable.Article(x, self.transformer)))
 
     def create_image_table(self, r=None):
-        """ Create and store a new ImageTable instance based on the current 
-        Dataset. Will generally be called privately, but may be useful as a 
-        convenience method in cases where the user wants to re-generate the 
+        """ Create and store a new ImageTable instance based on the current
+        Dataset. Will generally be called privately, but may be useful as a
+        convenience method in cases where the user wants to re-generate the
         table with a new smoothing kernel of different radius.
 
         Args:
             r (int): An optional integer indicating the radius of the smoothing
-                kernel. By default, this is None, which will keep whatever 
+                kernel. By default, this is None, which will keep whatever
                 value is currently set in the Dataset instance.
         """
         logger.info("Creating image table...")
@@ -193,7 +191,7 @@ class Dataset(object):
         Args:
             filename (str): The name of the file containing new mappables.
             mappables (list): Mappable instances to append to existing list.
-            remap (bool): Optional flag indicating whether to regenerate the 
+            remap (bool): Optional flag indicating whether to regenerate the
                 entire ImageTable after appending the new Mappables.
         """
         # TODO: (i) it would be more effiicent to only map the new Mappables
@@ -210,12 +208,12 @@ class Dataset(object):
     def delete_mappables(self, ids, remap=True):
         """ Delete specific Mappables from the Dataset.
 
-        Note that 'ids' is a list of unique identifiers of the Mappables (e.g., 
+        Note that 'ids' is a list of unique identifiers of the Mappables (e.g.,
         doi's), and not indices in the current instance's mappables list.
 
         Args:
             ids (list): ids corresponding to the Mappables to delete.
-            remap (bool): Optional flag indicating whether to regenerate the 
+            remap (bool): Optional flag indicating whether to regenerate the
                 entire ImageTable after deleting undesired Mappables.
         """
         self.mappables = [m for m in self.mappables if m not in ids]
@@ -294,7 +292,8 @@ class Dataset(object):
         Select studies that activate at least 5% of all voxels within 12 mm of
         three specific foci:
 
-            >>> ids = dataset.get_studies(peaks=[[12, -20, 30], [-26, 22, 22], [0, 36, -20]], r=12)
+            >>> ids = dataset.get_studies(peaks=[[12, -20, 30], [-26, 22, 22],
+                                                [0, 36, -20]], r=12)
 
         """
         results = []
@@ -305,10 +304,11 @@ class Dataset(object):
             # retrieve the weights later using just the IDs.
             if return_type == 'weights':
                 if expression is not None or mask is not None or \
-                    peaks is not None:
-                    raise ValueError("return_type cannot be 'weights' when "
-                                     "feature-based search is used in conjunction with "
-                                     "other search modes.")
+                        peaks is not None:
+                    raise ValueError(
+                        "return_type cannot be 'weights' when feature-based "
+                        "search is used in conjunction with other search "
+                        "modes.")
                 return self.feature_table.get_ids(
                     features, frequency_threshold, func, get_weights=True)
             else:
@@ -318,7 +318,7 @@ class Dataset(object):
         # Logical expression-based selection
         if expression is not None:
             _ids = self.feature_table.get_ids_by_expression(
-                            expression, frequency_threshold, func)
+                expression, frequency_threshold, func)
             results.append(list(_ids))
 
         # Mask-based selection
@@ -339,8 +339,8 @@ class Dataset(object):
             img = imageutils.map_peaks_to_image(
                 peaks, r, vox_dims=m.vox_dims, dims=m.dims,
                 header=m.get_header())
-            results.append(self.get_studies(mask=img,
-                                    activation_threshold=activation_threshold))
+            results.append(self.get_studies(
+                mask=img, activation_threshold=activation_threshold))
 
         # Get intersection of all sets
         ids = list(reduce(lambda x, y: set(x) & set(y), results))
@@ -361,7 +361,7 @@ class Dataset(object):
             of image data rather than the Mappable instances themselves.
 
         Returns:
-            If get_image_data is True, a 2D numpy array of voxels x Mappables. 
+            If get_image_data is True, a 2D numpy array of voxels x Mappables.
             Otherwise, a list of Mappables.
         """
         if get_image_data:
@@ -372,15 +372,16 @@ class Dataset(object):
     @deprecated("get_ids_by_features() is deprecated and will be removed in "
                 "0.5. Please use get_studies(features=...).")
     def get_ids_by_features(self, features, threshold=0.001, func=np.sum,
-                            get_image_data=False, get_weights=False, dense=True):
+                            get_image_data=False, get_weights=False,
+                            dense=True):
         """ A wrapper for FeatureTable.get_ids().
 
         Args:
             features (list): features to use when selecting Mappables.
-            threshold (float): Float in range 0-1. Threshold used to select 
+            threshold (float): Float in range 0-1. Threshold used to select
                 mappables.
             func (Callable): The function to use when aggregating over the list
-                of features. See documentation in FeatureTable.get_ids() for a 
+                of features. See documentation in FeatureTable.get_ids() for a
                 full explanation.
             get_image_data (bool): When True, returns a voxel x mappable matrix
             of image data rather than the Mappable instances themselves.
@@ -510,7 +511,6 @@ class Dataset(object):
         counts = np.sum(self.get_feature_data() >= threshold, 0)
         return dict(zip(self.get_feature_names(), list(counts)))
 
-
     @classmethod
     def load(cls, filename):
         """ Load a pickled Dataset instance from file. """
@@ -565,7 +565,7 @@ class ImageTable(object):
             must explicitly provide mappables and masker.
         mappables (list): A list of Mappables to load into the ImageTable.
             Ignored if dataset is not None.
-        masker (Masker): The Masker defining the image space. Ignored if 
+        masker (Masker): The Masker defining the image space. Ignored if
             dataset is not None.
         r (int): The radius of the sphere used for smoothing (default = 6 mm).
         use_sparse (bool): Flag indicating whether or not to represent the data
@@ -628,11 +628,13 @@ class ImageTable(object):
           A 2D numpy array with voxels in rows and mappables in columns.
         """
         if dense and ids is None and voxels is None:
-            logger.warning("Warning: get_image_data() is being called without specifying a "
-                           "subset of studies or voxels to retrieve. This may result in a very large "
-                           "amount of data (several GB) being read into memory. If you experience any "
-                           "problems, consider returning a sparse matrix by passing dense=False, or "
-                           "pass in a list of ids of voxels to retrieve only a portion of the data.")
+            logger.warning(
+                "Warning: get_image_data() is being called without specifying "
+                "a subset of studies or voxels to retrieve. This may result in"
+                " a very large amount of data (several GB) being read into "
+                "memory. If you experience any problems, consider returning a "
+                "sparse matrix by passing dense=False, or pass in a list of "
+                "ids of voxels to retrieve only a portion of the data.")
 
         result = self.data
         if ids is not None:
@@ -643,16 +645,18 @@ class ImageTable(object):
         return result.toarray() if dense else result
 
     def trim(self, ids):
-        """ Trim ImageTable to keep only the passed Mappables. This is a convenience
-        method, and should generally be avoided in favor of non-destructive alternatives
-        that don't require slicing (e.g., matrix multiplication). """
+        """ Trim ImageTable to keep only the passed Mappables. This is a
+        convenience method, and should generally be avoided in favor of
+        non-destructive alternatives that don't require slicing (e.g.,
+            matrix multiplication). """
         self.data = self.get_image_data(ids, dense=False)  # .tocoo()
         idxs = np.where(np.in1d(np.array(self.ids), np.array(ids)))[0]
         self.ids = [self.ids[i] for i in idxs]
 
     def save_images_to_file(self, ids, outroot='./'):
-        """ Reconstructs vectorized images corresponding to the specified Mappable ids
-        and saves them to file, prepending with the outroot (default: current directory). """
+        """ Reconstructs vectorized images corresponding to the specified
+        Mappable ids and saves them to file, prepending with the outroot
+        (default: current directory). """
         pass
 
     def save(self, filename):
@@ -662,12 +666,12 @@ class ImageTable(object):
 
 class FeatureTable(object):
 
-    """ A FeatureTable instance stores a matrix of mappables x features, along with
-    associated manipulation methods. """
+    """ A FeatureTable instance stores a matrix of mappables x features,
+    along with associated manipulation methods. """
 
     def __init__(self, dataset, **kwargs):
-        """ Initialize a new FeatureTable. Takes as input a parent DataSet instance and
-        feature data (if provided). """
+        """ Initialize a new FeatureTable. Takes as input a parent DataSet
+        instance and feature data (if provided). """
         self.dataset = dataset
         self.data = pd.DataFrame()
         if kwargs:
@@ -677,7 +681,7 @@ class FeatureTable(object):
                      min_studies=0, threshold=0.0001):
         """ Add new features to FeatureTable.
         Args:
-            features (str, DataFrame): A filename to load data from, or a 
+            features (str, DataFrame): A filename to load data from, or a
                 pandas DataFrame. In either case, studies are in rows and
                 features are in columns. Values in cells reflect the weight of
                 the intersecting feature for the intersecting study. Feature
@@ -696,7 +700,7 @@ class FeatureTable(object):
                         different
             min_studies (int): minimum number of studies that pass threshold in
                 order to add feature.
-            threshold (float): minimum frequency threshold each study must 
+            threshold (float): minimum frequency threshold each study must
                 exceed in order to count towards min_studies.
         """
         if isinstance(features, basestring):
@@ -720,11 +724,13 @@ class FeatureTable(object):
             set(features.index) & set(self.dataset.image_table.ids))
         if float(n_common_ids) / n_studies < 0.01:  # Minimum 1% overlap
             msg = "Only %d" % n_common_ids if n_common_ids else "None of the"
-            logger.warning(msg + " studies in the feature file matched studies currently in " +
-                           "the Dataset. The most likely cause for this is that you're pairing a newer " +
-                           "feature set with an older, incompatible database file. You may want to try " +
-                           "regenerating the Dataset instance from a newer database file that uses PMIDs " +
-                           "rather than doi's as the study identifiers in the first column.")
+            logger.warning(
+                msg + " studies in the feature file matched studies currently "
+                "the Dataset. The most likely cause for this is that you're "
+                "pairing a newer feature set with an older, incompatible "
+                "database file. You may want to try regenerating the Dataset "
+                "instance from a newer database file that uses PMIDs rather "
+                "than doi's as the study identifiers in the first column.")
 
         old_data = self.data.to_dense()
         # Handle features with duplicate names
@@ -746,7 +752,7 @@ class FeatureTable(object):
         """ Slices and returns a subset of feature data.
 
         Args:
-            ids (list, array): A list or 1D numpy array of Mappable ids to 
+            ids (list, array): A list or 1D numpy array of Mappable ids to
                 return rows for. If None, returns data for all Mappables
                 (i.e., all rows in array). 
             features (list, array): A list or 1D numpy array of named features
