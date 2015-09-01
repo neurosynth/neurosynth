@@ -64,7 +64,7 @@ class Clusterable(object):
         ''' Apply a transformation to the Clusterable instance. Accepts any
         scikit-learn-style class that implements a fit_transform() method. '''
         data = self.data.T if transpose else self.data
-        self.data = transformer.fit_transform(data)
+        self.data = transformer.fit_transform(data).T
         return self
 
 
@@ -160,8 +160,6 @@ def magic(dataset, method='coactivation', roi_mask=None,
 
         transpose = (method == 'coactivation')
         reference = reference.transform(reduce_reference, transpose=transpose)
-        if transpose:
-            reference.data = reference.data.T
 
     distances = pairwise_distances(roi.data, reference.data,
                                    metric=distance_metric)

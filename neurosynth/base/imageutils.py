@@ -5,6 +5,7 @@ import logging
 import nibabel as nb
 from nibabel import nifti1
 import numpy as np
+from six import string_types
 
 logger = logging.getLogger('neurosynth.imageutils')
 
@@ -50,7 +51,7 @@ def load_imgs(filenames, masker, nan_to_num=True):
       An m x n 2D numpy array, where m = number of voxels in mask and
       n = number of images passed.
     """
-    if isinstance(filenames, basestring):
+    if isinstance(filenames, string_types):
         filenames = [filenames]
     data = np.zeros((masker.n_vox_in_mask, len(filenames)))
     for i, f in enumerate(filenames):
@@ -113,7 +114,7 @@ def create_grid(image, scale=4, apply_mask=True, save_file=None):
         A nibabel image with the same dimensions as the input image. All voxels
         in each cell in the 3D grid are assigned the same non-zero label.
     """
-    if isinstance(image, basestring):
+    if isinstance(image, string_types):
         image = nb.load(image)
 
     # create a list of cluster centers
@@ -128,9 +129,9 @@ def create_grid(image, scale=4, apply_mask=True, save_file=None):
     # factor
     grid = np.zeros(image.shape)
     for (i, (x, y, z)) in enumerate(centers):
-        for mov_x in range((-scale+1)/2, (scale+1)/2):
-            for mov_y in range((-scale+1)/2, (scale+1)/2):
-                for mov_z in range((-scale+1)/2, (scale+1)/2):
+        for mov_x in range((-scale+1)//2, (scale+1)//2):
+            for mov_y in range((-scale+1)//2, (scale+1)//2):
+                for mov_z in range((-scale+1)//2, (scale+1)//2):
                     try:  # Ignore voxels outside bounds of image
                         grid[x+mov_x, y+mov_y, z+mov_z] = i+1
                     except:
@@ -138,7 +139,7 @@ def create_grid(image, scale=4, apply_mask=True, save_file=None):
 
     if apply_mask:
         mask = image
-        if isinstance(mask, basestring):
+        if isinstance(mask, string_types):
             mask = nb.load(mask)
         if type(mask).__module__ != np.__name__:
             mask = mask.get_data()

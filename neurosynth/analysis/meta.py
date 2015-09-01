@@ -4,7 +4,7 @@ import logging
 import numpy as np
 from scipy.stats import norm
 from neurosynth.base import imageutils
-import stats
+from neurosynth.analysis import stats
 from os.path import join, exists
 from os import makedirs
 

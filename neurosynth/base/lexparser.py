@@ -50,7 +50,7 @@ class Lexer(object):
             tok = self.lexer.token()
             if not tok:
                 break      # No more input
-            print tok
+            print(tok)
 
 
 class Parser(object):
@@ -109,7 +109,7 @@ class Parser(object):
         self.parser = yacc.yacc(module=self, **kwargs)
 
     def p_error(self, p):
-        print p
+        print(p)
 
     def parse(self, input):
         return self.parser.parse(input)

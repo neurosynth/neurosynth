@@ -7,11 +7,22 @@ import sys
 import numpy as np
 import pandas as pd
 from scipy import sparse
-import mappable
+from neurosynth.base import mappable
 from neurosynth.base import mask, imageutils, transformations
 from neurosynth.base import lexparser as lp
 from neurosynth.utils import deprecated
-import urllib2
+
+# For Python 2/3 compatibility
+from six import string_types
+from functools import reduce
+try:
+    from urllib2 import urlopen
+except ImportError:
+    from urllib.request import urlopen
+try:
+    import cPickle as pickle
+except:
+    import pickle
 
 logger = logging.getLogger('neurosynth.dataset')
 
@@ -34,9 +45,8 @@ def download(path='.', url=None, unpack=False):
 
     f = open(filename, 'wb')
 
-    u = urllib2.urlopen(url)
-    meta = u.info()
-    file_size = int(meta.getheaders("Content-Length")[0])
+    u = urlopen(url)
+    file_size = int(u.headers["Content-Length"][0])
     print("Downloading the latest Neurosynth files: {0} bytes: {1}".format(
         url, file_size))
 
@@ -514,8 +524,7 @@ class Dataset(object):
     @classmethod
     def load(cls, filename):
         """ Load a pickled Dataset instance from file. """
-        import cPickle
-        dataset = cPickle.load(open(filename, 'rb'))
+        dataset = pickle.load(open(filename, 'rb'))
         if hasattr(dataset, 'feature_table'):
             dataset.feature_table._csr_to_sdf()
         return dataset
@@ -534,8 +543,7 @@ class Dataset(object):
         if hasattr(self, 'feature_table'):
             self.feature_table._sdf_to_csr()
 
-        import cPickle
-        cPickle.dump(self, open(filename, 'wb'), -1)
+        pickle.dump(self, open(filename, 'wb'), -1)
 
         if hasattr(self, 'feature_table'):
             self.feature_table._csr_to_sdf()
@@ -660,8 +668,7 @@ class ImageTable(object):
         pass
 
     def save(self, filename):
-        import cPickle
-        cPickle.dump(self, open(filename, 'wb'), -1)
+        pickle.dump(self, open(filename, 'wb'), -1)
 
 
 class FeatureTable(object):
@@ -703,7 +710,7 @@ class FeatureTable(object):
             threshold (float): minimum frequency threshold each study must
                 exceed in order to count towards min_studies.
         """
-        if isinstance(features, basestring):
+        if isinstance(features, string_types):
             if not os.path.exists(features):
                 raise ValueError("%s cannot be found." % features)
             try:
@@ -840,7 +847,7 @@ class FeatureTable(object):
         Returns:
             A list of matching feature names.
         '''
-        if isinstance(search, basestring):
+        if isinstance(search, string_types):
             search = [search]
         search = [s.replace('*', '.*') for s in search]
         cols = list(self.data.columns)
