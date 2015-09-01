@@ -282,15 +282,6 @@ class TestBase(unittest.TestCase):
         with self.assertRaises(AssertionError):
             image_table = ImageTable()
 
-    def test_img_to_json(self):
-        path = get_test_data_path() + 'sgacc_mask.nii.gz'
-        json_data = imageutils.img_to_json(path)
-        data = json.loads(json_data)
-        self.assertEqual(data['max'], 1)
-        self.assertEqual(data['dims'], [91, 109, 91])
-        self.assertEqual(data['values'], [1.0])
-        self.assertEqual(len(data['indices'][0]), 1142)
-
     def test_get_features_by_ids(self):
         features = self.dataset.feature_table.get_features_by_ids(
             ['study1', 'study3'], threshold=0.01)
