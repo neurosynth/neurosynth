@@ -163,8 +163,7 @@ class Decoder:
         """
         self.feature_names = self.dataset.feature_table.feature_names
         if features is not None:
-            self.feature_names = filter(
-                lambda x: x in self.feature_names, features)
+            self.feature_names = [f for f in features if f in self.feature_names]
         from neurosynth.analysis import meta
         self.feature_images = meta.analyze_features(
             self.dataset, self.feature_names, image_type=image_type,
