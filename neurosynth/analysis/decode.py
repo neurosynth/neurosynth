@@ -7,6 +7,7 @@ from neurosynth.analysis.reduce import average_within_regions
 from os import path
 import pandas as pd
 import matplotlib.pyplot as plt
+from six import string_types
 
 
 class Decoder:
@@ -82,7 +83,7 @@ class Decoder:
           each image is a column. The meaning of the values depends on the
           decoding method used. """
 
-        if isinstance(images, basestring):
+        if isinstance(images, string_types):
             images = [images]
 
         if isinstance(images, list):
@@ -162,8 +163,7 @@ class Decoder:
         """
         self.feature_names = self.dataset.feature_table.feature_names
         if features is not None:
-            self.feature_names = filter(
-                lambda x: x in self.feature_names, features)
+            self.feature_names = [f for f in features if f in self.feature_names]
         from neurosynth.analysis import meta
         self.feature_images = meta.analyze_features(
             self.dataset, self.feature_names, image_type=image_type,
@@ -270,9 +270,9 @@ class Decoder:
             fig, ax = plt.subplots(1, 1, subplot_kw=dict(polar=True))
             fig.set_size_inches(10, 10)
         else:
-            fig, axes = plt.subplots(n_panels, 1, sharex=False, sharey=False,
+            fig, axes = plt.subplots(1, n_panels, sharex=False, sharey=False,
                                      subplot_kw=dict(polar=True))
-            fig.set_size_inches((6, 6 * n_panels))
+            fig.set_size_inches((6 * n_panels, 6))
         # A bit silly to import seaborn just for this...
         # should extract just the color_palette functionality.
         import seaborn as sns
@@ -285,8 +285,10 @@ class Decoder:
                 alpha = 0.8
             ax.set_ylim(data.values.min(), data.values.max())
             d = data.iloc[:, i].values
-            ax.fill(
-                theta, d, ec='k', alpha=alpha, color=colors[i], linewidth=2)
+            ax.fill(theta, d, color=colors[i], alpha=alpha, ec='k',
+                    linewidth=0)
+            ax.fill(theta, d, alpha=1.0, ec=colors[i],
+                    linewidth=2, fill=False)
             ax.set_xticks(theta)
             ax.set_xticklabels(labels, fontsize=18)
             [lab.set_fontsize(18) for lab in ax.get_yticklabels()]

@@ -95,6 +95,7 @@ class TestAnalysis(unittest.TestCase):
         assert_array_almost_equal(p, 0.04753082)
 
     def test_clustering(self):
+        # Test standard coactivation-based clustering
         roi_mask = os.path.join(get_test_data_path(), 'sgacc_mask.nii.gz')
         clusters = cluster.magic(self.real_dataset, roi_mask=roi_mask,
                                  reduce_reference='pca', n_components=5,
@@ -102,6 +103,7 @@ class TestAnalysis(unittest.TestCase):
         n_unique = len(np.unique(clusters.get_data()))
         self.assertEqual(n_unique, 4)
 
+        # Test study-based clustering
         d = tempfile.mkdtemp()
         from sklearn.decomposition import RandomizedPCA
         from sklearn.cluster import KMeans
@@ -114,6 +116,13 @@ class TestAnalysis(unittest.TestCase):
             distance_metric='jaccard', output_dir=d, filename='test.nii.gz')
         img = nb.load(os.path.join(d, 'test.nii.gz'))
         self.assertEqual(len(np.unique(img.get_data())), 4)
+
+        # Test feature-based clustering
+        clusters = cluster.magic(self.real_dataset, method='features',
+                                 n_clusters=3)
+        n_unique = len(np.unique(clusters.get_data()))
+        self.assertEqual(n_unique, 4)
+        shutil.rmtree(d)
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestAnalysis)

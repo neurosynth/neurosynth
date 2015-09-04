@@ -5,12 +5,13 @@ import tempfile
 import os
 import shutil
 from glob import glob
-from neurosynth.tests.utils import get_test_dataset, get_test_data_path, get_resource_path
+from neurosynth.tests.utils import (get_test_dataset, get_test_data_path,
+                                    get_resource_path)
 from neurosynth.base.dataset import Dataset, ImageTable
 from neurosynth.base import imageutils
 from neurosynth.base.mask import Masker
 import neurosynth as ns
-from numpy.testing import assert_almost_equal
+from six import string_types
 import json
 
 
@@ -46,24 +47,27 @@ class TestBase(unittest.TestCase):
 
     def test_export_to_json(self):
         js = self.dataset.to_json()
-        self.assertTrue(isinstance(js, basestring))
+        self.assertTrue(isinstance(js, string_types))
         data = json.loads(js)
         self.assertEqual(len(data['mappables']), 5)
 
     def test_dataset_initializes(self):
         """ Test whether dataset initializes properly. """
-        Dataset(get_test_data_path() + 'test_dataset.txt', get_test_data_path() + 'test_features.txt')
+        Dataset(get_test_data_path() + 'test_dataset.txt',
+                get_test_data_path() + 'test_features.txt')
         self.assertIsNotNone(self.dataset.masker)
         self.assertIsNotNone(self.dataset.image_table)
         self.assertEqual(len(self.dataset.mappables), 5)
         self.assertIsNotNone(self.dataset.masker)
         self.assertIsNotNone(self.dataset.r)
-        self.assertIsNotNone(self.dataset.mappables[0].data['extra_field'].iloc[2], 'field')
+        self.assertIsNotNone(
+            self.dataset.mappables[0].data['extra_field'].iloc[2], 'field')
 
     def test_get_mappables(self):
         mappables = self.dataset.get_mappables(['study2', 'study5'])
         self.assertEqual(len(mappables), 2)
-        mappables = self.dataset.get_mappables(['study3', 'study4', 'study5'], get_image_data=True)
+        mappables = self.dataset.get_mappables(
+            ['study3', 'study4', 'study5'], get_image_data=True)
         self.assertEqual(mappables.shape, (228453, 3))
 
     def test_image_table_loads(self):
@@ -83,15 +87,15 @@ class TestBase(unittest.TestCase):
         self.assertEqual(len(self.dataset.get_feature_names()), 5)
         self.assertEqual(tt.data.shape, (5, 5))
         self.assertEqual(tt.data.columns[3], 'f4')
-        self.assertEqual(tt.data.to_dense().iloc[0,0], 0.0003)
+        self.assertEqual(tt.data.to_dense().iloc[0, 0], 0.0003)
 
     def test_feature_addition(self):
         """ Add feature data from multiple sources to FeatureTable. """
         d = self.dataset
         new_data = pd.DataFrame(np.array([
-            [0.001, 0.1, 0.003], 
+            [0.001, 0.1, 0.003],
             [0.02, 0.0008, 0.0003],
-            [0.001, 0.002, 0.05]]), 
+            [0.001, 0.002, 0.05]]),
             index=['study1', 'study4', 'study6'], columns=['g1', 'g2', 'g3'])
         # Replace all features
         d.add_features(new_data, append=False)
@@ -116,7 +120,7 @@ class TestBase(unittest.TestCase):
         # Apply threshold
         d = get_test_dataset()
         d.add_features(new_data, min_studies=2, threshold=0.003)
-        self.assertEqual(d.feature_table.data.shape, (6,6))
+        self.assertEqual(d.feature_table.data.shape, (6, 6))
 
     def test_selection_by_features(self):
         """ Test feature-based Mappable search. Tests both the FeatureTable method
@@ -133,7 +137,8 @@ class TestBase(unittest.TestCase):
             features=['f1', 'f3', 'g1'], activation_threshold=0.001,
             func=np.max, return_type='data')
         self.assertEqual(img_data.shape, (228453, 5))
-        d.feature_table.data.columns = ['f1', 'f2', 'my ngram', 'my ngram reprise', 'g1']
+        d.feature_table.data.columns = [
+            'f1', 'f2', 'my ngram', 'my ngram reprise', 'g1']
         ids = d.get_studies('my ngram reprise', frequency_threshold=0.001)
         self.assertEqual(list(ids), ['study5'])
 
@@ -149,41 +154,42 @@ class TestBase(unittest.TestCase):
 
         if have_ply:
             ids = self.dataset.get_studies(expression="* &~ (g*)", func=np.sum,
-                frequency_threshold=0.003)
-            self.assertEqual(ids, ['study3', 'study5'])
+                                           frequency_threshold=0.003)
+            self.assertEqual(sorted(ids), ['study3', 'study5'])
             ids = self.dataset.get_studies(
                 expression="f* > 0.005", func=np.mean, frequency_threshold=0.0)
             self.assertEqual(ids, ['study3'])
             ids = self.dataset.get_studies(expression="f* < 0.05", func=np.sum,
-                frequency_threshold=0.0)
-            self.assertEqual(ids, ['study1', 'study2', 'study3', 
-                'study4', 'study5'])
+                                           frequency_threshold=0.0)
+            self.assertEqual(sorted(ids), ['study1', 'study2', 'study3',
+                                           'study4', 'study5'])
             ids = self.dataset.get_studies(expression="f* | g*", func=np.mean,
-                frequency_threshold=0.003)
-            self.assertEqual(ids, ['study1', 'study2', 'study3',
-                'study4'])
+                                           frequency_threshold=0.003)
+            self.assertEqual(sorted(ids), ['study1', 'study2', 'study3',
+                                           'study4'])
             ids = self.dataset.get_studies(expression="(f* & g*)", func=np.sum,
-                frequency_threshold=0.001)
-            self.assertEqual(ids, ['study1', 'study4'])
+                                           frequency_threshold=0.001)
+            self.assertEqual(sorted(ids), ['study1', 'study4'])
             # test N-gram feature handling
             self.dataset.feature_table.data.columns = ['f1', 'f2', 'my ngram',
-                'my ngram reprise', 'g1']
+                                                       'my ngram reprise', 'g1']
             ids = self.dataset.get_studies(expression="my ngram reprise")
             self.assertEqual(ids, ['study5'])
             ids = self.dataset.get_studies(expression="my ngram*",
-                frequency_threshold=0.01)
-            self.assertEqual(ids, ['study1', 'study4', 'study5'])
+                                           frequency_threshold=0.01)
+            self.assertEqual(sorted(ids), ['study1', 'study4', 'study5'])
             try:
                 os.unlink('lextab.py')
                 os.unlink('parser.out')
                 os.unlink('parsetab.py')
-            except: pass
+            except:
+                pass
 
     def test_selection_by_mask(self):
         """ Test mask-based Mappable selection.
         Only one peak in the test dataset (in study5) should be within the sgACC. """
-        ids = self.dataset.get_studies(mask=get_test_data_path() + 
-            'sgacc_mask.nii.gz')
+        ids = self.dataset.get_studies(mask=get_test_data_path() +
+                                       'sgacc_mask.nii.gz')
         self.assertEquals(len(ids), 1)
         self.assertEquals('study5', ids[0])
 
@@ -191,8 +197,8 @@ class TestBase(unittest.TestCase):
         """ Test peak-based Mappable selection. """
         ids = self.dataset.get_studies(peaks=np.array(
             [[3, 30, -9]]))  # Test with numpy array
-        ids2 = self.dataset.get_studies(peaks=
-            [[3, 30, -9]])  # Test with list of lists
+        # Test with list of lists
+        ids2 = self.dataset.get_studies(peaks=[[3, 30, -9]])
         self.assertEquals(ids, ids2)
         self.assertEquals(len(ids), 1)
         self.assertEquals('study5', ids[0])
@@ -201,7 +207,7 @@ class TestBase(unittest.TestCase):
         ids = self.dataset.get_studies(
             peaks=[[3, 30, -9]], r=35, expression="f* < 0.013", func=np.sum,
             frequency_threshold=0.0, activation_threshold=0.0001)
-        self.assertEquals(ids, ['study2', 'study5'])
+        self.assertEquals(sorted(ids), ['study2', 'study5'])
 
     def test_unmask(self):
         """ Test unmasking on 1d and 2d vectors (going back to 3d and 4d)
@@ -239,30 +245,34 @@ class TestBase(unittest.TestCase):
         # and should be equal to the ones computed directly (we do not do
         # any fancy queries atm), assumes default threshold of 0.001
         feature_counts_ = dict([(feature, np.sum(self.dataset.feature_table.data.to_dense().ix[:, col] > 0.001))
-                               for col, feature in enumerate(self.dataset.feature_table.feature_names)])
+                                for col, feature in enumerate(self.dataset.feature_table.feature_names)])
         self.assertEqual(feature_counts, feature_counts_)
 
     def test_get_feature_data(self):
         """ Test retrieval of Mappable x feature data. """
         # Retrieve dense
-        feature_data = self.dataset.get_feature_data(features=['f1', 'f4', 'g1'])
-        self.assertEqual(feature_data.shape, (5,3))
+        feature_data = self.dataset.get_feature_data(
+            features=['f1', 'f4', 'g1'])
+        self.assertEqual(feature_data.shape, (5, 3))
         # Retrieve sparse
-        feature_data = self.dataset.get_feature_data(ids=['study3', 'study1'], dense=False)
-        self.assertEqual(feature_data.shape, (2,5))
+        feature_data = self.dataset.get_feature_data(
+            ids=['study3', 'study1'], dense=False)
+        self.assertEqual(feature_data.shape, (2, 5))
         # Skip this for now; behaves inconsistently across pandas versions
         # self.assertEqual(feature_data.iloc[0,1], 0.02)
         self.assertEqual(feature_data['f3']['study1'], 0.012)
 
     def test_get_image_data(self):
         """ Test retrieval of voxel x Mappable data. """
-        image_data = self.dataset.get_image_data(voxels=range(2000,3000))
-        self.assertEquals(image_data.shape, (1000,5))
-        image_data = self.dataset.get_image_data(ids=['study1','study2','study5'], dense=True)
-        self.assertEquals(image_data.shape, (228453,3))
+        image_data = self.dataset.get_image_data(voxels=range(2000, 3000))
+        self.assertEquals(image_data.shape, (1000, 5))
+        image_data = self.dataset.get_image_data(
+            ids=['study1', 'study2', 'study5'], dense=True)
+        self.assertEquals(image_data.shape, (228453, 3))
         # Or directly through the image table
-        image_data = self.dataset.image_table.get_image_data(ids=['study1','study2','study5'], dense=False)
-        self.assertEquals(image_data.shape, (228453,3))
+        image_data = self.dataset.image_table.get_image_data(
+            ids=['study1', 'study2', 'study5'], dense=False)
+        self.assertEquals(image_data.shape, (228453, 3))
 
     def test_trim_image_table(self):
         self.dataset.image_table.trim(['study1', 'study2', 'study3'])
@@ -272,20 +282,12 @@ class TestBase(unittest.TestCase):
         with self.assertRaises(AssertionError):
             image_table = ImageTable()
 
-    def test_img_to_json(self):
-        path = get_test_data_path() + 'sgacc_mask.nii.gz'
-        json_data = imageutils.img_to_json(path)
-        data = json.loads(json_data)
-        self.assertEqual(data['max'], 1)
-        self.assertEqual(data['dims'], [91, 109, 91])
-        self.assertEqual(data['values'], [1.0])
-        self.assertEqual(len(data['indices'][0]), 1142)
-
     def test_get_features_by_ids(self):
-        features = self.dataset.feature_table.get_features_by_ids(['study1','study3'], threshold=0.01)
+        features = self.dataset.feature_table.get_features_by_ids(
+            ['study1', 'study3'], threshold=0.01)
         self.assertEquals(len(features), 3)
-        features = self.dataset.feature_table.get_features_by_ids(['study2','study5'], func=np.sum, 
-            threshold=0.0, get_weights=True)
+        features = self.dataset.feature_table.get_features_by_ids(['study2', 'study5'], func=np.sum,
+                                                                  threshold=0.0, get_weights=True)
         self.assertEquals(len(features), 5)
         self.assertEqual(features['f3'], 0.01)
 
@@ -316,10 +318,12 @@ class TestMasker(unittest.TestCase):
 
     def test_add_and_remove_masks(self):
         self.masker.add(get_test_data_path() + 'sgacc_mask.nii.gz')
-        self.masker.add({'motor': get_test_data_path() + 'medial_motor.nii.gz'})
+        self.masker.add(
+            {'motor': get_test_data_path() + 'medial_motor.nii.gz'})
         self.assertEqual(len(self.masker.layers), 2)
         self.assertEqual(len(self.masker.stack), 2)
-        self.assertEqual(set(self.masker.layers.keys()), set(['layer_0', 'motor']))
+        self.assertEqual(
+            set(self.masker.layers.keys()), set(['layer_0', 'motor']))
         self.assertEqual(np.sum(self.masker.layers['motor']), 1419)
         self.masker.remove('motor')
         self.assertEqual(len(self.masker.layers), 1)

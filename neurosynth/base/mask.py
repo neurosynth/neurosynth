@@ -1,6 +1,6 @@
 import numpy as np
 import nibabel as nb
-
+from six import string_types
 
 class Masker(object):
 
@@ -15,7 +15,7 @@ class Masker(object):
                 an image filename or a NiBabel image.
             layers: Optional masking layers to add; see docstring for add().
         """
-        if isinstance(volume, basestring):
+        if isinstance(volume, string_types):
             volume = nb.load(volume)
         self.volume = volume
         data = self.volume.get_data()
@@ -77,7 +77,7 @@ class Masker(object):
         if not isinstance(layers, list):
             layers = [layers]
         for l in layers:
-            if isinstance(l, basestring):
+            if isinstance(l, string_types):
                 if l not in self.layers:
                     raise ValueError("There's no image/layer named '%s' in "
                                      "the masking stack!" % l)
@@ -103,7 +103,7 @@ class Masker(object):
                     'image': A NiBabel image
         Returns: An object containing image data; see output options above.
         """
-        if isinstance(image, basestring):
+        if isinstance(image, string_types):
             image = nb.load(image)
 
         if type(image).__module__.startswith('nibabel'):
@@ -210,7 +210,7 @@ class Masker(object):
         elif not isinstance(layers, list):
             layers = [layers]
 
-        layers = map(lambda x: x if isinstance(x, basestring)
+        layers = map(lambda x: x if isinstance(x, string_types)
                      else self.stack[x], layers)
         layers = [self.layers[l] for l in layers if l in self.layers]
 

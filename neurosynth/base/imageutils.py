@@ -5,6 +5,7 @@ import logging
 import nibabel as nb
 from nibabel import nifti1
 import numpy as np
+from six import string_types
 
 logger = logging.getLogger('neurosynth.imageutils')
 
@@ -50,7 +51,7 @@ def load_imgs(filenames, masker, nan_to_num=True):
       An m x n 2D numpy array, where m = number of voxels in mask and
       n = number of images passed.
     """
-    if isinstance(filenames, basestring):
+    if isinstance(filenames, string_types):
         filenames = [filenames]
     data = np.zeros((masker.n_vox_in_mask, len(filenames)))
     for i, f in enumerate(filenames):
@@ -113,7 +114,7 @@ def create_grid(image, scale=4, apply_mask=True, save_file=None):
         A nibabel image with the same dimensions as the input image. All voxels
         in each cell in the 3D grid are assigned the same non-zero label.
     """
-    if isinstance(image, basestring):
+    if isinstance(image, string_types):
         image = nb.load(image)
 
     # create a list of cluster centers
@@ -128,9 +129,9 @@ def create_grid(image, scale=4, apply_mask=True, save_file=None):
     # factor
     grid = np.zeros(image.shape)
     for (i, (x, y, z)) in enumerate(centers):
-        for mov_x in range((-scale+1)/2, (scale+1)/2):
-            for mov_y in range((-scale+1)/2, (scale+1)/2):
-                for mov_z in range((-scale+1)/2, (scale+1)/2):
+        for mov_x in range((-scale+1)//2, (scale+1)//2):
+            for mov_y in range((-scale+1)//2, (scale+1)//2):
+                for mov_z in range((-scale+1)//2, (scale+1)//2):
                     try:  # Ignore voxels outside bounds of image
                         grid[x+mov_x, y+mov_y, z+mov_z] = i+1
                     except:
@@ -138,7 +139,7 @@ def create_grid(image, scale=4, apply_mask=True, save_file=None):
 
     if apply_mask:
         mask = image
-        if isinstance(mask, basestring):
+        if isinstance(mask, string_types):
             mask = nb.load(mask)
         if type(mask).__module__ != np.__name__:
             mask = mask.get_data()
@@ -150,89 +151,3 @@ def create_grid(image, scale=4, apply_mask=True, save_file=None):
         nb.save(grid, save_file)
 
     return grid
-
-
-def img_to_json(img, decimals=2, swap=False, save=None):
-    """ Convert an image volume to web-ready JSON format suitable for import
-    into the Neurosynth viewer.
-    Args:
-      img: An image filename.
-      round: Optional integer giving number of decimals to round values to.
-      swap: A temporary kludge to deal with some orientation problems. For some
-        reason the switch from PyNifti to NiBabel seems to produce images that
-        load in a different orientation given the same header. In practice this
-        can be addressed by flipping the x and z axes (swap = True), but need
-        to look into this and come up with a permanent solution.
-    Returns:
-      a JSON-formatted string.
-
-    """
-    try:
-        data = nb.load(img).get_data()
-    except Exception as e:
-        raise Exception("Error loading %s: %s" % (img, str(e)))
-
-    dims = list(data.shape)
-
-    # Convenience method to package and output the converted data;
-    # also handles cases where image is blank.
-    def package_json(contents=None):
-        if contents is None:
-            contents = {
-                'thresh': 0.0,
-                'max': 0.0,
-                'min': 0.0,
-                'dims': dims,
-                'values': [],
-                'indices': []
-            }
-        # Write to file or return string
-        if save is None:
-            return json.dumps(contents)
-        else:
-            json.dump(contents, open(save, 'w'))
-
-    # Skip empty images
-    data = np.nan_to_num(data)
-    if np.sum(data) == 0:
-        return package_json()
-
-    # Round values to save space. Note that in practice the resulting JSON file will
-    # typically be larger than the original nifti unless the image is relatively
-    # dense (even when compressed). More reason to switch from JSON to nifti reading
-    # in the viewer!
-    data = np.round_(data, decimals)
-
-    # Temporary kludge to fix orientation issue
-    if swap:
-        data = np.swapaxes(data, 0, 2)
-
-    # Identify threshold--minimum nonzero value
-    thresh = np.min(np.abs(data[np.nonzero(data)]))
-
-    # compress into 2 lists, one with values, the other with list of indices
-    # for each value
-    uniq = list(np.unique(data))
-    # uniq = np.unique()
-    uniq.remove(0)
-    if len(uniq) == 0:
-        return package_json()
-
-    contents = {
-        'thresh': round(thresh, decimals),
-        'max': round(np.max(data), decimals),
-        'min': round(np.min(data), decimals),
-        'dims': dims,
-        'values': [float('%.2f' % u) for u in uniq]
-    }
-    ds_flat = data.ravel()
-    all_inds = []
-
-    for val in uniq:
-        if val == 0:
-            continue
-        ind = [int(x) for x in list(np.where(ds_flat == val)[0])]  # UGH
-        all_inds.append(ind)
-    contents['indices'] = all_inds
-
-    return package_json(contents)

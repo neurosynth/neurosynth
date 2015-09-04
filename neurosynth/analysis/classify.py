@@ -96,7 +96,7 @@ def get_studies_by_regions(dataset, masks, threshold=0.08,
     try:
         loaded_masks = [nib.load(os.path.relpath(m)) for m in masks]
     except OSError:
-        print 'Error loading masks. Check the path'
+        print('Error loading masks. Check the path')
 
     # Get a list of studies that activate for each mask file--i.e.,  a list of
     # lists

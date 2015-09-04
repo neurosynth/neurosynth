@@ -64,7 +64,8 @@ class Clusterable(object):
         ''' Apply a transformation to the Clusterable instance. Accepts any
         scikit-learn-style class that implements a fit_transform() method. '''
         data = self.data.T if transpose else self.data
-        self.data = transformer.fit_transform(data)
+        data = transformer.fit_transform(data)
+        self.data = data.T if transpose else data
         return self
 
 
@@ -148,6 +149,11 @@ def magic(dataset, method='coactivation', roi_mask=None,
                                 min_studies=min_studies_per_voxel,
                                 features=features,
                                 feature_threshold=feature_threshold)
+    elif method == 'features':
+        reference = deepcopy(roi)
+        feature_data = dataset.feature_table.data
+        n_studies = len(feature_data)
+        reference.data = reference.data.dot(feature_data.values) / n_studies
     elif method == 'studies':
         reference = roi
 
@@ -160,11 +166,12 @@ def magic(dataset, method='coactivation', roi_mask=None,
 
         transpose = (method == 'coactivation')
         reference = reference.transform(reduce_reference, transpose=transpose)
-        if transpose:
-            reference.data = reference.data.T
 
-    distances = pairwise_distances(roi.data, reference.data,
-                                   metric=distance_metric)
+    if method == 'coactivation':
+        distances = pairwise_distances(roi.data, reference.data,
+                                       metric=distance_metric)
+    else:
+        distances = reference.data
 
     # TODO: add additional clustering methods
     if isinstance(clustering_algorithm, string_types):
