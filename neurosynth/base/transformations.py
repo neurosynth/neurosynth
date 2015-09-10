@@ -1,5 +1,3 @@
-# emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
-# ex: set sts=2 ts=2 sw=2 et:
 """ Various transformations between coordinate frames, atlas spaces, etc. """
 
 import numpy as np
@@ -7,6 +5,7 @@ from numpy import linalg
 import logging
 
 logger = logging.getLogger('neurosynth.transformations')
+
 
 def transform(foci, mat):
     """ Convert coordinates from one space to another using provided
@@ -37,7 +36,10 @@ def t88_to_mni():
     Adapted from BrainMap scripts; see http://brainmap.org/icbm2tal/
     Details are described in Lancaster et al. (2007)
     (http://brainmap.org/new/pubs/LancasterHBM07.pdf). """
-    return np.array([[0.9254, 0.0024, -0.0118, -1.0207], [-0.0048, 0.9316, -0.0871, -1.7667], [0.0152, 0.0883,  0.8924, 4.0926], [0.0, 0.0, 0.0, 1.0]]).T
+    return np.array([[0.9254, 0.0024, -0.0118, -1.0207],
+                     [-0.0048, 0.9316, -0.0871, -1.7667],
+                     [0.0152, 0.0883,  0.8924, 4.0926],
+                     [0.0, 0.0, 0.0, 1.0]]).T
 
 
 class Transformer(object):
@@ -62,5 +64,7 @@ class Transformer(object):
         if name in self.transformations:
             return transform(foci, self.transformations[name])
         else:
-            logger.info("No transformation named '%s' found; coordinates left untransformed." % name)
+            logger.info(
+                "No transformation named '%s' found; coordinates left "
+                "untransformed." % name)
             return foci

@@ -19,7 +19,7 @@ import logging
 import sys
 import os
 
-from version import __version__
+from .version import __version__
 
 logger = logging.getLogger("neurosynth")
 

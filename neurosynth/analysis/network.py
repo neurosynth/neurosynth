@@ -1,8 +1,7 @@
-# emacs: -*- mode: python-mode; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
-# ex: set sts=4 ts=4 sw=4 et:
 """ Network analysis-related tools"""
 
 from neurosynth.analysis import meta
+from six import string_types
 
 
 def coactivation(dataset, seed, threshold=0.0, output_dir='.', prefix='', r=6):
@@ -31,11 +30,11 @@ def coactivation(dataset, seed, threshold=0.0, output_dir='.', prefix='', r=6):
       meta.MetaAnalysis.
     """
 
-    if isinstance(seed, basestring):
+    if isinstance(seed, string_types):
         ids = dataset.get_studies(mask=seed, activation_threshold=threshold)
     else:
         ids = dataset.get_studies(peaks=seed, r=r,
-          activation_threshold=threshold)
+                                  activation_threshold=threshold)
 
     ma = meta.MetaAnalysis(dataset, ids)
     ma.save_results(output_dir, prefix)

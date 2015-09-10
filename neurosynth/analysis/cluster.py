@@ -1,5 +1,3 @@
-# from abc import ABCMeta, abstractmethod
-# from neurosynth import masker
 from copy import deepcopy
 import numpy as np
 from six import string_types
@@ -9,9 +7,11 @@ from sklearn.metrics import pairwise_distances
 from os.path import exists, join
 from os import makedirs
 from nibabel import nifti1
+from neurosynth.analysis import meta
 
 
 class Clusterable(object):
+
     '''
     Args:
         dataset: The Dataset instance to extract data from.
@@ -64,7 +64,8 @@ class Clusterable(object):
         ''' Apply a transformation to the Clusterable instance. Accepts any
         scikit-learn-style class that implements a fit_transform() method. '''
         data = self.data.T if transpose else self.data
-        self.data = transformer.fit_transform(data)
+        data = transformer.fit_transform(data)
+        self.data = data.T if transpose else data
         return self
 
 
@@ -73,7 +74,8 @@ def magic(dataset, method='coactivation', roi_mask=None,
           min_voxels_per_study=None, min_studies_per_voxel=None,
           reduce_reference='pca', n_components=100,
           distance_metric='correlation', clustering_algorithm='kmeans',
-          n_clusters=5, clustering_kwargs={}, output_dir=None, filename=None):
+          n_clusters=5, clustering_kwargs={}, output_dir=None, filename=None,
+          coactivation_images=False, coactivation_threshold=0.1):
     ''' Execute a full clustering analysis pipeline.
     Args:
         dataset: a Dataset instance to extract all data from.
@@ -125,8 +127,16 @@ def magic(dataset, method='coactivation', roi_mask=None,
             object.
         output_dir (str): The directory to write results to. If None (default),
             returns the cluster label image rather than saving to disk.
-        filename (str): Name of cluster label image file. Must be provided
-            if output_dir is not None.
+        filename (str): Name of cluster label image file. Defaults to
+            cluster_labels_k{k}.nii.gz, where k is the number of clusters.
+        coactivation_images (bool): If True, saves a meta-analytic coactivation
+            map for every ROI in the resulting cluster map.
+        coactivation_threshold (float or int): If coactivation_images is True,
+            this is the threshold used to define whether or not a study is
+            considered to activation within a cluster ROI. Integer values are
+            interpreted as minimum number of voxels within the ROI; floats
+            are interpreted as the proportion of voxels. Defaults to 0.1 (i.e.,
+            10% of all voxels within ROI must be active).
     '''
 
     roi = Clusterable(dataset, roi_mask, min_voxels=min_voxels_per_study,
@@ -139,6 +149,11 @@ def magic(dataset, method='coactivation', roi_mask=None,
                                 min_studies=min_studies_per_voxel,
                                 features=features,
                                 feature_threshold=feature_threshold)
+    elif method == 'features':
+        reference = deepcopy(roi)
+        feature_data = dataset.feature_table.data
+        n_studies = len(feature_data)
+        reference.data = reference.data.dot(feature_data.values) / n_studies
     elif method == 'studies':
         reference = roi
 
@@ -151,12 +166,14 @@ def magic(dataset, method='coactivation', roi_mask=None,
 
         transpose = (method == 'coactivation')
         reference = reference.transform(reduce_reference, transpose=transpose)
-        if transpose:
-            reference.data = reference.data.T
 
-    distances = pairwise_distances(roi.data, reference.data,
-                                   metric=distance_metric)
+    if method == 'coactivation':
+        distances = pairwise_distances(roi.data, reference.data,
+                                       metric=distance_metric)
+    else:
+        distances = reference.data
 
+    # TODO: add additional clustering methods
     if isinstance(clustering_algorithm, string_types):
         clustering_algorithm = {
             'kmeans': sk_cluster.KMeans,
@@ -168,15 +185,26 @@ def magic(dataset, method='coactivation', roi_mask=None,
     header = roi.masker.get_header()
     header['cal_max'] = labels.max()
     header['cal_min'] = labels.min()
-    img = nifti1.Nifti1Image(roi.masker.unmask(labels), None, header)
+    voxel_labels = roi.masker.unmask(labels)
+    img = nifti1.Nifti1Image(voxel_labels, None, header)
 
     if output_dir is not None:
         if not exists(output_dir):
             makedirs(output_dir)
         if filename is None:
-            raise ValueError('If output_dir is provided, a valid filename '
-                             'argument must also be passed.')
+            filename = 'cluster_labels_k%d.nii.gz' % n_clusters
         outfile = join(output_dir, filename)
         img.to_filename(outfile)
+
+        # Write coactivation images
+        if coactivation_images:
+            for l in np.unique(voxel_labels):
+                roi_mask = np.copy(voxel_labels)
+                roi_mask[roi_mask != l] = 0
+                ids = dataset.get_studies(
+                    mask=roi_mask, activation_threshold=coactivation_threshold)
+                ma = meta.MetaAnalysis(dataset, ids)
+                ma.save_results(output_dir=join(output_dir, 'coactivation'),
+                                prefix='cluster_%d_coactivation' % l)
     else:
         return img

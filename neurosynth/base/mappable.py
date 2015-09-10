@@ -1,11 +1,7 @@
-# emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
-# ex: set sts=2 ts=2 sw=2 et:
 """ Classes representing article-like data that can be mapped to images. """
 
 import logging
 import json
-import numpy as np
-
 from neurosynth.base import imageutils
 from neurosynth.base import transformations
 
@@ -18,15 +14,16 @@ class Mappable(object):
         try:
             self.data = data.copy().reset_index()
             self.id = data['id'].values[0]
-            # If space is not explicitly set, assume the coordinates are already in
-            # the target space.
-            self.space = data['space'].values[0] if 'space' in data.columns else transformer.target
+            # If space is not explicitly set, assume the coordinates are
+            # already in the target space.
+            self.space = data['space'].values[
+                0] if 'space' in data.columns else transformer.target
         except Exception as e:
             logger.error("Missing ID and/or space fields. "
                          "Please check database file, caught: %s" % str(e))
             exit()
 
-        peaks = data[['x','y','z']].values
+        peaks = data[['x', 'y', 'z']].values
 
         # Convert between stereotactic spaces
         if transformer is not None and self.space != transformer.target:
@@ -41,8 +38,12 @@ class Mappable(object):
         return imageutils.map_peaks_to_image(self.peaks)
 
     def to_json(self, filename=None):
-        json_string = json.dumps({
-                                 'id': self.id, 'space': self.space, 'peaks': self.xyz.tolist()})
+        json_string = json.dumps(
+            {
+                'id': self.id,
+                'space': self.space,
+                'peaks': self.xyz.tolist()
+            })
         if filename is not None:
             open(filename, 'w').write(json_string)
         else:
