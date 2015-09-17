@@ -8,7 +8,7 @@ env:
   global:
     - TEST_RUN_FOLDER="/tmp" # folder where the tests are run from
     - DEFAULT_TO_LATEST=true # use latest package versions if not explicitly set
-    - NIBABEL_VERSION=">=2.0" # temporary--remove after fixing install_requires
+    - NIBABEL_VERSION="2.0.0" # temporary--remove after fixing install_requires
   matrix:
     - DISTRIB="conda" PYTHON_VERSION="2.7"
     - DISTRIB="neurodebian" PYTHON_VERSION="2.7"
@@ -18,8 +18,14 @@ env:
 install: 
     - source ci/install.sh
 
-# before_script:
-#     - make clean
+before_script:
+    - find . -name "*.pyc" | xargs rm -f
+    - find . -name "*.so" | xargs rm -f
+    - find . -name "*.pyd" | xargs rm -f
+    - rm -rf build
+    - rm -f tags
+
+clean: clean-build clean-pyc clean-so clean-ctags
 
 script:
     - python ci/show-python-package-versions.py
