@@ -13,7 +13,6 @@ env:
     - DISTRIB="conda" PYTHON_VERSION="2.7"
     - DISTRIB="neurodebian" PYTHON_VERSION="2.7"
     - DISTRIB="conda" PYTHON_VERSION="3.4"
-    - DISTRIB="neurodebian" PYTHON_VERSION="3.4"
 
 install: 
     - source ci/install.sh
