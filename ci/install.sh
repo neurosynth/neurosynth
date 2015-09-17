@@ -15,6 +15,7 @@ set -e
 # lookup for g++44 unexpectedly.
 export CC=gcc
 export CXX=g++
+export DEFAULT_TO_LATEST=true
 
 create_new_venv() {
     # At the time of writing numpy 1.9.1 is included in the travis
@@ -47,6 +48,8 @@ print_conda_requirements() {
         PACKAGE_VERSION="${!PACKAGE_VERSION_VARNAME}"
         if [ -n "$PACKAGE_VERSION" ]; then
             REQUIREMENTS="$REQUIREMENTS $PACKAGE=$PACKAGE_VERSION"
+        elif [ "$DEFAULT_TO_LATEST" ]; then
+            REQUIREMENTS="$REQUIREMENTS $PACKAGE=*"
         fi
     done
     echo $REQUIREMENTS
