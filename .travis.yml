@@ -7,6 +7,8 @@ virtualenv:
 env:
   global:
     - TEST_RUN_FOLDER="/tmp" # folder where the tests are run from
+    - DEFAULT_TO_LATEST=true # use latest package versions if not explicitly set
+    - NIBABEL_VERSION=">=2.0" # temporary--remove after fixing install_requires
   matrix:
     - DISTRIB="conda" PYTHON_VERSION="2.7"
     - DISTRIB="neurodebian" PYTHON_VERSION="2.7"

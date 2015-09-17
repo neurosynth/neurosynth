@@ -15,7 +15,6 @@ set -e
 # lookup for g++44 unexpectedly.
 export CC=gcc
 export CXX=g++
-export DEFAULT_TO_LATEST=true
 
 create_new_venv() {
     # At the time of writing numpy 1.9.1 is included in the travis
@@ -87,14 +86,10 @@ create_new_conda_env() {
 if [[ "$DISTRIB" == "neurodebian" ]]; then
     create_new_venv
     bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
-    sudo apt-get install -qq python-scipy python-nose python-nibabel python-sklearn python-ply
+    sudo apt-get install -qq python-scipy python-nose python-nibabel python-sklearn python-ply python-pandas
 
 elif [[ "$DISTRIB" == "conda" ]]; then
     create_new_conda_env
-    # Note: nibabel is in setup.py install_requires so nibabel will
-    # always be installed eventually. Defining NIBABEL_VERSION is only
-    # useful if you happen to want a specific nibabel version rather
-    # than the latest available one.
     if [ -n "$NIBABEL_VERSION" ]; then
         pip install nibabel=="$NIBABEL_VERSION"
     fi
