@@ -1,5 +1,5 @@
 # Adapted from nilearn
-anguage: python
+language: python
 
 virtualenv:
   system_site_packages: true
@@ -16,8 +16,8 @@ env:
 install: 
     - source ci/install.sh
 
-before_script:
-    - make clean
+# before_script:
+#     - make clean
 
 script:
     - python ci/show-python-package-versions.py
