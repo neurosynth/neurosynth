@@ -326,6 +326,7 @@ class Clusterer:
 
             algs = {
                 'kmeans': cluster.KMeans,
+                'agglomerative' : cluster.AgglomerativeClustering
             }
 
             if algorithm not in algs.keys():
