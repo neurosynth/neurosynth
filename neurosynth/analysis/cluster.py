@@ -138,7 +138,7 @@ class Clusterer:
         self.roi_data = data[self.masker.get_mask(), :]
         # if roi_mask is not None: self.masker.remove(-1)
         if distance_metric is not None:
-            self.create_distance_matrix(distance_metric=distance_metric, figure_file='/home/delavega/projects/permutation_clustering/dist_matrix/fig.jpeg', distance_file='/home/delavega/projects/permutation_clustering/dist_matrix/dist.txt')
+            self.create_distance_matrix(distance_metric=distance_metric)
 
     def set_reference_data(self, method, mask):
         self.reference_data = self.data
