@@ -1,5 +1,5 @@
 
-# What is Neurosynth?
+# What is Neurosynth XP?
 
 Neurosynth is a Python package for large-scale synthesis of functional neuroimaging data.
 
