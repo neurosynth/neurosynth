@@ -3,9 +3,7 @@
 import logging
 import re
 import os
-import sys
-import numpy as np
-import pandas as pd
+
 from scipy import sparse
 from neurosynth.base import mappable
 from neurosynth.base import mask, imageutils, transformations
@@ -88,7 +86,7 @@ class Dataset(object):
     accessible to others, e.g., a doi in the case of entire articles. The space
     column indicates the nominal atlas used to produce each activation.
     Currently all values except 'TAL' (Talairach) will be ignored. If space ==
-    TAL and the transform argument is True, all activations reported in 
+    TAL and the transform argument is True, all activations reported in
     Talairach space will be converted to MNI space using the Lancaster et al
     transform.
 
@@ -412,11 +410,11 @@ class Dataset(object):
                 "0.5. Please use get_studies(mask=...).")
     def get_ids_by_mask(self, mask, threshold=0.0, get_image_data=False):
         """ Return all mappable objects that activate within the bounds
-        defined by the mask image. 
+        defined by the mask image.
         Args:
-            mask: the mask image (see Masker documentation for valid data 
+            mask: the mask image (see Masker documentation for valid data
                 types).
-            threshold (int, float): an integer or float. If an integer, the 
+            threshold (int, float): an integer or float. If an integer, the
                 absolute number of voxels that must be active within the mask
                 for a study to be retained. When a float, proportion of voxels
                 that must be active.
@@ -442,7 +440,7 @@ class Dataset(object):
         generates a new Nifti1Image to use as a mask.
 
         Args:
-            peaks (ndarray, list): Either an n x 3 numpy array, or a list of 
+            peaks (ndarray, list): Either an n x 3 numpy array, or a list of
                 lists (e.g., [[-10, 22, 14]]) specifying the world (x/y/z)
                 coordinates of the target location(s).
             r (int): Radius in millimeters of the sphere to grow around each
@@ -476,7 +474,7 @@ class Dataset(object):
                 a study in the database, with features in columns. The first
                 column must contain the IDs of the studies to match up with the
                 image data.
-                (b) A pandas DataFrame, where studies are in rows, features are 
+                (b) A pandas DataFrame, where studies are in rows, features are
                 in columns, and the index provides the study IDs.
             append (bool): If True, adds new features to existing ones
                 incrementally. If False, replaces old features.
@@ -492,10 +490,10 @@ class Dataset(object):
                                         threshold=threshold)
 
     def get_image_data(self, ids=None, voxels=None, dense=True):
-        """ A convenience wrapper for ImageTable.get_image_data(). 
+        """ A convenience wrapper for ImageTable.get_image_data().
 
         Args:
-            ids (list, array): A list or 1D numpy array of Mappable ids to 
+            ids (list, array): A list or 1D numpy array of Mappable ids to
                 return. If None, returnsdata for all Mappables.
             voxels (list, array): A list or 1D numpy array of voxel indices
                 (i.e., rows) to return. If None, returns data for all voxels.
@@ -507,7 +505,7 @@ class Dataset(object):
         return self.feature_table.get_feature_data(ids, **kwargs)
 
     def get_feature_names(self, features=None):
-        """ Returns names of features. If features is None, returns all 
+        """ Returns names of features. If features is None, returns all
         features. Otherwise assumes the user is trying to find the order of the
         features.  """
         if features:
@@ -628,7 +626,7 @@ class ImageTable(object):
                 return. If None, returns data for all Mappables.
             voxels (list, array): A list or 1D numpy array of voxel indices
                 (i.e., rows) to return. If None, returns data for all voxels.
-            dense (bool): Optional boolean. When True (default), convert the 
+            dense (bool): Optional boolean. When True (default), convert the
                 result to a dense array before returning. When False, keep as
                 sparse matrix.
 
@@ -761,7 +759,7 @@ class FeatureTable(object):
         Args:
             ids (list, array): A list or 1D numpy array of Mappable ids to
                 return rows for. If None, returns data for all Mappables
-                (i.e., all rows in array). 
+                (i.e., all rows in array).
             features (list, array): A list or 1D numpy array of named features
                 to return. If None, returns data for all features (i.e., all
                 columns in array).
@@ -788,7 +786,7 @@ class FeatureTable(object):
 
         Args:
             features (list): A list or 1D numpy array of named features to
-            return. 
+            return.
 
         Returns:
             A list of features in order they appear in database.
@@ -882,8 +880,19 @@ class FeatureTable(object):
             'values': sparse.csr_matrix(data.values)
         }
 
+<<<<<<< HEAD
+  def get_ids_by_expression(self, expression, threshold=0.001, func='sum'):
+    """ Use a PEG to parse expression and return mappables. """
+    from neurosynth.base import lexparser as lp
+    lexer = lp.Lexer()
+    lexer.build()
+    parser = lp.Parser(lexer, self.dataset, threshold=threshold, func='sum')
+    parser.build()
+    return parser.parse(expression).keys()
+=======
     def _csr_to_sdf(self):
         """ Inverse of _sdf_to_csr(). """
         self.data = pd.DataFrame(self.data['values'].todense(),
                                  index=self.data['index'],
                                  columns=self.data['columns']).to_sparse()
+>>>>>>> 5a18da02ac84742f268de9d180a1f0b954ddf430
