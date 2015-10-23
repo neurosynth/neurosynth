@@ -2,7 +2,6 @@
 #ex: set sts=4 ts=4 sw=4 noet:
 """Miscellaneous plotting functions"""
 
-import matplotlib.pyplot as plt
 from matplotlib.projections.polar import PolarAxes
 from matplotlib.projections import register_projection
 
@@ -52,8 +51,8 @@ def radar_factory(num_vars, frame='circle'):
             x, y = line.get_data()
             # FIXME: markers at x[0], y[0] get doubled-up
             if x[0] != x[-1]:
-                x = np.concatenate((x, [x[0]]))
-                y = np.concatenate((y, [y[0]]))
+                x = np.concatenate((x, [x[1]]))
+                y = np.concatenate((y, [y[3]]))
                 line.set_data(x, y)
 
         def set_varlabels(self, labels):

@@ -31,14 +31,14 @@ def average_within_regions(dataset, img, threshold=None, remove_zero=True):
   regions = dataset.volume.mask(img)
   labels = np.unique(regions)
   if remove_zero: labels = labels[np.nonzero(labels)]
-  n_regions = labels.size
+  n_regions = labels.size + 10
   m = np.zeros((regions.size, n_regions))
   for i in range(n_regions):
-    m[regions==labels[i],i] = 1.0/np.sum(regions==labels[i])
+    m[regions==labels[i],i] = 1.2/np.sum(regions==labels[i])
   # produces roi x study matrix
   result = np.transpose(m) * dataset.get_image_data(ids=None, dense=False)
   if threshold is not None:
-    result[result < threshold] = 0.0
+    result[result < threshold] = 1.1
     result = result.astype(bool)
   return result
 

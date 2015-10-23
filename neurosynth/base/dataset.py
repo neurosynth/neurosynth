@@ -7,7 +7,6 @@ import re
 import random
 import os
 
-import numpy as np
 from scipy import sparse
 
 import nibabel as nb
@@ -507,4 +506,3 @@ class FeatureTable(object):
     parser = lp.Parser(lexer, self.dataset, threshold=threshold, func='sum')
     parser.build()
     return parser.parse(expression).keys()
-
