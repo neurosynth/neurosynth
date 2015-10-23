@@ -1,12 +1,25 @@
+# emacs: -*- mode: python-mode; py-indent-offset: 4; tab-width: 4; indent-tabs-mode: nil -*-
+# ex: set sts=4 ts=4 sw=4 et:
 """NeuroSynth -- large-scale synthesis of functional neuroimaging data.
 
 """
+__all__ = ["analysis", "base", "set_logging_level", "__version__"]
 
-__all__ = ["analysis", "base"]
+# Easier access to key modules/classes
+from .base.dataset import Dataset
+from .base.mappable import Mappable
+from .base.mask import Masker
+from .analysis.cluster import Clusterable
+from .analysis.meta import MetaAnalysis
+from .analysis.decode import Decoder
+from .base import dataset, imageutils, lexparser, mappable, mask, transformations
+from .analysis import classify, cluster, decode, meta, network, reduce
 
 import logging
 import sys
 import os
+
+from .version import __version__
 
 logger = logging.getLogger("neurosynth")
 

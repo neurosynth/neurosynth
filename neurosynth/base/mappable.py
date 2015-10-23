@@ -1,77 +1,72 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
-#ex: set sts=2 ts=2 sw=2 noet:
-""" Base Mappable object and all objects that inherit from Mappable.
-
-A Mappable object is defined by the presence of one or more Peaks that can
-be meaningfully represented as a spatial image.
-"""
+""" Classes representing article-like data that can be mapped to images. """
 
 import logging
 import json
-import numpy as np
-
-import imageutils
-import transformations
+from neurosynth.base import imageutils
+from neurosynth.base import transformations
 
 logger = logging.getLogger('neurosynth.mappable')
 
+
 class Mappable(object):
 
-  def __init__(self, data, transformer=None):
-    try:
-      self.data = data
-      self.id = data['id']
-      # If space is not explicitly set, assume the coordinates are already in
-      # the target space.
-      self.space = data['space'] if 'space' in data else transformer.target
-    except Exception, e:
-      logger.error("Missing ID and/or space fields. "
-                   "Please check database file, caught: %s" % str(e))
-      exit()
+    def __init__(self, data, transformer=None):
+        try:
+            self.data = data.copy().reset_index()
+            self.id = data['id'].values[0]
+            # If space is not explicitly set, assume the coordinates are
+            # already in the target space.
+            self.space = data['space'].values[
+                0] if 'space' in data.columns else transformer.target
+        except Exception as e:
+            logger.error("Missing ID and/or space fields. "
+                         "Please check database file, caught: %s" % str(e))
+            exit()
 
-    # Loop through rows and set coordinates
-    peaks = np.zeros((len(data['peaks']), 3), dtype=int)
-    for i,f in enumerate(data['peaks']):
-      peaks[i,] = [float(j) for j in f[0:3]]
+        peaks = data[['x', 'y', 'z']].values
 
-    # Convert between stereotactic spaces
-    if transformer is not None and self.space != transformer.target:
-        peaks = transformer.apply(self.space, peaks)
+        # Convert between stereotactic spaces
+        if transformer is not None and self.space != transformer.target:
+            peaks = transformer.apply(self.space, peaks)
 
-    # Convert from XYZ coordinates to matrix indices, saving both
-    self.xyz = peaks
-    self.peaks = transformations.xyz_to_mat(peaks)
+        # Convert from XYZ coordinates to matrix indices, saving both
+        self.xyz = peaks
+        self.peaks = transformations.xyz_to_mat(peaks)
 
-  def map_peaks(self):
-    """Map all Peaks to a new Nifti1Image."""
-    # if len(self.peaks) == 0: return
-    return imageutils.map_peaks_to_image(self.peaks)
+    def map_peaks(self):
+        """Map all Peaks to a new Nifti1Image."""
+        return imageutils.map_peaks_to_image(self.peaks)
 
-  def to_json(self, filename=None):
-    json_string = json.dumps({'id':self.id, 'space':self.space, 'peaks':self.xyz.tolist()})
-    if filename is not None:
-      open(filename, 'w').write(json_string)
-    else: return json_string
+    def to_json(self, filename=None):
+        json_string = json.dumps(
+            {
+                'id': self.id,
+                'space': self.space,
+                'peaks': self.xyz.tolist()
+            })
+        if filename is not None:
+            open(filename, 'w').write(json_string)
+        else:
+            return json_string
 
-  def to_s(self):
-    s = "Mappable ID: %s\n" % self.id
-    s += "Nominal space: %s\n" % self.space
-    s += "Num. of peaks: %s\n\n" % str(self.peaks.shape[0])
-    s += "Peaks:\n\n"
-    for p in self.xyz.tolist():
-      s += "\t%s\n" % str(p)
-    return s
+    def to_s(self):
+        s = "Mappable ID: %s\n" % self.id
+        s += "Nominal space: %s\n" % self.space
+        s += "Num. of peaks: %s\n\n" % str(self.peaks.shape[0])
+        s += "Peaks:\n\n"
+        for p in self.xyz.tolist():
+            s += "\t%s\n" % str(p)
+        return s
 
 
 class Article(Mappable):
 
-  def __init__(self, data, transformer=None):
-    super(Article, self).__init__(data, transformer)
+    def __init__(self, data, transformer=None):
+        super(Article, self).__init__(data, transformer)
 
 
 class Table(Mappable):
 
-  def __init__(self, data, transformer=None, article=None):
-    self.article = article
-    super(Table, self).__init__(data, transformer)
-
+    def __init__(self, data, transformer=None, article=None):
+        self.article = article
+        super(Table, self).__init__(data, transformer)

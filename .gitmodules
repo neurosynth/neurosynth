@@ -1,0 +1,4 @@
+[submodule "data"]
+	path = data
+	url = git://github.com/neurosynth/neurosynth-data.git
+	ignore = dirty

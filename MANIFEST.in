@@ -1,0 +1,3 @@
+include README.md Changelog.md LICENSE setup.py
+recursive-include examples *
+recursive-include neurosynth *

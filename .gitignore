@@ -1,0 +1,12 @@
+*.pyc
+*.DS_Store
+*~
+build/
+dist
+dist/*
+.ipynb_checkpoints
+docs/_*/*
+neurosynth.egg-info
+neurosynth/base/lextab.py
+neurosynth/base/parser.out
+neurosynth/base/parsetab.py

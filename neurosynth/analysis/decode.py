@@ -1,217 +1,297 @@
-#emacs: -*- mode: python-mode; py-indent-offset: 2; tab-width: 2; indent-tabs-mode: nil -*-
-#ex: set sts=2 ts=2 sw=2 noet:
-""" Decoding-related methods """
+""" Decoding tools"""
 
 import numpy as np
+from neurosynth.base.mask import Masker
 from neurosynth.base import imageutils
+from neurosynth.analysis.reduce import average_within_regions
+from os import path
+import pandas as pd
+import matplotlib.pyplot as plt
+from six import string_types
 
 
-class Decoder(object):
+class Decoder:
 
-  def __init__(self, dataset=None, method='pearson', features=None, mask=None, image_type=None):
-    """ Initialize a new Decoder instance.
+    def __init__(self, dataset=None, method='pearson', features=None,
+                 mask=None, image_type='pFgA_z', threshold=0.001):
+        """ Initialize a new Decoder instance.
 
-    Args:
-      dataset: An optional Dataset instance containing features to use in decoding.
-      method: The decoding method to use (optional). By default, Pearson correlation.
-      features: Optional list of features to use in decoding. If None, use all
-        features found in dataset. If features is a list of strings, use only the
-        subset of features in the Dataset that are named in the list. If features
-        is a list of filenames, ignore the dataset entirely and use only the
-        features passed as image files in decoding.
-      mask: An optional mask to apply to features and input images. If None, will use
-        the one in the current Dataset.
-      image_type: An optional string indicating the type of image to use when constructing
-        feature-based images. See meta.analyze_features() for details.
-
-    """
-
-    if dataset is not None: self.dataset = dataset
-    self.method = method.lower()
-
-    # If no mask is passed, use the dataset's.
-    if mask is None:
-      self.mask = dataset.volume
-    else:
-      from neurosynth.base import mask
-      self.mask = mask.Mask(mask)
-
-    if features is None:
-      features = dataset.list_features()
-
-    self.load_features(features, image_type=image_type)
+        Args:
+            dataset: An optional Dataset instance containing features to use in
+                decoding.
+            method: The decoding method to use (optional). By default, Pearson
+                correlation.
+            features: Optional list of features to use in decoding. If None,
+                use all features found in dataset. If features is a list of
+                strings, use only the subset of features in the Dataset that
+                are named in the list. If features is a list of filenames,
+                ignore the dataset entirely and use only the features passed as
+                image files in decoding.
+            mask: An optional mask to apply to features and input images. If
+                None, will use the one in the current Dataset.
+            image_type: An optional string indicating the type of image to use
+                when constructing feature-based images. See
+                meta.analyze_features() for details. By default, uses reverse
+                inference z-score images.
+            threshold: If decoding from a Dataset instance, this is the feature
+                threshold to use to generate the feature maps used in the
+                decoding.
 
 
-  def decode(self, filenames, method=None, save=None, round=4, names=None):
-    """ Decodes a set of images.
+        """
 
-    Args:
-      files: A list of filenames of images to decode.
-      method: Optional string indicating decoding method to use. If None, use
-        the method set when the Decoder instance was initialized.
-      save: Optional filename to save results to. If None (default), returns
-        all results as an array.
-      round: Optional integer indicating number of decimals to round result
-        to. Defaults to 4.
-      names: Optional list of names corresponding to the images in filenames.
-        If passed, must be of same length and in same order as filenames.
-        By default, the columns in the output will be named using the image
-        filenames.
+        self.dataset = dataset
 
-    Returns:
-      An n_features x n_files numpy array, where each feature is a row and
-      each image is a column. The meaning of the values depends on the
-      decoding method used. """
+        if dataset is not None:
+            self.masker = self.dataset.masker
+            if features is None:
+                features = dataset.get_feature_names()
+            if mask is not None:
+                self.masker.add(mask)
+        elif mask is not None:
+            self.masker = Masker(mask)
+        else:
+            self.masker = None
 
-    if method is None: method = self.method
-    imgs_to_decode = imageutils.load_imgs(filenames, self.mask)
-    methods = {
-      'pearson': self._pearson_correlation(imgs_to_decode),
-      # 'nb': self._naive_bayes(imgs_to_decode),
-      'pattern': self._pattern_expression(imgs_to_decode)
-    }
+        self.method = method.lower()
 
-    result = np.around(methods[method], round)
+        if self.method == 'roi':
+            self.feature_names = features
+        else:
+            self.load_features(features, image_type=image_type,
+                               threshold=threshold)
 
-    if save is not None:
+    def decode(self, images, save=None, round=4, names=None, **kwargs):
+        """ Decodes a set of images.
 
-      if names is None:
-        names = filenames
+        Args:
+          images: The images to decode. Can be:
+            - A single String specifying the filename of the image to decode
+            - A list of filenames
+            - A single NumPy array containing the image data
+          save: Optional filename to save results to. If None (default), returns
+            all results as an array.
+          round: Optional integer indicating number of decimals to round result
+            to. Defaults to 4.
+          names: Optional list of names corresponding to the images in filenames.
+            If passed, must be of same length and in same order as filenames.
+            By default, the columns in the output will be named using the image
+            filenames.
 
-      rownames = np.array(self.feature_names, dtype='|S32')[:,np.newaxis]
+        Returns:
+          An n_features x n_files numpy array, where each feature is a row and
+          each image is a column. The meaning of the values depends on the
+          decoding method used. """
 
-      f = open(save, 'w')
-      f.write('\t'.join(['Feature'] + names) + '\n')
-      np.savetxt(f, np.hstack((rownames, result)), fmt='%s', delimiter='\t')
-    else:
-      return methods[method]
+        if isinstance(images, string_types):
+            images = [images]
 
+        if isinstance(images, list):
+            imgs_to_decode = imageutils.load_imgs(images, self.masker)
+        else:
+            imgs_to_decode = images
 
-  def set_method(self, method):
-    """ Set decoding method. """
-    self.method = method
+        methods = {
+            'pearson': self._pearson_correlation,
+            'dot': self._dot_product,
+            'roi': self._roi_association
+        }
 
+        result = np.around(
+            methods[self.method](imgs_to_decode, **kwargs), round)
 
-  def load_features(self, features, image_type=None):
-    """ Load features from current Dataset instance or a list of files. """
-    from os import path
-    # Check if the first element in list is a valid file; if yes, assume
-    # we're dealing with image files, otherwise treat as names of features in
-    # the current Dataset.
-    if path.exists(features[0]):
-      self._load_features_from_images(features)
-    else:
-      self._load_features_from_dataset(features, image_type=image_type)
+        # if save is not None:
 
+        if names is None:
+            if type(images).__module__ == np.__name__:
+                names = ['image_%d' % i for i in range(images.shape[1])]
+            elif self.method == 'roi':
+                names = ['cluster_%d' % i for i in range(result.shape[1])]
+            else:
+                names = images
 
-  def _load_features_from_dataset(self, features=None, image_type=None):
-    """ Load feature image data from the current Dataset instance.
+        result = pd.DataFrame(result, columns=names, index=self.feature_names)
 
-    Args:
-      features: Optional list of features to use. If None, all features in the
-        current Dataset instance will be used.
-    """
-    self.feature_names = self.dataset.feature_table.feature_names
-    if features is not None:
-      self.feature_names = filter(lambda x: x in self.feature_names, features)
-    from neurosynth.analysis import meta
-    self.feature_images = meta.analyze_features(self.dataset, self.feature_names, image_type=image_type)
+        if save is not None:
+            result.to_csv(save, index_label='Feature')
+        return result
 
+    def set_method(self, method):
+        """ Set decoding method. """
+        self.method = method
 
-  def _load_features_from_images(self, images, names=None):
-    """ Load feature image data from image files.
+    def load_features(self, features, image_type=None, from_array=False,
+                      threshold=0.001):
+        """ Load features from current Dataset instance or a list of files. 
+        Args:
+            features: List containing paths to, or names of, features to
+                extract. Each element in the list must be a string containing
+                either a path to an image, or the name of a feature (as named
+                in the current Dataset). Mixing of paths and feature names
+                within the list is not allowed.
+            image_type: Optional suffix indicating which kind of image to use
+                for analysis. Only used if features are taken from the Dataset;
+                if features is a list of filenames, image_type is ignored.
+            from_array: If True, the features argument is interpreted as a
+                string pointing to the location of a 2D ndarray on disk
+                containing feature data, where rows are voxels and columns are
+                individual features.
+            threshold: If features are taken from the dataset, this is the
+                threshold passed to the meta-analysis module to generate fresh
+                images.
 
-    Args:
-      images: A list of image filenames.
-      names: An optional list of strings to use as the feature names. Must be
-        in the same order as the images.
-    """
-    if names is not None and len(names) != len(images):
-      raise Exception("Lists of feature names and image files must be of same length!")
-    self.feature_names = names if names is not None else images
-    self.feature_images = imageutils.load_imgs(images, self.mask)
+        """
+        if from_array:
+            if isinstance(features, list):
+                features = features[0]
+            self._load_features_from_array(features)
+        elif path.exists(features[0]):
+            self._load_features_from_images(features)
+        else:
+            self._load_features_from_dataset(
+                features, image_type=image_type, threshold=threshold)
 
+    def _load_features_from_array(self, features):
+        """ Load feature data from a 2D ndarray on disk. """
+        self.feature_images = np.load(features)
+        self.feature_names = range(self.feature_images.shape[1])
 
-  def _pearson_correlation(self, imgs_to_decode):
-    """ Decode images using Pearson's r.
+    def _load_features_from_dataset(self, features=None, image_type=None,
+                                    threshold=0.001):
+        """ Load feature image data from the current Dataset instance. See
+        load_features() for documentation.
+        """
+        self.feature_names = self.dataset.feature_table.feature_names
+        if features is not None:
+            self.feature_names = [f for f in features if f in self.feature_names]
+        from neurosynth.analysis import meta
+        self.feature_images = meta.analyze_features(
+            self.dataset, self.feature_names, image_type=image_type,
+            threshold=threshold)
+        # Apply a mask if one was originally passed
+        if self.masker.layers:
+            in_mask = self.masker.get_mask(in_global_mask=True)
+            self.feature_images = self.feature_images[in_mask, :]
 
-    Computes the correlation between each input image and each feature image across
-    voxels.
+    def _load_features_from_images(self, images, names=None):
+        """ Load feature image data from image files.
 
-    Args:
-      imgs_to_decode: An ndarray of images to decode, with voxels in rows and images
-        in columns.
+        Args:
+          images: A list of image filenames.
+          names: An optional list of strings to use as the feature names. Must
+            be in the same order as the images.
+        """
+        if names is not None and len(names) != len(images):
+            raise Exception(
+                "Lists of feature names and images must be of same length!")
+        self.feature_names = names if names is not None else images
+        self.feature_images = imageutils.load_imgs(images, self.masker)
 
-    Returns:
-      An n_features x n_images 2D array, with each cell representing the pearson
-      correlation between the i'th feature and the j'th image across all voxels.
-    """
-    x, y = imgs_to_decode.astype(float), self.feature_images.astype(float)
-    x, y = x - x.mean(0), y - y.mean(0)
-    x, y = x/np.sqrt((x**2).sum(0)), y/np.sqrt((y**2).sum(0))
-    return x.T.dot(y).T
+    def train_classifiers(self, features=None):
+        ''' Train a set of classifiers '''
+        # for f in features:
+        #     clf = Classifier(None)
+        #     self.classifiers.append(clf)
+        pass
 
+    def _pearson_correlation(self, imgs_to_decode):
+        """ Decode images using Pearson's r.
 
-  def _naive_bayes(self, imgs_to_decode):
-    """ Decode images using a Naive Bayes classifier. Unimplemented. """
-    pass
+        Computes the correlation between each input image and each feature
+        image across voxels.
 
+        Args:
+            imgs_to_decode: An ndarray of images to decode, with voxels in rows
+                and images in columns.
 
-  def _pattern_expression(self, imgs_to_decode):
-    """ Decode images using pattern expression. For explanation, see:
-    http://wagerlab.colorado.edu/wiki/doku.php/help/fmri_help/pattern_expression_and_connectivity
-    """
-    return np.dot(imgs_to_decode.T, self.feature_images).T
+        Returns:
+            An n_features x n_images 2D array, with each cell representing the
+            pearson correlation between the i'th feature and the j'th image
+            across all voxels.
+        """
+        x, y = imgs_to_decode.astype(float), self.feature_images.astype(float)
+        return self._xy_corr(x, y)
 
+    def _dot_product(self, imgs_to_decode):
+        """ Decoding using the dot product.
+        """
+        return np.dot(imgs_to_decode.T, self.feature_images).T
 
-  def polar_plot(self, data, features=None, autoselect_features=0, autosort=True):
-    """ Create a polar plot of decoding results.
+    def _roi_association(self, imgs_to_decode, value='z', binarize=None):
+        """ Computes the strength of association between activation in a mask
+        and presence/absence of a semantic feature. This is essentially a
+        generalization of the voxel-wise reverse inference z-score to the
+        multivoxel case.
+        """
+        imgs_to_decode = imgs_to_decode.squeeze()
+        x = average_within_regions(self.dataset, imgs_to_decode).astype(float)
+        y = self.dataset.feature_table.data[self.feature_names].values
+        if binarize is not None:
+            y[y > binarize] = 1.
+            y[y < 1.] = 0.
+        r = self._xy_corr(x.T, y)
+        if value == 'r':
+            return r
+        elif value == 'z':
+            f_r = np.arctanh(r)
+            return f_r*np.sqrt(y.shape[0]-3)
 
-    Args:
-      data: The data to plot. An m x n 2D numpy array, where images are in rows
-        and features are in columns.
-      features: Optional list of features to include in the plot. By default, uses
-        all features passed in data.
-      autoselect_features: Optional integer. If set to a value other than 0, will
-        select the top N features for each image and use those in the plot.
-      autosort: Boolean indicating whether to reorder features to as to maximize
-        separate in the plot.
+    def _xy_corr(self, x, y):
+        x, y = x - x.mean(0), y - y.mean(0)
+        x, y = x / np.sqrt((x ** 2).sum(0)), y / np.sqrt((y ** 2).sum(0))
+        return x.T.dot(y).T
 
-    """
-    from neurosynth.plotutils import radar_factory
+    def plot_polar(self, data, n_top=3, overplot=False, labels=None,
+                   palette='husl'):
 
-    N_images, N_features = data.shape
+        r = np.linspace(0, 10, num=100)
+        n_panels = data.shape[1]
 
-    # Sort images to maximize separation
-    if autosort:
-      from scipy.cluster import vq
-      whitened = vq.whiten(data)
-      res = vq.kmeans(whitened, N_images)
+        if labels is None:
+            labels = []
+            for i in range(n_panels):
+                labels.extend(data.iloc[:, i].order(ascending=False)
+                              .index[:n_top])
+            labels = np.unique(labels)
 
-    theta = radar_factory(N_features)
-    spoke_labels = feature_names  # fix--need to make sure feature names are available
+        data = data.loc[labels, :]
 
-    fig = plt.figure(figsize=(9,9))
-    fig.subplots_adjust(wspace=0.25, hspace=0.20, top=0.9, bottom=0.05)
+        # Use hierarchical clustering to order
+        from scipy.spatial.distance import pdist
+        from scipy.cluster.hierarchy import linkage, leaves_list
+        dists = pdist(data, metric='correlation')
+        pairs = linkage(dists)
+        order = leaves_list(pairs)
+        data = data.iloc[order, :]
+        labels = [labels[i] for i in order]
 
-    colors = ['b', 'r', 'g', 'm', 'y'][0::N_images]  # TODO: generalize to N colors
-    radial_grid = [0.2, 0.4, 0.6, 0.8]  # TODO: calculate sensible gridlines
-
-    ax = fig.add_subplot(111, projection='radar')
-    ax.set_varlabels(spoke_labels)
-    plt.rgrids(radial_grid)
-
-    for d, color in zip(data, colors):
-        ax.plot(theta, d, color=color, lw=1)
-        ax.fill(theta, d, facecolor=color, alpha=0.25)
-
-    labels = image_names  # TODO: need to get this from user or instance
-    legend = plt.legend(labels, loc=(0.9, .95), labelspacing=0.1)
-    for l in legend.get_lines():
-        l.set_linewidth(2)
-    plt.setp(legend.get_texts(), fontsize='large')
-    plt.figtext(0.5, 0.965,  'Test radar plot',
-               ha='center', color='black', weight='bold', size='large')
-    plt.show()
-
-
+        theta = np.linspace(0.0, 2 * np.pi, len(labels), endpoint=False)
+        if overplot:
+            fig, ax = plt.subplots(1, 1, subplot_kw=dict(polar=True))
+            fig.set_size_inches(10, 10)
+        else:
+            fig, axes = plt.subplots(1, n_panels, sharex=False, sharey=False,
+                                     subplot_kw=dict(polar=True))
+            fig.set_size_inches((6 * n_panels, 6))
+        # A bit silly to import seaborn just for this...
+        # should extract just the color_palette functionality.
+        import seaborn as sns
+        colors = sns.color_palette(palette, n_panels)
+        for i in range(n_panels):
+            if overplot:
+                alpha = 0.2
+            else:
+                ax = axes[i]
+                alpha = 0.8
+            ax.set_ylim(data.values.min(), data.values.max())
+            d = data.iloc[:, i].values
+            ax.fill(theta, d, color=colors[i], alpha=alpha, ec='k',
+                    linewidth=0)
+            ax.fill(theta, d, alpha=1.0, ec=colors[i],
+                    linewidth=2, fill=False)
+            ax.set_xticks(theta)
+            ax.set_xticklabels(labels, fontsize=18)
+            [lab.set_fontsize(18) for lab in ax.get_yticklabels()]
+            ax.set_title('Cluster %d' % i, fontsize=22, y=1.12)
+        plt.tight_layout()
+        return plt
