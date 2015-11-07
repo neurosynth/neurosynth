@@ -8,7 +8,8 @@ import logging
 logger = logging.getLogger('neurosynth.cluster')
 
 
-def average_within_regions(dataset, regions, threshold=None, remove_zero=True):
+def average_within_regions(dataset, regions, masker=None, threshold=None,
+                           remove_zero=True):
     """ Aggregates over all voxels within each ROI in the input image.
 
     Takes a Dataset and a Nifti image that defines distinct regions, and
@@ -31,6 +32,8 @@ def average_within_regions(dataset, regions, threshold=None, remove_zero=True):
             3) A list of NiBabel images
             4) A 1D numpy array of the same length as the mask vector in
                 the Dataset's current Masker.
+        masker: Optional masker used to load image if regions is not a 
+            numpy array. Must be passed if dataset is a numpy array.
         threshold: An optional float in the range of 0 - 1 or integer. If
             passed, the array will be binarized, with ROI values above the
             threshold assigned to True and values below the threshold
@@ -46,8 +49,20 @@ def average_within_regions(dataset, regions, threshold=None, remove_zero=True):
     Returns:
         A 2D numpy array with ROIs in rows and mappables in columns.
     """
+
+    if masker is not None:
+        masker = masker
+    else:
+        if isinstance(dataset, Dataset):
+            masker = dataset.masker
+        else:
+            if not type(regions).__module__.startswith('numpy'):
+                raise ValueError(
+                    "If dataset is a numpy array and regions is not a \
+numpy array, a masker must be provided.")
+
     if not type(regions).__module__.startswith('numpy'):
-        regions = dataset.masker.mask(regions)
+        regions = masker.mask(regions)
 
     if isinstance(dataset, Dataset):
         dataset = dataset.get_image_data(dense=False)
