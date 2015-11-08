@@ -63,9 +63,11 @@ create_new_conda_env() {
     # itself
     wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh \
         -O miniconda.sh
-    chmod +x miniconda.sh && ./miniconda.sh -b
-    export PATH=/home/travis/miniconda/bin:$PATH
-    conda update --yes conda
+    chmod +x miniconda.sh && ./miniconda.sh -b -p $HOME/miniconda
+    export PATH=$HOME/miniconda/bin:$PATH
+    conda config --set always_yes yes --set changeps1 no
+    conda update -q conda
+    conda info -a
 
     # Configure the conda environment and put it in the path using the
     # provided versions
