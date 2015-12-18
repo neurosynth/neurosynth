@@ -213,7 +213,7 @@ class Dataset(object):
         elif mappables != None:
             self.mappables.extend(mappables)
         if remap:
-            self.image_table = self.create_image_table()
+            self.create_image_table()
 
     def delete_mappables(self, ids, remap=True):
         """ Delete specific Mappables from the Dataset.
@@ -226,9 +226,9 @@ class Dataset(object):
             remap (bool): Optional flag indicating whether to regenerate the
                 entire ImageTable after deleting undesired Mappables.
         """
-        self.mappables = [m for m in self.mappables if m not in ids]
+        self.mappables = [m for m in self.mappables if m.id not in ids]
         if remap:
-            self.image_table = self.create_image_table()
+            self.create_image_table()
 
     def get_studies(self, features=None, expression=None, mask=None,
                     peaks=None, frequency_threshold=0.001,
