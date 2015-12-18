@@ -1,13 +1,7 @@
 import os
 import sys
-
-# Borrowing a trick from nibabel to enable some functionality coming
-# from setuptools.
-# For some commands, use setuptools
-if len(set(('test', 'easy_install')).intersection(sys.argv)) > 0:
-    import setuptools
-
-from setuptools import setup
+import setuptools
+from setuptools import setup, find_packages
 
 extra_setuptools_args = {}
 if 'setuptools' in sys.modules:
@@ -28,11 +22,10 @@ setup(name="neurosynth",
       maintainer='Tal Yarkoni',
       maintainer_email='tyarkoni@gmail.com',
       url='http://github.com/neurosynth/neurosynth',
-      download_url = 'https://github.com/neurosynth/neurosynth/tarball/%s' % __version__,
-      packages=["neurosynth",
-                  "neurosynth.base",
-                  "neurosynth.analysis",
-                  "neurosynth.tests"],
+      download_url='https://github.com/neurosynth/neurosynth/tarball/%s' % __version__,
+      install_requires=['numpy', 'scipy', 'pandas', 'ply', 'scikit-learn',
+                        'nibabel', 'six'],
+      packages=find_packages(),
       package_data={'neurosynth': ['resources/*'],
                     'neurosynth.tests': ['data/*']
                     },

@@ -1,3 +1,14 @@
+## 0.3.4 (November 8, 2015)
+- Updated dependency list and moved dependencies into setup.py
+- Added ROI-based decoding method (generalization of voxel-based decoding)
+- Added new clustering module with high and low-level APIs
+- Python 3 compatibility
+- Much more extensive testing via Travis/Coveralls
+- Bug fixes/minor improvements:
+	- Added thresholding options to Masker
+	- Fix broken import statements
+	- Removed seaborn dependency
+
 ## 0.3.3 (March 9, 2015)
 - Added Sphinx docs and readthedocs integration (http://neurosynth.readthedocs.org)
 - Improved study selection interface; get_ids_by_*  methods replaced with a single get_studies() method

@@ -17,7 +17,7 @@ Dependencies:
 * pandas
 * NiBabel
 * [ply](http://www.dabeaz.com/ply/)
-* scikit-learn (optional, used in some classification functions)
+* scikit-learn
 
 We recommend installing the core scientific packages (NumPy, SciPy, pandas, sklearn) via a distribution like [https://store.continuum.io/cshop/anaconda/](Anaconda), which will keep clutter and conflicts to a minimum. The other packages can be installed with pip using the requirements file:
 
