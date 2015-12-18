@@ -70,6 +70,17 @@ class TestBase(unittest.TestCase):
             ['study3', 'study4', 'study5'], get_image_data=True)
         self.assertEqual(mappables.shape, (228453, 3))
 
+    def test_delete_mappables(self):
+        orig_ids = [m.id for m in self.dataset.mappables]
+        
+        # Remove first ten studies
+        rm_ids = orig_ids[:10]
+        keep_ids = list(set(orig_ids) - set(rm_ids))
+        self.dataset.delete_mappables(rm_ids)
+        new_ids = [m.id for m in self.dataset.mappables]
+        
+        self.assertEqual(keep_ids, new_ids)
+
     def test_image_table_loads(self):
         """ Test ImageTable initialization. """
         self.assertIsNotNone(self.dataset.image_table)
