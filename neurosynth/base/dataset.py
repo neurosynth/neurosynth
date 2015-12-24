@@ -134,8 +134,8 @@ class Dataset(object):
         else:
             self.transformer = None
 
-        # Load mappables
-        self.mappables = self._load_mappables_from_txt(filename)
+        # Load and process activation data
+        self.activations = self._load_activations(filename)
 
         # Load the volume into a new Masker
         if masker is None:
@@ -151,31 +151,39 @@ class Dataset(object):
         if feature_filename is not None:
             self.add_features(feature_filename, **kwargs)
 
-    def _load_mappables_from_txt(self, filename):
-        """ Load mappables from a text file.
+    def _load_activations(self, filename):
+        """ Load activation data from a text file.
 
         Args:
             filename (str): a string pointing to the location of the txt file
                 to read from.
         """
-        logger.info("Loading mappables from %s..." % filename)
+        logger.info("Loading activation data from %s..." % filename)
 
-        # Read in with pandas
-        contents = pd.read_csv(filename, sep='\t')
-        contents.columns = [col.lower() for col in list(contents.columns)]
+        activations = pd.read_csv(filename, sep='\t')
+        activations.columns = [col.lower() for col in list(activations.columns)]
 
         # Make sure all mandatory columns exist
         mc = ['x', 'y', 'z', 'id', 'space']
-        if (set(mc) - set(list(contents.columns))):
+        if (set(mc) - set(list(activations.columns))):
             logger.error(
                 "At least one of mandatory columns (x, y, z, id, and space) "
                 "is missing from input file.")
             return
 
-        # Initialize all mappables--for now, assume Articles are passed
-        logger.info("Loading study data from database file...")
-        return list(contents.groupby('id', as_index=False).apply(
-            lambda x: mappable.Article(x, self.transformer)))
+        # Transform to target space where needed
+        spaces = activations['space'].unique()
+        xyz = activations[['x', 'y', 'z']].values
+        for s in spaces:
+            if s != self.transformer.target:
+                inds = activations['space'] == s
+                xyz[inds] = self.transformer.apply(s, xyz[inds])
+        activations[['x', 'y', 'z']] = xyz
+
+        # xyz --> ijk
+        ijk = pd.DataFrame(transformations.xyz_to_mat(xyz), columns=['i','j','k'])
+        activations = pd.concat([activations, ijk], axis=1)
+        return activations
 
     def create_image_table(self, r=None):
         """ Create and store a new ImageTable instance based on the current
@@ -192,43 +200,6 @@ class Dataset(object):
         if r is not None:
             self.r = r
         self.image_table = ImageTable(self)
-
-    def add_mappables(self, filename=None, mappables=None, remap=True):
-        """ Append new Mappable objects to the end of the list.
-
-        Either a filename or a list of mappables must be passed.
-
-        Args:
-            filename (str): The name of the file containing new mappables.
-            mappables (list): Mappable instances to append to existing list.
-            remap (bool): Optional flag indicating whether to regenerate the
-                entire ImageTable after appending the new Mappables.
-        """
-        # TODO: (i) it would be more effiicent to only map the new Mappables
-        # into the ImageTable instead of redoing everything. (ii) we should
-        # check for duplicates and prompt whether to overwrite or update in
-        # cases where conflicts occur.
-        if filename != None:
-            self.mappables.extend(self._load_mappables_from_txt(filename))
-        elif mappables != None:
-            self.mappables.extend(mappables)
-        if remap:
-            self.create_image_table()
-
-    def delete_mappables(self, ids, remap=True):
-        """ Delete specific Mappables from the Dataset.
-
-        Note that 'ids' is a list of unique identifiers of the Mappables (e.g.,
-        doi's), and not indices in the current instance's mappables list.
-
-        Args:
-            ids (list): ids corresponding to the Mappables to delete.
-            remap (bool): Optional flag indicating whether to regenerate the
-                entire ImageTable after deleting undesired Mappables.
-        """
-        self.mappables = [m for m in self.mappables if m.id not in ids]
-        if remap:
-            self.create_image_table()
 
     def get_studies(self, features=None, expression=None, mask=None,
                     peaks=None, frequency_threshold=0.001,
@@ -359,25 +330,6 @@ class Dataset(object):
             return ids
         elif return_type == 'data':
             return self.get_image_data(ids)
-
-    @deprecated("get_mappables() is deprecated and will be removed in 0.5. "
-                "Please use get_studies().")
-    def get_mappables(self, ids, get_image_data=False):
-        """ Takes a list of unique ids and returns corresponding Mappables.
-
-        Args:
-            ids (list): A list of ids of the mappables to return.
-            get_image_data (bool): When True, returns a voxel x mappable matrix
-            of image data rather than the Mappable instances themselves.
-
-        Returns:
-            If get_image_data is True, a 2D numpy array of voxels x Mappables.
-            Otherwise, a list of Mappables.
-        """
-        if get_image_data:
-            return self.get_image_data(ids)
-        else:
-            return [m for m in self.mappables if m.id in ids]
 
     @deprecated("get_ids_by_features() is deprecated and will be removed in "
                 "0.5. Please use get_studies(features=...).")
@@ -540,21 +492,6 @@ class Dataset(object):
         if hasattr(self, 'feature_table'):
             self.feature_table._csr_to_sdf()
 
-    def to_json(self, filename=None):
-        """ Save the Dataset to file in JSON format.
-
-        This is not recommended, as the resulting file will typically be
-        several GB in size. If no filename is provided, returns the JSON
-        string.
-        """
-        import json
-        mappables = [m.to_json() for m in self.mappables]
-        json_string = json.dumps({'mappables': mappables})
-        if filename is not None:
-            open(filename, 'w').write(json_string)
-        else:
-            return json_string
-
 
 class ImageTable(object):
 
@@ -563,8 +500,6 @@ class ImageTable(object):
     Args:
         dataset (Dataset): Dataset instance to pull inputs from. If None, user
             must explicitly provide mappables and masker.
-        mappables (list): A list of Mappables to load into the ImageTable.
-            Ignored if dataset is not None.
         masker (Masker): The Masker defining the image space. Ignored if
             dataset is not None.
         r (int): The radius of the sphere used for smoothing (default = 6 mm).
@@ -574,17 +509,18 @@ class ImageTable(object):
             in dense form.)
     """
 
-    def __init__(self, dataset=None, mappables=None, masker=None, r=6,
+    def __init__(self, dataset, masker=None, r=6,
                  use_sparse=True):
-        if dataset is not None:
-            mappables, masker, r = dataset.mappables, dataset.masker, dataset.r
-        for var in [mappables, masker, r]:
+        activations, masker, r = dataset.activations, dataset.masker, dataset.r
+        for var in [activations, masker, r]:
             assert var is not None
-        self.ids = [m.id for m in mappables]
+        # self.ids = [m.id for m in mappables]
+        self.ids = activations['id'].unique()
         self.masker = masker
         self.r = r
 
-        data_shape = (self.masker.n_vox_in_vol, len(mappables))
+        n_studies = len(self.ids)
+        data_shape = (self.masker.n_vox_in_vol, n_studies)
         if use_sparse:
             # Fancy indexing assignment is not supported for sparse matrices,
             # so let's keep lists of values and their indices (rows, cols) to
@@ -593,11 +529,12 @@ class ImageTable(object):
         else:
             self.data = np.zeros(data_shape, dtype=int)
 
-        logger.info("Creating matrix of %d mappables..." % (len(mappables),))
-        for i, s in enumerate(mappables):
-            logger.debug("%s/%s..." % (str(i + 1), str(len(mappables))))
+        logger.info("Creating matrix of %d mappables..." % (n_studies,))
+        # for i, s in enumerate(mappables):
+        for i, (name, data) in enumerate(activations.groupby('id')):
+            logger.debug("%s/%s..." % (str(i + 1), str(n_studies)))
             img = imageutils.map_peaks_to_image(
-                s.peaks, r=r, header=self.masker.get_header())
+                data[['i', 'j', 'k']].values, r=r, header=self.masker.get_header())
             img_masked = self.masker.mask(img)
             if use_sparse:
                 nz = np.nonzero(img_masked)
