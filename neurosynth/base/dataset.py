@@ -158,7 +158,8 @@ class Dataset(object):
         logger.info("Loading activation data from %s..." % filename)
 
         activations = pd.read_csv(filename, sep='\t')
-        activations.columns = [col.lower() for col in list(activations.columns)]
+        activations.columns = [col.lower()
+                               for col in list(activations.columns)]
 
         # Make sure all mandatory columns exist
         mc = ['x', 'y', 'z', 'id', 'space']
@@ -178,7 +179,8 @@ class Dataset(object):
         activations[['x', 'y', 'z']] = xyz
 
         # xyz --> ijk
-        ijk = pd.DataFrame(transformations.xyz_to_mat(xyz), columns=['i','j','k'])
+        ijk = pd.DataFrame(
+            transformations.xyz_to_mat(xyz), columns=['i', 'j', 'k'])
         activations = pd.concat([activations, ijk], axis=1)
         return activations
 
@@ -327,93 +329,6 @@ class Dataset(object):
             return ids
         elif return_type == 'data':
             return self.get_image_data(ids)
-
-    @deprecated("get_ids_by_features() is deprecated and will be removed in "
-                "0.5. Please use get_studies(features=...).")
-    def get_ids_by_features(self, features, threshold=0.001, func=np.sum,
-                            get_image_data=False, get_weights=False,
-                            dense=True):
-        """ A wrapper for FeatureTable.get_ids().
-
-        Args:
-            features (list): features to use when selecting studies.
-            threshold (float): Float in range 0-1. Threshold used to select
-                studies.
-            func (Callable): The function to use when aggregating over the list
-                of features. See documentation in FeatureTable.get_ids() for a
-                full explanation.
-            get_image_data (bool): When True, returns a voxel x study matrix
-            of image data rather than a list of study IDs.
-        """
-        ids = self.feature_table.get_ids(
-            features, threshold, func, get_weights)
-        return self.get_image_data(ids, dense=dense) if get_image_data else ids
-
-    @deprecated("get_ids_by_expression() is deprecated and will be removed in "
-                "0.5. Please use get_studies(expression=...).")
-    def get_ids_by_expression(self, expression, threshold=0.001, func=np.sum,
-                              get_image_data=False):
-        ids = self.feature_table.get_ids_by_expression(
-            expression, threshold, func)
-        return self.get_image_data(ids) if get_image_data else ids
-
-    @deprecated("get_ids_by_mask() is deprecated and will be removed in "
-                "0.5. Please use get_studies(mask=...).")
-    def get_ids_by_mask(self, mask, threshold=0.0, get_image_data=False):
-        """ Return all studies that activate within the bounds
-        defined by the mask image. 
-        Args:
-            mask: the mask image (see Masker documentation for valid data 
-                types).
-            threshold (int, float): an integer or float. If an integer, the 
-                absolute number of voxels that must be active within the mask
-                for a study to be retained. When a float, proportion of voxels
-                that must be active.
-            get_image_data (bool): When True, returns a voxel x mappable matrix
-            of image data rather than the Mappable instances themselves.
-        """
-        mask = self.masker.mask(mask).astype(bool)
-        num_vox = np.sum(mask)
-        prop_mask_active = self.image_table.data.T.dot(mask).astype(float)
-        if isinstance(threshold, float):
-            prop_mask_active /= num_vox
-        indices = np.where(prop_mask_active > threshold)[0]
-        if get_image_data:
-            return self.get_image_data(indices)
-        else:
-            return [self.image_table.ids[ind] for ind in indices]
-
-    @deprecated("get_ids_by_peaks() is deprecated and will be removed in "
-                "0.5. Please use get_studies(peaks=...).")
-    def get_ids_by_peaks(self, peaks, r=10, threshold=0.0,
-                         get_image_data=False):
-        """ A wrapper for get_ids_by_mask. Takes a set of xyz coordinates and
-        generates a new Nifti1Image to use as a mask.
-
-        Args:
-            peaks (ndarray, list): Either an n x 3 numpy array, or a list of 
-                lists (e.g., [[-10, 22, 14]]) specifying the world (x/y/z)
-                coordinates of the target location(s).
-            r (int): Radius in millimeters of the sphere to grow around each
-                location.
-          threshold (float): Optional float indicating the proportion of voxels
-            that must be active in order for a Mappable to be considered
-            active.
-            get_image_data (bool): When True, returns a voxel x mappable matrix
-            of image data rather than the Mappable instances themselves.
-
-        Returns:
-            Either a list of ids (if get_image_data = False) or a numpy array
-            of image data.
-
-        """
-        peaks = np.array(peaks)  # Make sure we have a numpy array
-        peaks = transformations.xyz_to_mat(peaks)
-        img = imageutils.map_peaks_to_image(
-            peaks, r, vox_dims=self.masker.vox_dims,
-            dims=self.masker.dims, header=self.masker.get_header())
-        return self.get_ids_by_mask(img, threshold,
-                                    get_image_data=get_image_data)
 
     def add_features(self, features, append=True, merge='outer',
                      duplicates='ignore', min_studies=0.0, threshold=0.001):
