@@ -32,24 +32,12 @@ class TestBase(unittest.TestCase):
     def test_dataset_save_and_load(self):
         # smoke test of saving and loading
         t = tempfile.mktemp()
-        self.dataset.save(t, keep_mappables=True)
+        self.dataset.save(t)
         self.assertTrue(os.path.exists(t))
         dataset = Dataset.load(t)
         self.assertIsNotNone(dataset)
-        self.assertIsNotNone(dataset.mappables)
-        self.assertEqual(len(dataset.mappables), 5)
-        # Now with the mappables deleted
-        dataset.save(t)
-        self.assertTrue(os.path.exists(t))
-        dataset = Dataset.load(t)
-        self.assertEqual(len(dataset.mappables), 0)
+        self.assertEqual(len(dataset.image_table.ids), 5)
         os.unlink(t)
-
-    def test_export_to_json(self):
-        js = self.dataset.to_json()
-        self.assertTrue(isinstance(js, string_types))
-        data = json.loads(js)
-        self.assertEqual(len(data['mappables']), 5)
 
     def test_dataset_initializes(self):
         """ Test whether dataset initializes properly. """
@@ -57,29 +45,11 @@ class TestBase(unittest.TestCase):
                 get_test_data_path() + 'test_features.txt')
         self.assertIsNotNone(self.dataset.masker)
         self.assertIsNotNone(self.dataset.image_table)
-        self.assertEqual(len(self.dataset.mappables), 5)
+        self.assertEqual(len(self.dataset.image_table.ids), 5)
         self.assertIsNotNone(self.dataset.masker)
         self.assertIsNotNone(self.dataset.r)
         self.assertIsNotNone(
-            self.dataset.mappables[0].data['extra_field'].iloc[2], 'field')
-
-    def test_get_mappables(self):
-        mappables = self.dataset.get_mappables(['study2', 'study5'])
-        self.assertEqual(len(mappables), 2)
-        mappables = self.dataset.get_mappables(
-            ['study3', 'study4', 'study5'], get_image_data=True)
-        self.assertEqual(mappables.shape, (228453, 3))
-
-    def test_delete_mappables(self):
-        orig_ids = [m.id for m in self.dataset.mappables]
-        
-        # Remove first ten studies
-        rm_ids = orig_ids[:10]
-        keep_ids = list(set(orig_ids) - set(rm_ids))
-        self.dataset.delete_mappables(rm_ids)
-        new_ids = [m.id for m in self.dataset.mappables]
-        
-        self.assertEqual(keep_ids, new_ids)
+            self.dataset.activations['extra_field'].iloc[2], 'field')
 
     def test_image_table_loads(self):
         """ Test ImageTable initialization. """
@@ -288,10 +258,6 @@ class TestBase(unittest.TestCase):
     def test_trim_image_table(self):
         self.dataset.image_table.trim(['study1', 'study2', 'study3'])
         self.assertEqual(self.dataset.get_image_data().shape, (228453, 3))
-
-    def test_either_dataset_or_manual_image_vars(self):
-        with self.assertRaises(AssertionError):
-            image_table = ImageTable()
 
     def test_get_features_by_ids(self):
         features = self.dataset.feature_table.get_features_by_ids(
