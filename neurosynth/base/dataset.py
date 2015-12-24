@@ -221,19 +221,18 @@ class Dataset(object):
             mask: the mask image (see Masker documentation for valid data
                 types).
             peaks (ndarray or list): Either an n x 3 numpy array, or a list of
-                lists (e.g., [[-10, 22, 14]]) specifying the world (x/y/z)
-                coordinates of the target location(s).
+                lists or tuples (e.g., [(-10, 22, 14)]) specifying the world
+                (x/y/z) coordinates of the target location(s).
             frequency_threshold (float): For feature-based or expression-based
                 selection, the threshold for selecting studies--i.e., the
                 cut-off for a study to be included. Must be a float in range
                 [0, 1].
-            activation_threshold (int or float): For mask-based or peak-based
-                selection, threshold for a study to be included based on
-                amount of activation displayed. If an integer, represents the
-                absolute number of voxels that must be active within the mask
-                (or generated ROIs) in order for a study to be selected. If a
-                float, it represents the proportion of voxels that must be
-                active.
+            activation_threshold (int or float): For mask-based selection,
+                threshold for a study to be included based on amount of
+                activation displayed. If an integer, represents the absolute
+                number of voxels that must be active within the mask in order
+                for a study to be selected. If a float, it represents the
+                proportion of voxels that must be active.
             func (Callable): The function to use when aggregating over the list
                 of features. See documentation in FeatureTable.get_ids() for a
                 full explanation. Only used for feature- or expression-based
@@ -246,8 +245,9 @@ class Dataset(object):
                 'weights': returns a dict where the keys are study IDs and the
                 values are the computed weights. Only valid when performing
                 feature-based selection.
-            r (int): For peak-based selection, the radius in millimeters of the
-                sphere to grow around each peak.
+            r (int): For peak-based selection, the distance cut-off (in mm)
+                for inclusion (i.e., only studies with one or more activations
+                within r mm of one of the passed foci will be returned).
 
         Returns:
             When return_type is 'ids' (default), returns a list of IDs of the
@@ -269,8 +269,8 @@ class Dataset(object):
             >>> data = dataset.get_studies(mask='amygdala_mask.nii.gz',
                 threshold=0.2, return_type='images')
 
-        Select studies that activate at least 5% of all voxels within 12 mm of
-        three specific foci:
+        Select studies that report at least one activation within 12 mm of at
+        least one of three specific foci:
 
             >>> ids = dataset.get_studies(peaks=[[12, -20, 30], [-26, 22, 22],
                                                 [0, 36, -20]], r=12)
@@ -313,14 +313,14 @@ class Dataset(object):
 
         # Peak-based selection
         if peaks is not None:
-            peaks = np.array(peaks)  # Make sure we have a numpy array
-            peaks = transformations.xyz_to_mat(peaks)
-            m = self.masker
-            img = imageutils.map_peaks_to_image(
-                peaks, r, vox_dims=m.vox_dims, dims=m.dims,
-                header=m.get_header())
-            results.append(self.get_studies(
-                mask=img, activation_threshold=activation_threshold))
+            found = set()
+            for p in peaks:
+                _xt, _yt, _zt = p
+                x, y, z = self.activations['x'], self.activations['y'], self.activations['z']
+                dists = np.sqrt((x-_xt)**2 + (y-_yt)**2 + (z-_zt)**2)
+                res = self.activations[dists <= r]['id'].unique()
+                found |= set(self.activations[dists <= r]['id'].unique())
+            results.append(found)
 
         # Get intersection of all sets
         ids = list(reduce(lambda x, y: set(x) & set(y), results))
