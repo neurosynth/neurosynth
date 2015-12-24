@@ -529,17 +529,9 @@ class Dataset(object):
             dataset.feature_table._csr_to_sdf()
         return dataset
 
-    def save(self, filename, keep_mappables=False):
+    def save(self, filename):
         """ Pickle the Dataset instance to the provided file.
-
-        If keep_mappables = False (default), will delete the Mappable objects
-        themselves before pickling. This will save a good deal of space and
-        is generally advisable once a stable Dataset is created, as the
-        Mappables are rarely used after the ImageTable is generated.
         """
-        if not keep_mappables:
-            self.mappables = []
-
         if hasattr(self, 'feature_table'):
             self.feature_table._sdf_to_csr()
 
