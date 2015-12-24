@@ -20,6 +20,7 @@ class TestBase(unittest.TestCase):
     def setUp(self):
         """ Create a new Dataset and add features. """
         self.dataset = get_test_dataset()
+        self.real_dataset = get_test_dataset(prefix='test_real')
 
     def test_dataset_download(self):
         tmpdir = tempfile.mkdtemp()
@@ -176,18 +177,17 @@ class TestBase(unittest.TestCase):
 
     def test_selection_by_peaks(self):
         """ Test peak-based Mappable selection. """
-        ids = self.dataset.get_studies(peaks=np.array(
-            [[3, 30, -9]]))  # Test with numpy array
-        # Test with list of lists
-        ids2 = self.dataset.get_studies(peaks=[[3, 30, -9]])
-        self.assertEquals(ids, ids2)
-        self.assertEquals(len(ids), 1)
-        self.assertEquals('study5', ids[0])
+        ids = self.real_dataset.get_studies(peaks=[[0, 20, 40]])
+        self.assertEquals(len(ids), 3)
+        self.assertTrue(10376114 in ids)
+        peaks = np.array([[0, 20, 40], [-32, 22, 12]])
+        ids = self.real_dataset.get_studies(peaks=peaks, r=8)
+        self.assertEquals(len(ids), 12)
 
     def test_selection_by_multiple_criteria(self):
         ids = self.dataset.get_studies(
-            peaks=[[3, 30, -9]], r=35, expression="f* < 0.013", func=np.sum,
-            frequency_threshold=0.0, activation_threshold=0.0001)
+            peaks=[[3, 30, -9]], r=40, expression="f* < 0.013", func=np.sum,
+            frequency_threshold=0.0)
         self.assertEquals(sorted(ids), ['study2', 'study5'])
 
     def test_unmask(self):
