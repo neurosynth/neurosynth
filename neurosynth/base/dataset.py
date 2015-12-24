@@ -7,7 +7,6 @@ import sys
 import numpy as np
 import pandas as pd
 from scipy import sparse
-from neurosynth.base import mappable
 from neurosynth.base import mask, imageutils, transformations
 from neurosynth.base import lexparser as lp
 from neurosynth.utils import deprecated
@@ -75,22 +74,20 @@ class Dataset(object):
     """ Base Dataset class.
 
     The core data-representing object in Neurosynth. Internally stores
-    information about Mappables, including both reported activations and tagged
-    features. Provides a variety of methods for manipulating and retrieving
-    various kinds of data.
+    information about both reported activations and tagged features. Provides a
+    variety of methods for manipulating and retrieving various kinds of data.
 
     The Dataset is typically initialized by passing in a database file as the
     first argument. At minimum, the input file must contain tab-delimited
     columns named x, y, z, id, and space (case-insensitive). The x/y/z columns
     indicate the coordinates of the activation center or peak, the id column is
-    used to group multiple activations from a single Mappable (e.g. an
-    article). Typically the id should be a uniquely identifying field
-    accessible to others, e.g., a doi in the case of entire articles. The space
-    column indicates the nominal atlas used to produce each activation.
-    Currently all values except 'TAL' (Talairach) will be ignored. If space ==
-    TAL and the transform argument is True, all activations reported in 
-    Talairach space will be converted to MNI space using the Lancaster et al
-    transform.
+    used to group multiple activations from a single study. Typically the id
+    should be a uniquely identifying field accessible to others, e.g., a PubMed
+    ID in the case of entire articles. The space column indicates the nominal
+    atlas used to produce each activation. Currently all values except 'TAL'
+    (Talairach) will be ignored. If space == TAL and the transform argument is
+    True, all activations reported in Talairach space will be converted to MNI
+    space using the Lancaster et al. transform.
 
     Args:
         filename (str): The name of a database file containing a list of
@@ -242,7 +239,7 @@ class Dataset(object):
             return_type (str): A string specifying what data to return. Valid
                 options are:
                 'ids': returns a list of IDs of selected studies.
-                'images': returns a voxel x mappable matrix of data for all
+                'images': returns a voxel x study matrix of data for all
                 selected studies.
                 'weights': returns a dict where the keys are study IDs and the
                 values are the computed weights. Only valid when performing
@@ -339,14 +336,14 @@ class Dataset(object):
         """ A wrapper for FeatureTable.get_ids().
 
         Args:
-            features (list): features to use when selecting Mappables.
+            features (list): features to use when selecting studies.
             threshold (float): Float in range 0-1. Threshold used to select
-                mappables.
+                studies.
             func (Callable): The function to use when aggregating over the list
                 of features. See documentation in FeatureTable.get_ids() for a
                 full explanation.
-            get_image_data (bool): When True, returns a voxel x mappable matrix
-            of image data rather than the Mappable instances themselves.
+            get_image_data (bool): When True, returns a voxel x study matrix
+            of image data rather than a list of study IDs.
         """
         ids = self.feature_table.get_ids(
             features, threshold, func, get_weights)
@@ -363,7 +360,7 @@ class Dataset(object):
     @deprecated("get_ids_by_mask() is deprecated and will be removed in "
                 "0.5. Please use get_studies(mask=...).")
     def get_ids_by_mask(self, mask, threshold=0.0, get_image_data=False):
-        """ Return all mappable objects that activate within the bounds
+        """ Return all studies that activate within the bounds
         defined by the mask image. 
         Args:
             mask: the mask image (see Masker documentation for valid data 
@@ -447,8 +444,8 @@ class Dataset(object):
         """ A convenience wrapper for ImageTable.get_image_data(). 
 
         Args:
-            ids (list, array): A list or 1D numpy array of Mappable ids to 
-                return. If None, returnsdata for all Mappables.
+            ids (list, array): A list or 1D numpy array of study ids to
+                return. If None, returns data for all studies.
             voxels (list, array): A list or 1D numpy array of voxel indices
                 (i.e., rows) to return. If None, returns data for all voxels.
         """
@@ -498,10 +495,7 @@ class ImageTable(object):
     """ Represents image data from multiple studies in an accessible form.
 
     Args:
-        dataset (Dataset): Dataset instance to pull inputs from. If None, user
-            must explicitly provide mappables and masker.
-        masker (Masker): The Masker defining the image space. Ignored if
-            dataset is not None.
+        dataset (Dataset): Dataset instance to pull inputs from.
         r (int): The radius of the sphere used for smoothing (default = 6 mm).
         use_sparse (bool): Flag indicating whether or not to represent the data
             as a sparse array (generally this should be left to True, as these
@@ -509,12 +503,10 @@ class ImageTable(object):
             in dense form.)
     """
 
-    def __init__(self, dataset, masker=None, r=6,
-                 use_sparse=True):
+    def __init__(self, dataset, r=6, use_sparse=True):
         activations, masker, r = dataset.activations, dataset.masker, dataset.r
         for var in [activations, masker, r]:
             assert var is not None
-        # self.ids = [m.id for m in mappables]
         self.ids = activations['id'].unique()
         self.masker = masker
         self.r = r
@@ -529,8 +521,7 @@ class ImageTable(object):
         else:
             self.data = np.zeros(data_shape, dtype=int)
 
-        logger.info("Creating matrix of %d mappables..." % (n_studies,))
-        # for i, s in enumerate(mappables):
+        logger.info("Mapping %d studies into image space..." % (n_studies,))
         for i, (name, data) in enumerate(activations.groupby('id')):
             logger.debug("%s/%s..." % (str(i + 1), str(n_studies)))
             img = imageutils.map_peaks_to_image(
@@ -553,8 +544,8 @@ class ImageTable(object):
         """ Slices and returns a subset of image data.
 
         Args:
-            ids (list, array): A list or 1D numpy array of Mappable ids to
-                return. If None, returns data for all Mappables.
+            ids (list, array): A list or 1D numpy array of study ids to
+                return. If None, returns data for all studies.
             voxels (list, array): A list or 1D numpy array of voxel indices
                 (i.e., rows) to return. If None, returns data for all voxels.
             dense (bool): Optional boolean. When True (default), convert the 
@@ -562,7 +553,7 @@ class ImageTable(object):
                 sparse matrix.
 
         Returns:
-          A 2D numpy array with voxels in rows and mappables in columns.
+          A 2D numpy array with voxels in rows and studies in columns.
         """
         if dense and ids is None and voxels is None:
             logger.warning(
@@ -582,7 +573,7 @@ class ImageTable(object):
         return result.toarray() if dense else result
 
     def trim(self, ids):
-        """ Trim ImageTable to keep only the passed Mappables. This is a
+        """ Trim ImageTable to keep only the passed studies. This is a
         convenience method, and should generally be avoided in favor of
         non-destructive alternatives that don't require slicing (e.g.,
             matrix multiplication). """
@@ -592,7 +583,7 @@ class ImageTable(object):
 
     def save_images_to_file(self, ids, outroot='./'):
         """ Reconstructs vectorized images corresponding to the specified
-        Mappable ids and saves them to file, prepending with the outroot
+        study ids and saves them to file, prepending with the outroot
         (default: current directory). """
         pass
 
@@ -602,7 +593,7 @@ class ImageTable(object):
 
 class FeatureTable(object):
 
-    """ A FeatureTable instance stores a matrix of mappables x features,
+    """ A FeatureTable instance stores a matrix of studies x features,
     along with associated manipulation methods. """
 
     def __init__(self, dataset, **kwargs):
@@ -621,7 +612,7 @@ class FeatureTable(object):
                 pandas DataFrame. In either case, studies are in rows and
                 features are in columns. Values in cells reflect the weight of
                 the intersecting feature for the intersecting study. Feature
-                names and mappable IDs should be included as the first column
+                names and study IDs should be included as the first column
                 and first row, respectively.
             merge (str): The merge strategy to use when merging new features
                 with old. This is passed to pandas.merge, so can be 'left',
@@ -688,9 +679,9 @@ class FeatureTable(object):
         """ Slices and returns a subset of feature data.
 
         Args:
-            ids (list, array): A list or 1D numpy array of Mappable ids to
-                return rows for. If None, returns data for all Mappables
-                (i.e., all rows in array). 
+            ids (list, array): A list or 1D numpy array of study ids to
+                return rows for. If None, returns data for all studies
+                (i.e., all rows in array).
             features (list, array): A list or 1D numpy array of named features
                 to return. If None, returns data for all features (i.e., all
                 columns in array).
@@ -699,7 +690,7 @@ class FeatureTable(object):
                 sparse matrix. Note that if ids is not None, the returned array
                 will always be dense.
         Returns:
-          A pandas DataFrame with mappable IDs in rows and features incolumns.
+          A pandas DataFrame with study IDs in rows and features incolumns.
         """
         result = self.data
 
@@ -728,10 +719,10 @@ class FeatureTable(object):
         return list(self.data.columns[idxs].values)
 
     def get_ids(self, features, threshold=0.0, func=np.sum, get_weights=False):
-        """ Returns a list of all Mappables in the table that meet the desired
+        """ Returns a list of all studies in the table that meet the desired
         feature-based criteria.
 
-        Will most commonly be used to retrieve Mappables that use one or more
+        Will most commonly be used to retrieve studies that use one or more
         features with some minimum frequency; e.g.,:
 
             get_ids(['fear', 'anxiety'], threshold=0.001)
@@ -753,8 +744,8 @@ class FeatureTable(object):
             get_weights (bool): if True, returns a dict with ids => weights.
 
         Returns:
-            When get_weights is false (default), returns a list of Mappable
-                names. When true, returns a dict, with mappable names as keys
+            When get_weights is false (default), returns a list of study
+                names. When true, returns a dict, with study names as keys
                 and feature weights as values.
         """
         if isinstance(features, str):
@@ -786,7 +777,7 @@ class FeatureTable(object):
         return list(set(results))
 
     def get_ids_by_expression(self, expression, threshold=0.001, func=np.sum):
-        """ Use a PEG to parse expression and return mappables."""
+        """ Use a PEG to parse expression and return study IDs."""
         lexer = lp.Lexer()
         lexer.build()
         parser = lp.Parser(
