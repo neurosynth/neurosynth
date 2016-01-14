@@ -24,10 +24,10 @@ class Clusterable(object):
             greater than feature_threshold.
         feature_threshold (float): The threshold to use when selecting studies
             on the basis of features.
-        min_voxels_per_study (int): Minimum number of active voxels a study
+        min_voxels (int): Minimum number of active voxels a study
             must report in order to be retained in the dataset. By default,
             all studies are used.
-        min_studies_per_voxel (int): Minimum number of studies a voxel must be
+        min_studies (int): Minimum number of studies a voxel must be
             active in in order to be retained in analysis. By default, all
             voxels are used.
     '''
