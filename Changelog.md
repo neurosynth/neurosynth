@@ -1,3 +1,8 @@
+## 0.3.5 (March, 8, 2016)
+- Reworked base.py: now uses a pandas DataFrame to store activation data, and the Mappable class has been removed.
+- Fixed bug in peak-based search
+- Minor cleanup and doc improvements
+
 ## 0.3.4 (November 8, 2015)
 - Updated dependency list and moved dependencies into setup.py
 - Added ROI-based decoding method (generalization of voxel-based decoding)
