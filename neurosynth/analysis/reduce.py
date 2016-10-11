@@ -1,9 +1,14 @@
 """ Dimensionality reduction methods"""
 
+import os
 import numpy as np
 from neurosynth.base.dataset import Dataset
 from neurosynth.base import imageutils
+from neurosynth.tests.utils import get_resource_path
 import logging
+import subprocess
+import pandas as pd
+import shutil
 
 logger = logging.getLogger('neurosynth.cluster')
 
@@ -58,8 +63,8 @@ def average_within_regions(dataset, regions, masker=None, threshold=None,
         else:
             if not type(regions).__module__.startswith('numpy'):
                 raise ValueError(
-                    "If dataset is a numpy array and regions is not a \
-numpy array, a masker must be provided.")
+                    "If dataset is a numpy array and regions is not a numpy "
+                    "array, a masker must be provided.")
 
     if not type(regions).__module__.startswith('numpy'):
         regions = masker.mask(regions)
@@ -155,3 +160,110 @@ def get_random_voxels(dataset, n_voxels):
     np.random.shuffle(voxels)
     selected = voxels[0:n_voxels]
     return dataset.get_image_data(voxels=selected)
+
+
+def _get_top_words(model, feature_names, n_top_words=40):
+    """ Return top forty words from each topic in trained topic model.
+    """
+    topic_words = []
+    for topic in model.components_:
+        top_words = [feature_names[i] for i in topic.argsort()[:-n_top_words-1:-1]]
+        topic_words += [top_words]
+    return topic_words
+
+
+def topic_models(abstracts, n_topics=50, alpha=None, beta=0.001):
+    """ Perform topic modeling using Latent Dirichlet Allocation.
+    """
+    if abstracts.index.name != 'pmid':
+        abstracts.index = abstracts['pmid']
+
+    resdir = os.path.abspath(get_resource_path())
+    tempdir = os.path.join(resdir, 'topic_models')
+    absdir = os.path.join(tempdir, 'abstracts')
+    if not os.path.isdir(tempdir):
+        os.mkdir(tempdir)
+    
+    if alpha is None:
+        alpha = 50. / n_topics
+    
+    # Check for presence of MALLET and download if necessary
+    mallet_bin = os.path.join(resdir, 'mallet-2.0.7/bin/mallet')
+    if not os.path.isfile(mallet_bin):
+        print('MALLET toolbox not found. Downloading...')
+        cmd = ('curl -o {0}/mallet-2.0.7.tar.gz '
+               'http://mallet.cs.umass.edu/dist/mallet-2.0.7.tar.gz').format(resdir)
+        subprocess.call(cmd, shell=True)
+        cmd = 'cd {0}; tar zxf {0}/mallet-2.0.7.tar.gz'.format(resdir)
+        subprocess.call(cmd, shell=True)
+        os.remove(os.path.join(resdir, 'mallet-2.0.7.tar.gz'))
+    
+    # Check for presence of abstract files and convert if necessary
+    if not os.path.isdir(absdir):
+        print('Abstracts folder not found. Creating abstract files...')
+        os.mkdir(absdir)
+        for pmid in abstracts.index.values:
+            abstract = abstracts.loc[pmid]['abstract']
+            with open(os.path.join(absdir, str(pmid)+'.txt'), 'wb') as fo:
+                fo.write(abstract)
+        
+    # Run MALLET topic modeling
+    print('Generating topics...')
+    import_str = ('{0} import-dir --input {1} --output {2}/topic-input.mallet '
+              '--keep-sequence --remove-stopwords').format(mallet_bin, absdir, tempdir)
+    
+    train_str = ('{mallet} train-topics --input {out}/topic-input.mallet --num-topics {n_topics} '
+             '--num-top-words 31 --output-topic-keys {out}/topic_keys.txt '
+             '--output-doc-topics {out}/doc_topics.txt '
+             '--num-iterations 1000 --output-model {out}/saved_model.mallet '
+             '--random-seed 1 --alpha {alpha} --beta {beta}').format(mallet=mallet_bin,
+                                                                n_topics=n_topics,
+                                                                alpha=alpha,
+                                                                beta=beta,
+                                                                out=tempdir)
+
+    subprocess.call(import_str, shell=True)
+    subprocess.call(train_str, shell=True)
+    
+    # Read in and convert topic_keys and doc_topics
+    def clean_str(string):
+        return os.path.basename(os.path.splitext(string)[0])
+    
+    def get_sort(lst):
+        return [i[0] for i in sorted(enumerate(lst), key=lambda x:x[1])]
+    
+    # doc_topics
+    n_cols = (2 * n_topics) + 1
+    df = pd.read_csv(os.path.join(tempdir, 'doc_topics.txt'), delimiter='\t',
+                     skiprows=1, header=None, index_col=0)
+    df = df[df.columns[:n_cols]]
+    df[1] = df[1].apply(clean_str)
+    weights = df[df.columns[2::2]]
+    topics = df[df.columns[1::2]]
+    weights.index = df[1]
+    weights.columns = range(n_topics)
+    topics.index = df[1]
+    topics.columns = range(n_topics)
+    sorters = topics.apply(get_sort, axis=1)
+    w2 = weights.as_matrix()
+    s2 = sorters.as_matrix()
+    for i in range(s2.shape[0]):  # there has to be a better way to do this.
+        w2[i, :] = w2[i, s2[i, :]]
+    columns = ['topic_{0:03d}'.format(i) for i in range(n_topics)]
+    index = df[1]
+    weights = pd.DataFrame(columns=columns, data=w2, index=index)
+    weights.index.name = 'pmid'
+    
+    # topic_keys
+    df = pd.read_csv(os.path.join(tempdir, 'topic_keys.txt'), delimiter='\t',
+                     header=None, index_col=0)
+    df = df[[2]]
+    df.rename(columns={2: 'Terms'}, inplace=True)
+    df.index = columns
+    df.index.name = 'Topic'
+        
+    # Remove all temporary files
+    shutil.rmtree(tempdir)
+    
+    # Return topic keys and article topic weights
+    return weights, df
