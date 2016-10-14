@@ -78,9 +78,9 @@ def download_abstracts(dataset, path='.', email=None, out_file=None):
     Entrez.email = email
     
     if isinstance(dataset, Dataset):
-        pmids = dataset.image_table.ids.tolist()
+        pmids = dataset.image_table.ids.astype(str).tolist()
     elif isinstance(dataset, list):
-        pmids = dataset
+        pmids = [str(pmid) for pmid in dataset]
     else:
         raise Exception('Dataset type not recognized: {0}'.format(type(dataset)))
     
