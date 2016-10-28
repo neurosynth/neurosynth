@@ -237,7 +237,7 @@ def topic_models(abstracts, n_topics=50, n_words=31, n_iters=1000, alpha=None,
         os.mkdir(absdir)
         for pmid in abstracts.index.values:
             abstract = abstracts.loc[pmid]['abstract']
-            with open(os.path.join(absdir, str(pmid)+'.txt'), 'wb') as fo:
+            with open(os.path.join(absdir, str(pmid)+'.txt'), 'w') as fo:
                 fo.write(abstract)
         
     # Run MALLET topic modeling
