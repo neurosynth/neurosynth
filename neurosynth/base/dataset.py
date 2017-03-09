@@ -388,11 +388,7 @@ class Dataset(object):
     @classmethod
     def load(cls, filename):
         """ Load a pickled Dataset instance from file. """
-        try:
-            dataset = pickle.load(open(filename, 'rb'))
-        except UnicodeDecodeError:
-            # Need to try this for python3
-            dataset = pickle.load(open(filename, 'rb'), encoding='latin')
+        dataset = pickle.load(open(filename, 'rb'))
 
         if hasattr(dataset, 'feature_table'):
             dataset.feature_table._csr_to_sdf()
