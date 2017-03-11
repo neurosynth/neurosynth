@@ -371,7 +371,7 @@ class Dataset(object):
                 a study in the database, with features in columns. The first
                 column must contain the IDs of the studies to match up with the
                 image data.
-                (b) A pandas DataFrame, where studies are in rows, features are 
+                (b) A pandas DataFrame, where studies are in rows, features are
                 in columns, and the index provides the study IDs.
             append (bool): If True, adds new features to existing ones
                 incrementally. If False, replaces old features.
@@ -387,7 +387,7 @@ class Dataset(object):
                                         threshold=threshold)
 
     def get_image_data(self, ids=None, voxels=None, dense=True):
-        """ A convenience wrapper for ImageTable.get_image_data(). 
+        """ A convenience wrapper for ImageTable.get_image_data().
 
         Args:
             ids (list, array): A list or 1D numpy array of study ids to
@@ -402,7 +402,7 @@ class Dataset(object):
         return self.feature_table.get_feature_data(ids, **kwargs)
 
     def get_feature_names(self, features=None):
-        """ Returns names of features. If features is None, returns all 
+        """ Returns names of features. If features is None, returns all
         features. Otherwise assumes the user is trying to find the order of the
         features.  """
         if features:
@@ -419,7 +419,12 @@ class Dataset(object):
     @classmethod
     def load(cls, filename):
         """ Load a pickled Dataset instance from file. """
-        dataset = pickle.load(open(filename, 'rb'))
+        try:
+            dataset = pickle.load(open(filename, 'rb'))
+        except UnicodeDecodeError:
+            # Need to try this for python3
+            dataset = pickle.load(open(filename, 'rb'), encoding='latin')
+
         if hasattr(dataset, 'feature_table'):
             dataset.feature_table._csr_to_sdf()
         return dataset
@@ -494,7 +499,7 @@ class ImageTable(object):
                 return. If None, returns data for all studies.
             voxels (list, array): A list or 1D numpy array of voxel indices
                 (i.e., rows) to return. If None, returns data for all voxels.
-            dense (bool): Optional boolean. When True (default), convert the 
+            dense (bool): Optional boolean. When True (default), convert the
                 result to a dense array before returning. When False, keep as
                 sparse matrix.
 
@@ -654,7 +659,7 @@ class FeatureTable(object):
 
         Args:
             features (list): A list or 1D numpy array of named features to
-            return. 
+            return.
 
         Returns:
             A list of features in order they appear in database.
