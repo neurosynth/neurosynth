@@ -218,19 +218,6 @@ def topic_models(abstracts, n_topics=50, n_words=31, n_iters=1000, alpha=None,
     if alpha is None:
         alpha = 50. / n_topics
     
-    # Check for existence of MALLET and download if necessary
-    mallet_bin = os.path.join(resdir, 'mallet-2.0.7/bin/mallet')
-    if not os.path.isfile(mallet_bin):
-        print('MALLET toolbox not found. Downloading...')
-        cmd = ('curl -o {0}/mallet-2.0.7.tar.gz '
-               'http://mallet.cs.umass.edu/dist/mallet-2.0.7.tar.gz').format(resdir)
-        subprocess.call(cmd, shell=True)
-        cmd = 'cd {0}; tar zxf {0}/mallet-2.0.7.tar.gz'.format(resdir)
-        subprocess.call(cmd, shell=True)
-        os.remove(os.path.join(resdir, 'mallet-2.0.7.tar.gz'))
-    else:
-        print('MALLET toolbox found!')
-    
     # Check for presence of abstract files and convert if necessary
     if not os.path.isdir(absdir):
         print('Abstracts folder not found. Creating abstract files...')
