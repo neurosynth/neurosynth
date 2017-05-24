@@ -24,7 +24,7 @@ setup(name="neurosynth",
       url='http://github.com/neurosynth/neurosynth',
       download_url='https://github.com/neurosynth/neurosynth/tarball/%s' % __version__,
       install_requires=['numpy', 'scipy', 'pandas', 'ply', 'scikit-learn',
-                        'nibabel', 'six'],
+                        'nibabel', 'six', 'biopython'],
       packages=find_packages(),
       package_data={'neurosynth': ['resources/*'],
                     'neurosynth.tests': ['data/*']

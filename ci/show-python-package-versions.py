@@ -2,7 +2,7 @@
 import sys
 
 DEPENDENCIES = ['numpy', 'scipy', 'sklearn', 'matplotlib', 'nibabel',
-                'ply', 'pandas']
+                'ply', 'pandas', 'biopython']
 
 
 def print_package_version(package_name, indent='  '):
