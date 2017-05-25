@@ -6,3 +6,4 @@ pandas>=0.13
 ply
 scikit-learn
 six
+biopython
