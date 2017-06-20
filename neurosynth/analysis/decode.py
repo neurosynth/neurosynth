@@ -13,7 +13,7 @@ from six import string_types
 class Decoder:
 
     def __init__(self, dataset=None, method='pearson', features=None,
-                 mask=None, image_type='pFgA_z', threshold=0.001):
+                 mask=None, image_type='pFgA_pF=0.50', threshold=0.001):
         """ Initialize a new Decoder instance.
 
         Args:
@@ -32,7 +32,7 @@ class Decoder:
             image_type: An optional string indicating the type of image to use
                 when constructing feature-based images. See
                 meta.analyze_features() for details. By default, uses reverse
-                inference z-score images.
+                inference images using a uniform prior.
             threshold: If decoding from a Dataset instance, this is the feature
                 threshold to use to generate the feature maps used in the
                 decoding.
@@ -122,7 +122,7 @@ class Decoder:
 
     def load_features(self, features, image_type=None, from_array=False,
                       threshold=0.001):
-        """ Load features from current Dataset instance or a list of files. 
+        """ Load features from current Dataset instance or a list of files.
         Args:
             features: List containing paths to, or names of, features to
                 extract. Each element in the list must be a string containing
