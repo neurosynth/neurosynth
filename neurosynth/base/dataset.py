@@ -10,7 +10,6 @@ from scipy import sparse
 from neurosynth.base import mask, imageutils, transformations
 from neurosynth.base import lexparser as lp
 from neurosynth.utils import deprecated
-from Bio import Entrez, Medline
 
 # For Python 2/3 compatibility
 from six import string_types
@@ -73,17 +72,22 @@ def download(path='.', url=None, unpack=False):
 def download_abstracts(dataset, path='.', email=None, out_file=None):
     """ Download the abstracts for a dataset/list of pmids
     """
+    try:
+        from Bio import Entrez, Medline
+    except:
+        raise Exception('Module biopython is required for downloading abstracts from PubMed.')
+
     if email is None:
         raise Exception('No email address provided.')
     Entrez.email = email
-    
+
     if isinstance(dataset, Dataset):
         pmids = dataset.image_table.ids.astype(str).tolist()
     elif isinstance(dataset, list):
         pmids = [str(pmid) for pmid in dataset]
     else:
         raise Exception('Dataset type not recognized: {0}'.format(type(dataset)))
-    
+
     records = []
     # PubMed only allows you to search ~1000 at a time. I chose 900 to be safe.
     chunks = [pmids[x:x+900] for x in xrange(0, len(pmids), 900)]
@@ -91,7 +95,7 @@ def download_abstracts(dataset, path='.', email=None, out_file=None):
         h = Entrez.efetch(db='pubmed', id=chunk, rettype='medline',
                           retmode='text')
         records += list(Medline.parse(h))
-    
+
     # Pull data for studies with abstracts
     data = [[study['PMID'], study['AB']] for study in records if study.get('AB', None)]
     df = pd.DataFrame(columns=['pmid', 'abstract'], data=data)

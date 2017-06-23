@@ -2,7 +2,7 @@
 FROM ubuntu:trusty
 
 # File Author / Maintainer
-MAINTAINER Tal Yarkoni
+MAINTAINER Elizabeth DuPre
 
 # Update the sources list and install basic applications
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -12,7 +12,7 @@ curl \
 nano \
 wget \
 dialog \
-net-tools \ 
+net-tools \
 build-essential \
 
 # Dependencies for python and java libs
@@ -27,19 +27,19 @@ software-properties-common \
 
 # Install Python and various packages
 python \
-python-dev \ 
-python-distribute \ 
+python-dev \
+python-distribute \
 python-pip \
-python-numpy \ 
+python-numpy \
 python-scipy \
-python-matplotlib \ 
-ipython \ 
-ipython-notebook \ 
-python-pandas \ 
+python-matplotlib \
+ipython \
+ipython-notebook \
+python-pandas \
 python-sympy \
-python-beautifulsoup \ 
+python-beautifulsoup \
 python-lxml \
-python-nose \ 
+python-nose \
 python-tk
 
 # Install Java for Mallet toolbox
@@ -62,4 +62,4 @@ ADD . /neurosynth
 RUN curl -o mallet-2.0.7.tar.gz http://mallet.cs.umass.edu/dist/mallet-2.0.7.tar.gz
 RUN tar xzf mallet-2.0.7.tar.gz
 RUN rm mallet-2.0.7.tar.gz
-RUN mv mallet-2.0.7 ./neurosynth/resources
+RUN mv mallet-2.0.7 ./neurosynth/resources/mallet
