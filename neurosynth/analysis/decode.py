@@ -13,7 +13,7 @@ from six import string_types
 class Decoder:
 
     def __init__(self, dataset=None, method='pearson', features=None,
-                 mask=None, image_type='pFgA_z', threshold=0.001):
+                 mask=None, image_type='specificity_z', threshold=0.001):
         """ Initialize a new Decoder instance.
 
         Args:
@@ -122,7 +122,7 @@ class Decoder:
 
     def load_features(self, features, image_type=None, from_array=False,
                       threshold=0.001):
-        """ Load features from current Dataset instance or a list of files. 
+        """ Load features from current Dataset instance or a list of files.
         Args:
             features: List containing paths to, or names of, features to
                 extract. Each element in the list must be a string containing
