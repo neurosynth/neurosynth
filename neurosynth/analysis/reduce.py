@@ -9,7 +9,7 @@ import logging
 import subprocess
 import pandas as pd
 import shutil
-from os.path import abspath
+from os.path import dirname, join
 
 logger = logging.getLogger('neurosynth.cluster')
 
@@ -230,7 +230,7 @@ def run_lda(abstracts, n_topics=50, n_words=31, n_iters=1000, alpha=None,
 
     # Run MALLET topic modeling
     print('Generating topics...')
-    mallet_bin = abspath('../resources/mallet/bin/mallet')
+    mallet_bin = join(dirname(dirname(__file__)), 'resources/mallet/bin/mallet')
     import_str = ('{mallet} import-dir '
                   '--input {absdir} '
                   '--output {outdir}/topic-input.mallet '
