@@ -1,9 +1,15 @@
 """ Dimensionality reduction methods"""
 
+import os
 import numpy as np
 from neurosynth.base.dataset import Dataset
 from neurosynth.base import imageutils
+from neurosynth.tests.utils import get_resource_path
 import logging
+import subprocess
+import pandas as pd
+import shutil
+from os.path import dirname, join
 
 logger = logging.getLogger('neurosynth.cluster')
 
@@ -32,7 +38,7 @@ def average_within_regions(dataset, regions, masker=None, threshold=None,
             3) A list of NiBabel images
             4) A 1D numpy array of the same length as the mask vector in
                 the Dataset's current Masker.
-        masker: Optional masker used to load image if regions is not a 
+        masker: Optional masker used to load image if regions is not a
             numpy array. Must be passed if dataset is a numpy array.
         threshold: An optional float in the range of 0 - 1 or integer. If
             passed, the array will be binarized, with ROI values above the
@@ -58,8 +64,8 @@ def average_within_regions(dataset, regions, masker=None, threshold=None,
         else:
             if not type(regions).__module__.startswith('numpy'):
                 raise ValueError(
-                    "If dataset is a numpy array and regions is not a \
-numpy array, a masker must be provided.")
+                    "If dataset is a numpy array and regions is not a numpy "
+                    "array, a masker must be provided.")
 
     if not type(regions).__module__.startswith('numpy'):
         regions = masker.mask(regions)
@@ -155,3 +161,160 @@ def get_random_voxels(dataset, n_voxels):
     np.random.shuffle(voxels)
     selected = voxels[0:n_voxels]
     return dataset.get_image_data(voxels=selected)
+
+
+def _get_top_words(model, feature_names, n_top_words=40):
+    """ Return top forty words from each topic in trained topic model.
+    """
+    topic_words = []
+    for topic in model.components_:
+        top_words = [feature_names[i] for i in topic.argsort()[:-n_top_words-1:-1]]
+        topic_words += [top_words]
+    return topic_words
+
+
+def run_lda(abstracts, n_topics=50, n_words=31, n_iters=1000, alpha=None,
+            beta=0.001):
+    """ Perform topic modeling using Latent Dirichlet Allocation with the
+    Java toolbox MALLET.
+
+    Args:
+        abstracts:  A pandas DataFrame with two columns ('pmid' and 'abstract')
+                    containing article abstracts.
+        n_topics:   Number of topics to generate. Default=50.
+        n_words:    Number of top words to return for each topic. Default=31,
+                    based on Poldrack et al. (2012).
+        n_iters:    Number of iterations to run in training topic model.
+                    Default=1000.
+        alpha:      The Dirichlet prior on the per-document topic distributions.
+                    Default: 50 / n_topics, based on Poldrack et al. (2012).
+        beta:       The Dirichlet prior on the per-topic word distribution.
+                    Default: 0.001, based on Poldrack et al. (2012).
+
+    Returns:
+        weights_df: A pandas DataFrame derived from the MALLET
+                    output-doc-topics output file. Contains the weight assigned
+                    to each article for each topic, which can be used to select
+                    articles for topic-based meta-analyses (accepted threshold
+                    from Poldrack article is 0.001). [n_topics]+1 columns:
+                    'pmid' is the first column and the following columns are
+                    the topic names. The names of the topics match the names
+                    in df (e.g., topic_000).
+        keys_df:    A pandas DataFrame derived from the MALLET
+                    output-topic-keys output file. Contains the top [n_words]
+                    words for each topic, which can act as a summary of the
+                    topic's content. Two columns: 'topic' and 'terms'. The
+                    names of the topics match the names in weights (e.g.,
+                    topic_000).
+    """
+    if abstracts.index.name != 'pmid':
+        abstracts.index = abstracts['pmid']
+
+    resdir = os.path.abspath(get_resource_path())
+    tempdir = os.path.join(resdir, 'topic_models')
+    absdir = os.path.join(tempdir, 'abstracts')
+    if not os.path.isdir(tempdir):
+        os.mkdir(tempdir)
+
+    if alpha is None:
+        alpha = 50. / n_topics
+
+    # Check for presence of abstract files and convert if necessary
+    if not os.path.isdir(absdir):
+        print('Abstracts folder not found. Creating abstract files...')
+        os.mkdir(absdir)
+        for pmid in abstracts.index.values:
+            abstract = abstracts.loc[pmid]['abstract']
+            with open(os.path.join(absdir, str(pmid)+'.txt'), 'w') as fo:
+                fo.write(abstract)
+
+    # Run MALLET topic modeling
+    print('Generating topics...')
+    mallet_bin = join(dirname(dirname(__file__)), 'resources/mallet/bin/mallet')
+    import_str = ('{mallet} import-dir '
+                  '--input {absdir} '
+                  '--output {outdir}/topic-input.mallet '
+                  '--keep-sequence '
+                  '--remove-stopwords').format(mallet=mallet_bin,
+                                               absdir=absdir,
+                                               outdir=tempdir)
+
+    train_str = ('{mallet} train-topics '
+                 '--input {out}/topic-input.mallet '
+                 '--num-topics {n_topics} '
+                 '--num-top-words {n_words} '
+                 '--output-topic-keys {out}/topic_keys.txt '
+                 '--output-doc-topics {out}/doc_topics.txt '
+                 '--num-iterations {n_iters} '
+                 '--output-model {out}/saved_model.mallet '
+                 '--random-seed 1 '
+                 '--alpha {alpha} '
+                 '--beta {beta}').format(mallet=mallet_bin, out=tempdir,
+                                         n_topics=n_topics, n_words=n_words,
+                                         n_iters=n_iters,
+                                         alpha=alpha, beta=beta)
+
+    subprocess.call(import_str, shell=True)
+    subprocess.call(train_str, shell=True)
+
+    # Read in and convert doc_topics and topic_keys.
+    def clean_str(string):
+        return os.path.basename(os.path.splitext(string)[0])
+
+    def get_sort(lst):
+        return [i[0] for i in sorted(enumerate(lst), key=lambda x:x[1])]
+
+    topic_names = ['topic_{0:03d}'.format(i) for i in range(n_topics)]
+
+    # doc_topics: Topic weights for each paper.
+    # The conversion here is pretty ugly at the moment.
+    # First row should be dropped. First column is row number and can be used
+    # as the index.
+    # Second column is 'file: /full/path/to/pmid.txt' <-- Parse to get pmid.
+    # After that, odd columns are topic numbers and even columns are the
+    # weights for the topics in the preceding column. These columns are sorted
+    # on an individual pmid basis by the weights.
+    n_cols = (2 * n_topics) + 1
+    dt_df = pd.read_csv(os.path.join(tempdir, 'doc_topics.txt'),
+                        delimiter='\t', skiprows=1, header=None, index_col=0)
+    dt_df = dt_df[dt_df.columns[:n_cols]]
+
+    # Get pmids from filenames
+    dt_df[1] = dt_df[1].apply(clean_str)
+
+    # Put weights (even cols) and topics (odd cols) into separate dfs.
+    weights_df = dt_df[dt_df.columns[2::2]]
+    weights_df.index = dt_df[1]
+    weights_df.columns = range(n_topics)
+
+    topics_df = dt_df[dt_df.columns[1::2]]
+    topics_df.index = dt_df[1]
+    topics_df.columns = range(n_topics)
+
+    # Sort columns in weights_df separately for each row using topics_df.
+    sorters_df = topics_df.apply(get_sort, axis=1)
+    weights = weights_df.as_matrix()
+    sorters = sorters_df.as_matrix()
+    for i in range(sorters.shape[0]):  # there has to be a better way to do this.
+        weights[i, :] = weights[i, sorters[i, :]]
+
+    # Define topic names (e.g., topic_000)
+    index = dt_df[1]
+    weights_df = pd.DataFrame(columns=topic_names, data=weights, index=index)
+    weights_df.index.name = 'pmid'
+
+    # topic_keys: Top [n_words] words for each topic.
+    keys_df = pd.read_csv(os.path.join(tempdir, 'topic_keys.txt'),
+                          delimiter='\t', header=None, index_col=0)
+
+    # Second column is a list of the terms.
+    keys_df = keys_df[[2]]
+    keys_df.rename(columns={2: 'terms'}, inplace=True)
+    keys_df.index = topic_names
+    keys_df.index.name = 'topic'
+
+    # Remove all temporary files (abstract files, model, and outputs).
+    shutil.rmtree(tempdir)
+
+    # Return article topic weights and topic keys.
+    return weights_df, keys_df
