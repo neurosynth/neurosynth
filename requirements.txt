@@ -7,3 +7,4 @@ ply
 scikit-learn
 six
 biopython
+future
