@@ -4,6 +4,8 @@ import logging
 import re
 import os
 import sys
+
+from builtins import range
 import numpy as np
 import pandas as pd
 from scipy import sparse
@@ -90,7 +92,7 @@ def download_abstracts(dataset, path='.', email=None, out_file=None):
 
     records = []
     # PubMed only allows you to search ~1000 at a time. I chose 900 to be safe.
-    chunks = [pmids[x:x+900] for x in xrange(0, len(pmids), 900)]
+    chunks = [pmids[x:x+900] for x in range(0, len(pmids), 900)]
     for chunk in chunks:
         h = Entrez.efetch(db='pubmed', id=chunk, rettype='medline',
                           retmode='text')
