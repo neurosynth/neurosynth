@@ -235,6 +235,7 @@ def run_lda(abstracts, n_topics=50, n_words=31, n_iters=1000, alpha=None,
                   '--input {absdir} '
                   '--output {outdir}/topic-input.mallet '
                   '--keep-sequence '
+                  '--gram-sizes 1 '
                   '--remove-stopwords').format(mallet=mallet_bin,
                                                absdir=absdir,
                                                outdir=tempdir)
@@ -245,6 +246,7 @@ def run_lda(abstracts, n_topics=50, n_words=31, n_iters=1000, alpha=None,
                  '--num-top-words {n_words} '
                  '--output-topic-keys {out}/topic_keys.txt '
                  '--output-doc-topics {out}/doc_topics.txt '
+                 '--topic-word-weights-file {out}/word_weights.txt '
                  '--num-iterations {n_iters} '
                  '--output-model {out}/saved_model.mallet '
                  '--random-seed 1 '
@@ -281,27 +283,8 @@ def run_lda(abstracts, n_topics=50, n_words=31, n_iters=1000, alpha=None,
 
     # Get pmids from filenames
     dt_df[1] = dt_df[1].apply(clean_str)
-
-    # Put weights (even cols) and topics (odd cols) into separate dfs.
-    weights_df = dt_df[dt_df.columns[2::2]]
-    weights_df.index = dt_df[1]
-    weights_df.columns = range(n_topics)
-
-    topics_df = dt_df[dt_df.columns[1::2]]
-    topics_df.index = dt_df[1]
-    topics_df.columns = range(n_topics)
-
-    # Sort columns in weights_df separately for each row using topics_df.
-    sorters_df = topics_df.apply(get_sort, axis=1)
-    weights = weights_df.as_matrix()
-    sorters = sorters_df.as_matrix()
-    for i in range(sorters.shape[0]):  # there has to be a better way to do this.
-        weights[i, :] = weights[i, sorters[i, :]]
-
-    # Define topic names (e.g., topic_000)
-    index = dt_df[1]
-    weights_df = pd.DataFrame(columns=topic_names, data=weights, index=index)
-    weights_df.index.name = 'pmid'
+    weights_df = dt_df.set_index(1)
+    weights_df.columns = topic_names
 
     # topic_keys: Top [n_words] words for each topic.
     keys_df = pd.read_csv(os.path.join(tempdir, 'topic_keys.txt'),
@@ -314,7 +297,7 @@ def run_lda(abstracts, n_topics=50, n_words=31, n_iters=1000, alpha=None,
     keys_df.index.name = 'topic'
 
     # Remove all temporary files (abstract files, model, and outputs).
-    shutil.rmtree(tempdir)
+    #shutil.rmtree(tempdir)
 
     # Return article topic weights and topic keys.
     return weights_df, keys_df

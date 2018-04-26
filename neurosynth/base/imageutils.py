@@ -15,7 +15,7 @@ def get_sphere(coords, r=4, vox_dims=(2, 2, 2), dims=(91, 109, 91)):
     and then discards all points outside sphere. Only returns values that
     fall within the dimensions of the image."""
     r = float(r)
-    xx, yy, zz = [slice(-r / vox_dims[i], r / vox_dims[
+    xx, yy, zz = [slice(-r // vox_dims[i], r // vox_dims[
                         i] + 0.01, 1) for i in range(len(coords))]
     cube = np.vstack([row.ravel() for row in np.mgrid[xx, yy, zz]])
     sphere = cube[:, np.sum(np.dot(np.diag(
