@@ -1,6 +1,5 @@
 """ Miscellaneous image-related utility functions. """
 
-import json
 import logging
 import nibabel as nb
 from nibabel import nifti1
@@ -129,11 +128,11 @@ def create_grid(image, scale=4, apply_mask=True, save_file=None):
     # factor
     grid = np.zeros(image.shape)
     for (i, (x, y, z)) in enumerate(centers):
-        for mov_x in range((-scale+1)//2, (scale+1)//2):
-            for mov_y in range((-scale+1)//2, (scale+1)//2):
-                for mov_z in range((-scale+1)//2, (scale+1)//2):
+        for mov_x in range((-scale + 1) // 2, (scale + 1) // 2):
+            for mov_y in range((-scale + 1) // 2, (scale + 1) // 2):
+                for mov_z in range((-scale + 1) // 2, (scale + 1) // 2):
                     try:  # Ignore voxels outside bounds of image
-                        grid[x+mov_x, y+mov_y, z+mov_z] = i+1
+                        grid[x + mov_x, y + mov_y, z + mov_z] = i + 1
                     except:
                         pass
 

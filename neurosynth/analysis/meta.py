@@ -139,13 +139,13 @@ class MetaAnalysis(object):
         pFgA_prior = pAgF * prior / pAgF_prior
 
         def p_to_z(p, sign):
-            p = p/2  # convert to two-tailed
+            p = p / 2  # convert to two-tailed
             # prevent underflow
             p[p < 1e-240] = 1e-240
             # Convert to z and assign tail
             z = np.abs(norm.ppf(p)) * sign
             # Set very large z's to max precision
-            z[np.isinf(z)] = norm.ppf(1e-240)*-1
+            z[np.isinf(z)] = norm.ppf(1e-240) * -1
             return z
 
         # One-way chi-square test for consistency of activation

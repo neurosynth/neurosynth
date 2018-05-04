@@ -186,7 +186,8 @@ def run_lda(abstracts, n_topics=50, n_words=31, n_iters=1000, alpha=None,
                     based on Poldrack et al. (2012).
         n_iters:    Number of iterations to run in training topic model.
                     Default=1000.
-        alpha:      The Dirichlet prior on the per-document topic distributions.
+        alpha:      The Dirichlet prior on the per-document topic
+                    distributions.
                     Default: 50 / n_topics, based on Poldrack et al. (2012).
         beta:       The Dirichlet prior on the per-topic word distribution.
                     Default: 0.001, based on Poldrack et al. (2012).
@@ -225,12 +226,13 @@ def run_lda(abstracts, n_topics=50, n_words=31, n_iters=1000, alpha=None,
         os.mkdir(absdir)
         for pmid in abstracts.index.values:
             abstract = abstracts.loc[pmid]['abstract']
-            with open(os.path.join(absdir, str(pmid)+'.txt'), 'w') as fo:
+            with open(os.path.join(absdir, str(pmid) + '.txt'), 'w') as fo:
                 fo.write(abstract)
 
     # Run MALLET topic modeling
     print('Generating topics...')
-    mallet_bin = join(dirname(dirname(__file__)), 'resources/mallet/bin/mallet')
+    mallet_bin = join(dirname(dirname(__file__)),
+                      'resources/mallet/bin/mallet')
     import_str = ('{mallet} import-dir '
                   '--input {absdir} '
                   '--output {outdir}/topic-input.mallet '
@@ -295,7 +297,8 @@ def run_lda(abstracts, n_topics=50, n_words=31, n_iters=1000, alpha=None,
     sorters_df = topics_df.apply(get_sort, axis=1)
     weights = weights_df.as_matrix()
     sorters = sorters_df.as_matrix()
-    for i in range(sorters.shape[0]):  # there has to be a better way to do this.
+    # there has to be a better way to do this.
+    for i in range(sorters.shape[0]):
         weights[i, :] = weights[i, sorters[i, :]]
 
     # Define topic names (e.g., topic_000)

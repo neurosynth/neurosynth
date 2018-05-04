@@ -51,7 +51,7 @@ def one_way(data, n):
     term = data.astype('float64')
     no_term = n - term
     t_exp = np.mean(term, 0)
-    t_exp = np.array([t_exp, ]*data.shape[0])
+    t_exp = np.array([t_exp, ] * data.shape[0])
     nt_exp = n - t_exp
     t_mss = (term - t_exp) ** 2 / t_exp
     nt_mss = (no_term - nt_exp) ** 2 / nt_exp

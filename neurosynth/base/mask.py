@@ -2,6 +2,7 @@ import numpy as np
 import nibabel as nb
 from six import string_types
 
+
 class Masker(object):
 
     """ Handles vectorization/masking/unmasking of images. """
@@ -99,7 +100,8 @@ class Masker(object):
             output: The format of the returned image representation. Must be
                 one of:
                     'vector': A 1D vectorized array
-                    'array': An N-dimensional array, with shape = self.volume.shape
+                    'array': An N-dimensional array, with
+                        shape = self.volume.shape
                     'image': A NiBabel image
         Returns: An object containing image data; see output options above.
         """
@@ -165,7 +167,7 @@ class Masker(object):
         return masked_data
 
     def unmask(self, data, layers=None, output='array'):
-        """ Reconstruct a masked vector into the original 3D volume. 
+        """ Reconstruct a masked vector into the original 3D volume.
         Args:
             data: The 1D vector to reconstruct. (Can also be a 2D vector where
                 the second dimension is time, but then output will always

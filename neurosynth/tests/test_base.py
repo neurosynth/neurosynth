@@ -7,12 +7,10 @@ import shutil
 from glob import glob
 from neurosynth.tests.utils import (get_test_dataset, get_test_data_path,
                                     get_resource_path)
-from neurosynth.base.dataset import Dataset, ImageTable
+from neurosynth.base.dataset import Dataset
 from neurosynth.base import imageutils
 from neurosynth.base.mask import Masker
 import neurosynth as ns
-from six import string_types
-import json
 
 
 class TestBase(unittest.TestCase):
@@ -154,7 +152,8 @@ class TestBase(unittest.TestCase):
             self.assertEqual(sorted(ids), ['study1', 'study4'])
             # test N-gram feature handling
             self.dataset.feature_table.data.columns = ['f1', 'f2', 'my ngram',
-                                                       'my ngram reprise', 'g1']
+                                                       'my ngram reprise',
+                                                       'g1']
             ids = self.dataset.get_studies(expression="my ngram reprise")
             self.assertEqual(ids, ['study5'])
             ids = self.dataset.get_studies(expression="my ngram*",
@@ -169,7 +168,8 @@ class TestBase(unittest.TestCase):
 
     def test_selection_by_mask(self):
         """ Test mask-based Mappable selection.
-        Only one peak in the test dataset (in study5) should be within the sgACC. """
+        Only one peak in the test dataset (in study5) should be within the
+        sgACC. """
         ids = self.dataset.get_studies(mask=get_test_data_path() +
                                        'sgacc_mask.nii.gz')
         self.assertEquals(len(ids), 1)
@@ -178,11 +178,11 @@ class TestBase(unittest.TestCase):
     def test_selection_by_peaks(self):
         """ Test peak-based Mappable selection. """
         ids = self.real_dataset.get_studies(peaks=[[0, 20, 40]])
-        self.assertEquals(len(ids), 3)
-        self.assertTrue(10376114 in ids)
+        self.assertEquals(len(ids), 1)
+        self.assertTrue(9106283 in ids)
         peaks = np.array([[0, 20, 40], [-32, 22, 12]])
         ids = self.real_dataset.get_studies(peaks=peaks, r=8)
-        self.assertEquals(len(ids), 12)
+        self.assertEquals(len(ids), 11)
 
     def test_selection_by_multiple_criteria(self):
         ids = self.dataset.get_studies(
@@ -263,8 +263,8 @@ class TestBase(unittest.TestCase):
         features = self.dataset.feature_table.get_features_by_ids(
             ['study1', 'study3'], threshold=0.01)
         self.assertEquals(len(features), 3)
-        features = self.dataset.feature_table.get_features_by_ids(['study2', 'study5'], func=np.sum,
-                                                                  threshold=0.0, get_weights=True)
+        features = self.dataset.feature_table.get_features_by_ids(
+            ['study2', 'study5'], func=np.sum, threshold=0.0, get_weights=True)
         self.assertEquals(len(features), 5)
         self.assertEqual(features['f3'], 0.01)
 
@@ -309,8 +309,3 @@ class TestMasker(unittest.TestCase):
         self.masker.remove(-1)
         self.assertTrue('layer_0' in self.masker.layers.keys())
         self.assertEqual(len(self.masker.layers), 1)
-
-suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
-
-if __name__ == '__main__':
-    unittest.main()

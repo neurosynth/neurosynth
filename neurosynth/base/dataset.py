@@ -75,7 +75,8 @@ def download_abstracts(dataset, path='.', email=None, out_file=None):
     try:
         from Bio import Entrez, Medline
     except:
-        raise Exception('Module biopython is required for downloading abstracts from PubMed.')
+        raise Exception(
+            'Module biopython is required for downloading abstracts from PubMed.')
 
     if email is None:
         raise Exception('No email address provided.')
@@ -86,18 +87,20 @@ def download_abstracts(dataset, path='.', email=None, out_file=None):
     elif isinstance(dataset, list):
         pmids = [str(pmid) for pmid in dataset]
     else:
-        raise Exception('Dataset type not recognized: {0}'.format(type(dataset)))
+        raise Exception(
+            'Dataset type not recognized: {0}'.format(type(dataset)))
 
     records = []
     # PubMed only allows you to search ~1000 at a time. I chose 900 to be safe.
-    chunks = [pmids[x:x+900] for x in xrange(0, len(pmids), 900)]
+    chunks = [pmids[x: x + 900] for x in range(0, len(pmids), 900)]
     for chunk in chunks:
         h = Entrez.efetch(db='pubmed', id=chunk, rettype='medline',
                           retmode='text')
         records += list(Medline.parse(h))
 
     # Pull data for studies with abstracts
-    data = [[study['PMID'], study['AB']] for study in records if study.get('AB', None)]
+    data = [[study['PMID'], study['AB']]
+            for study in records if study.get('AB', None)]
     df = pd.DataFrame(columns=['pmid', 'abstract'], data=data)
     if out_file is not None:
         df.to_csv(os.path.join(os.path.abspath(path), out_file), index=False)
@@ -348,12 +351,17 @@ class Dataset(object):
 
         # Peak-based selection
         if peaks is not None:
+            r = float(r)
             found = set()
             for p in peaks:
-                _xt, _yt, _zt = p
-                x, y, z = self.activations['x'], self.activations['y'], self.activations['z']
-                dists = np.sqrt((x-_xt)**2 + (y-_yt)**2 + (z-_zt)**2)
-                res = self.activations[dists <= r]['id'].unique()
+                xyz = np.array(p, dtype=float)
+                x = self.activations['x']
+                y = self.activations['y']
+                z = self.activations['z']
+                dists = np.sqrt(np.square(x - xyz[0]) + np.square(y - xyz[1]) +
+                                np.square(z - xyz[2]))
+                inds = np.where((dists > 5.5) & (dists < 6.5))[0]
+                tmp = dists[inds]
                 found |= set(self.activations[dists <= r]['id'].unique())
             results.append(found)
 
@@ -480,7 +488,8 @@ class ImageTable(object):
         for i, (name, data) in enumerate(activations.groupby('id')):
             logger.debug("%s/%s..." % (str(i + 1), str(n_studies)))
             img = imageutils.map_peaks_to_image(
-                data[['i', 'j', 'k']].values, r=r, header=self.masker.get_header())
+                data[['i', 'j', 'k']].values, r=r,
+                header=self.masker.get_header())
             img_masked = self.masker.mask(img)
             if use_sparse:
                 nz = np.nonzero(img_masked)
@@ -551,13 +560,11 @@ class FeatureTable(object):
     """ A FeatureTable instance stores a matrix of studies x features,
     along with associated manipulation methods. """
 
-    def __init__(self, dataset, **kwargs):
+    def __init__(self, dataset):
         """ Initialize a new FeatureTable. Takes as input a parent DataSet
         instance and feature data (if provided). """
         self.dataset = dataset
         self.data = pd.DataFrame()
-        if kwargs:
-            self.add_features(features, **kwargs)
 
     def add_features(self, features, merge='outer', duplicates='ignore',
                      min_studies=0, threshold=0.0001):
@@ -598,9 +605,9 @@ class FeatureTable(object):
                 (features.values >= threshold).sum(0) >= min_studies)[0]
             features = features.iloc[:, valid]
 
-        # Warn user if no/few IDs match between the FeatureTable and the Dataset.
-        # This most commonly happens because older database.txt files used doi's as
-        # IDs whereas we now use PMIDs throughout.
+        # Warn user if no/few IDs match between the FeatureTable and the
+        # Dataset. This most commonly happens because older database.txt files
+        # used doi's as IDs whereas we now use PMIDs throughout.
         n_studies = len(features)
         n_common_ids = len(
             set(features.index) & set(self.dataset.image_table.ids))
