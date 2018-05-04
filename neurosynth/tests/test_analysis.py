@@ -105,9 +105,9 @@ class TestAnalysis(unittest.TestCase):
 
         # Test study-based clustering
         d = tempfile.mkdtemp()
-        from sklearn.decomposition import RandomizedPCA
+        from sklearn.decomposition import PCA
         from sklearn.cluster import KMeans
-        pca = RandomizedPCA(20)
+        pca = PCA(20, svd_solver='randomized')
         clust = KMeans(3)
         cluster.magic(
             self.real_dataset, method='studies', roi_mask=roi_mask,
