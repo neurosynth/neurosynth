@@ -1,40 +1,11 @@
-# Adapted from nilearn
 language: python
-
-virtualenv:
-  system_site_packages: true
-
-env:
-  global:
-    - TEST_RUN_FOLDER="/tmp" # folder where the tests are run from
-    - DEFAULT_TO_LATEST=true # use latest package versions if not explicitly set
-  matrix:
-    - DISTRIB="conda" PYTHON_VERSION="2.7"
-    # - DISTRIB="neurodebian" PYTHON_VERSION="2.7"
-    # # This is about as old as we want to support...
-    # - DISTRIB="conda" PYTHON_VERSION="2.7" NUMPY_VERSION="1.8.1"
-    #   PANDAS_VERSION="0.14.0" SCIKIT_LEARN_VERSION="0.14.1"
-    #   SCIPY_VERSION="0.13.3" MATPLOTLIB_VERSION="1.3.1"
-    - DISTRIB="conda" PYTHON_VERSION="3.4"
-
-install: 
-    - source ci/install.sh
-
-before_script:
-    - find . -name "*.pyc" | xargs rm -f
-    - find . -name "*.so" | xargs rm -f
-    - find . -name "*.pyd" | xargs rm -f
-    - rm -rf build
-    - rm -f tags
-
-script:
-    - python ci/show-python-package-versions.py
-    - (cd "$TEST_RUN_FOLDER" && nosetests -s neurosynth)
-
+python:
+  - "3.6"
+  - "2.7"
+install:
+  - pip install -r requirements.txt
+  - pip install python-coveralls coverage nose
+script:  nosetests --with-coverage --with-doctest
 after_success:
-    # Ignore coveralls failures as the coveralls server is not very reliable
-    # but we don't want travis to report a failure in the github UI just
-    # because the coverage report failed to be published.
-    # coveralls need to be run from the git checkout
-    # so we need to copy the coverage results from TEST_RUN_FOLDER
-    - if [[ "$COVERAGE" == "true" ]]; then cp "$TEST_RUN_FOLDER/.coverage" .; coveralls || echo "failed"; fi
+  - coveralls --config_file .coveragerc
+sudo: false
