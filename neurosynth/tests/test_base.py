@@ -168,7 +168,8 @@ class TestBase(unittest.TestCase):
 
     def test_selection_by_mask(self):
         """ Test mask-based Mappable selection.
-        Only one peak in the test dataset (in study5) should be within the sgACC. """
+        Only one peak in the test dataset (in study5) should be within the
+        sgACC. """
         ids = self.dataset.get_studies(mask=get_test_data_path() +
                                        'sgacc_mask.nii.gz')
         self.assertEquals(len(ids), 1)
@@ -177,7 +178,8 @@ class TestBase(unittest.TestCase):
     def test_selection_by_peaks(self):
         """ Test peak-based Mappable selection. """
         ids = self.real_dataset.get_studies(peaks=[[0, 20, 40]])
-        self.assertEquals(ids, [9106283])
+        self.assertEquals(len(ids), 1)
+        self.assertTrue(9106283 in ids)
         peaks = np.array([[0, 20, 40], [-32, 22, 12]])
         ids = self.real_dataset.get_studies(peaks=peaks, r=8)
         self.assertEquals(len(ids), 11)

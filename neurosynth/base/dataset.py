@@ -351,14 +351,17 @@ class Dataset(object):
 
         # Peak-based selection
         if peaks is not None:
+            r = float(r)
             found = set()
             for p in peaks:
-                _xt, _yt, _zt = p
+                xyz = np.array(p, dtype=float)
                 x = self.activations['x']
                 y = self.activations['y']
                 z = self.activations['z']
-                dists = np.sqrt((x - _xt) ** 2 + (y - _yt) ** 2 +
-                                (z - _zt) ** 2)
+                dists = np.sqrt(np.square(x - xyz[0]) + np.square(y - xyz[1]) +
+                                np.square(z - xyz[2]))
+                inds = np.where((dists > 5.5) & (dists < 6.5))[0]
+                tmp = dists[inds]
                 found |= set(self.activations[dists <= r]['id'].unique())
             results.append(found)
 
