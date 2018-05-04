@@ -5,7 +5,7 @@ python:
 install:
   - pip install -r requirements.txt
   - pip install python-coveralls coverage pytest
-script:  - py.test --pyargs neurosynth --cov-report term-missing --cov=neurosynth
+script: py.test --pyargs neurosynth --cov-report term-missing --cov=neurosynth
 after_success:
   - coveralls
 sudo: false
