@@ -11,3 +11,5 @@ neurosynth/base/lextab.py
 neurosynth/base/parser.out
 neurosynth/base/parsetab.py
 neurosynth/resources/mallet-2.0.7
+.cache
+*.egg-info
