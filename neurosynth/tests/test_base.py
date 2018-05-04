@@ -176,13 +176,11 @@ class TestBase(unittest.TestCase):
 
     def test_selection_by_peaks(self):
         """ Test peak-based Mappable selection. """
-        ids = self.real_dataset.get_studies(peaks=[[0, 20, 40]], r=8)
-        print(ids)
-        self.assertEquals(len(ids), 3)
-        self.assertTrue(10376114 in ids)
+        ids = self.real_dataset.get_studies(peaks=[[0, 20, 40]])
+        self.assertEquals(ids, [9106283])
         peaks = np.array([[0, 20, 40], [-32, 22, 12]])
         ids = self.real_dataset.get_studies(peaks=peaks, r=8)
-        self.assertEquals(len(ids), 12)
+        self.assertEquals(len(ids), 11)
 
     def test_selection_by_multiple_criteria(self):
         ids = self.dataset.get_studies(
