@@ -4,7 +4,7 @@ python:
   - "2.7"
 install:
   - pip install -r requirements.txt
-  - pip install python-coveralls coverage pytest
+  - pip install overalls pytest pytest-cov
 script: py.test --pyargs neurosynth --cov-report term-missing --cov=neurosynth
 after_success:
   - coveralls
