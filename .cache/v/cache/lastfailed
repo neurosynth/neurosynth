@@ -1,4 +1,3 @@
 {
-  "neurosynth/tests/test_analysis.py::TestAnalysis::test_decoder": true, 
   "neurosynth/tests/test_base.py::TestBase::test_selection_by_peaks": true
 }

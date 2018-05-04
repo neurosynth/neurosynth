@@ -4,6 +4,7 @@ import numpy as np
 from functools import reduce
 from sklearn.feature_selection.univariate_selection import SelectKBest
 import re
+from six import string_types
 
 
 def feature_selection(feat_select, X, y):
@@ -18,7 +19,7 @@ def feature_selection(feat_select, X, y):
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=UserWarning)
             features_selected = np.where(
-                selector.fit(X, y).get_support() == True)[0]
+                selector.fit(X, y).get_support() is True)[0]
 
     elif re.match('.*-randombest', feat_select) is not None:
         n = int(feat_select.split('-')[0])
@@ -29,16 +30,16 @@ def feature_selection(feat_select, X, y):
 
         features_selected = features[:n]
 
-
     return features_selected
 
-def get_score(X, y, clf, scoring = 'accuracy'):
+
+def get_score(X, y, clf, scoring='accuracy'):
     prediction = clf.predict(X)
 
     if scoring == 'accuracy':
         from sklearn.metrics import accuracy_score
         score = accuracy_score(y, prediction)
-    elif scoring =='f1':
+    elif scoring == 'f1':
         from sklearn.metrics import f1_score
         score = f1_score(y, prediction)
     else:
@@ -60,29 +61,33 @@ def regularize(X, method='scale'):
         raise Exception('Unrecognized regularization method')
 
 
-def get_studies_by_regions(dataset, masks, threshold=0.08,
-    remove_overlap=True, studies=None,
-    features=None, regularization="scale"):
+def get_studies_by_regions(dataset, masks, threshold=0.08, remove_overlap=True,
+                           studies=None, features=None,
+                           regularization="scale"):
     """ Set up data for a classification task given a set of masks
-    
-        Given a set of masks, this function retrieves studies associated with each 
-        mask at the specified threshold, optionally removes overlap and filters by studies 
-        and features, and returns studies by feature matrix (X) and class labels (y)
+
+        Given a set of masks, this function retrieves studies associated with
+        each mask at the specified threshold, optionally removes overlap and
+        filters by studies and features, and returns studies by feature matrix
+        (X) and class labels (y)
 
         Args:
             dataset: a Neurosynth dataset
             maks: a list of paths to Nifti masks
-            threshold: percentage of voxels active within the mask for study to be included
-            remove_overlap: A boolean indicating if studies studies that appear in more than 
-                one mask should be excluded
-            studies: An optional list of study names used to constrain the set used in
-                classification. If None, will use all features in the dataset.
-            features: An optional list of feature names used to constrain the set used in
-                classification. If None, will use all features in the dataset.
+            threshold: percentage of voxels active within the mask for study
+                to be included
+            remove_overlap: A boolean indicating if studies studies that
+                appear in more than one mask should be excluded
+            studies: An optional list of study names used to constrain the set
+                used in classification. If None, will use all features in the
+                dataset.
+            features: An optional list of feature names used to constrain the
+                set used in classification. If None, will use all features in
+                the dataset.
             regularize: Optional boolean indicating if X should be regularized
 
         Returns:
-            A tuple (X, y) of np arrays. 
+            A tuple (X, y) of np arrays.
             X is a feature by studies matrix and y is a vector of class labels
     """
 
@@ -121,7 +126,8 @@ def get_studies_by_regions(dataset, masks, threshold=0.08,
     y = np.array(y)
 
     # Extract feature set for each class separately
-    X = [dataset.get_feature_data(ids=group_ids, features=features) for group_ids in grouped_ids]
+    X = [dataset.get_feature_data(ids=group_ids, features=features)
+         for group_ids in grouped_ids]
 
     X = np.vstack(tuple(X))
 
@@ -132,7 +138,8 @@ def get_studies_by_regions(dataset, masks, threshold=0.08,
 
 
 def get_feature_order(dataset, features):
-    """ Returns a list with the order that features requested appear in dataset """
+    """ Returns a list with the order that features requested appear in
+    dataset """
     all_features = dataset.get_feature_names()
 
     i = [all_features.index(f) for f in features]
@@ -141,54 +148,62 @@ def get_feature_order(dataset, features):
 
 
 def classify_regions(dataset, masks, method='ERF', threshold=0.08,
-    remove_overlap=True, regularization='scale',
-    output='summary', studies=None, features=None,
-    class_weight='auto', classifier=None,
-    cross_val='4-Fold', param_grid=None, scoring='accuracy'):
+                     remove_overlap=True, regularization='scale',
+                     output='summary', studies=None, features=None,
+                     class_weight='auto', classifier=None,
+                     cross_val='4-Fold', param_grid=None, scoring='accuracy'):
     """ Perform classification on specified regions
 
-        Given a set of masks, this function retrieves studies associated with each 
-        mask at the specified threshold, optionally removes overlap and filters by studies 
-        and features. Then it trains an algorithm to classify studies based on features
-        and tests performance. 
+        Given a set of masks, this function retrieves studies associated with
+        each mask at the specified threshold, optionally removes overlap and
+        filters by studies and features. Then it trains an algorithm to
+        classify studies based on features and tests performance.
 
         Args:
             dataset: a Neurosynth dataset
             maks: a list of paths to Nifti masks
-            method: a string indicating which method to used. 
+            method: a string indicating which method to used.
                 'SVM': Support Vector Classifier with rbf kernel
                 'ERF': Extremely Randomized Forest classifier
-                'Dummy': A dummy classifier using stratified classes as predictor
-            threshold: percentage of voxels active within the mask for study to be included
-            remove_overlap: A boolean indicating if studies studies that appear in more than 
-                one mask should be excluded
-            regularization: A string indicating type of regularization to use. If None
-                performs no regularization.
+                'Dummy': A dummy classifier using stratified classes as
+                    predictor
+            threshold: percentage of voxels active within the mask for study
+                to be included
+            remove_overlap: A boolean indicating if studies studies that
+                appear in more than one mask should be excluded
+            regularization: A string indicating type of regularization to use.
+                If None, performs no regularization.
                 'scale': Unit scale without demeaning
             output: A string indicating output type
-                'summary': Dictionary with summary statistics including score and n
-                'summary_clf': Same as above but also includes classifier 
+                'summary': Dictionary with summary statistics including score
+                    and n
+                'summary_clf': Same as above but also includes classifier
                 'clf': Only returns classifier
-                Warning: using cv without grid will return an untrained classifier
-            studies: An optional list of study names used to constrain the set used in
-                classification. If None, will use all features in the dataset.
-            features: An optional list of feature names used to constrain the set used in
-                classification. If None, will use all features in the dataset.
-            class_weight: Parameter to pass to classifier determining how to weight classes
-            classifier: An optional sci-kit learn classifier to use instead of pre-set up 
-                classifiers set up using 'method'
-            cross_val: A string indicating type of cross validation to use. Can also pass a 
-                scikit_classifier
-            param_grid: A dictionary indicating which parameters to optimize using GridSearchCV
-                If None, no GridSearch will be used
+                Warning: using cv without grid will return an untrained
+                classifier
+            studies: An optional list of study names used to constrain the set
+                used in classification. If None, will use all features in the
+                dataset.
+            features: An optional list of feature names used to constrain the
+                set used in classification. If None, will use all features in
+                the dataset.
+            class_weight: Parameter to pass to classifier determining how to
+                weight classes
+            classifier: An optional sci-kit learn classifier to use instead of
+                pre-set up classifiers set up using 'method'
+            cross_val: A string indicating type of cross validation to use.
+                Can also pass a scikit_classifier
+            param_grid: A dictionary indicating which parameters to optimize
+                using GridSearchCV. If None, no GridSearch will be used
 
         Returns:
-            A tuple (X, y) of np arrays. 
+            A tuple (X, y) of np arrays.
             X is a feature by studies matrix and y is a vector of class labels
     """
 
-    (X, y) = get_studies_by_regions(dataset, masks, threshold,
-                                    remove_overlap, studies, features, regularization=regularization)
+    (X, y) = get_studies_by_regions(dataset, masks, threshold, remove_overlap,
+                                    studies, features,
+                                    regularization=regularization)
 
     return classify(X, y, method, classifier, output, cross_val,
                     class_weight, scoring=scoring, param_grid=param_grid)
@@ -196,7 +211,8 @@ def classify_regions(dataset, masks, method='ERF', threshold=0.08,
 
 def classify(X, y, clf_method='ERF', classifier=None, output='summary_clf',
              cross_val=None, class_weight=None, regularization=None,
-             param_grid=None, scoring='accuracy', refit_all=True, feat_select=None):
+             param_grid=None, scoring='accuracy', refit_all=True,
+             feat_select=None):
     """ Wrapper for scikit-learn classification functions
     Imlements various types of classification and cross validation """
 
@@ -205,7 +221,9 @@ def classify(X, y, clf_method='ERF', classifier=None, output='summary_clf',
 
     # Fit & test model with or without cross-validation
     if cross_val is not None:
-        score = clf.cross_val_fit(X, y, cross_val, scoring=scoring, feat_select=feat_select, class_weight=class_weight)
+        score = clf.cross_val_fit(X, y, cross_val, scoring=scoring,
+                                  feat_select=feat_select,
+                                  class_weight=class_weight)
     else:
         # Does not support scoring function
         score = clf.fit(X, y, class_weight=class_weight).score(X, y)
@@ -219,9 +237,16 @@ def classify(X, y, clf_method='ERF', classifier=None, output='summary_clf',
         if output == 'summary':
             output = {'score': score, 'n': dict(Counter(y))}
         elif output == 'summary_clf':
-            output = {'score': score, 'n': dict(Counter(y)), 'clf': clf, 'features_selected': clf.features_selected, 'predictions': clf.predictions}
+            output = {
+                'score': score,
+                'n': dict(Counter(y)),
+                'clf': clf,
+                'features_selected': clf.features_selected,
+                'predictions': clf.predictions
+            }
 
         return output
+
 
 class Classifier:
 
@@ -245,9 +270,9 @@ class Classifier:
                 self.clf = svm.SVC()
             elif clf_method == 'ERF':
                 from sklearn.ensemble import ExtraTreesClassifier
-                self.clf = ExtraTreesClassifier(n_estimators=100,
-                                                max_depth=None, min_samples_split=1,
-                                                random_state=0)
+                self.clf = ExtraTreesClassifier(
+                    n_estimators=100, max_depth=None, min_samples_split=1,
+                    random_state=0)
             elif clf_method == 'GBC':
                 from sklearn.ensemble import GradientBoostingClassifier
                 self.clf = GradientBoostingClassifier(n_estimators=100,
@@ -263,7 +288,7 @@ class Classifier:
             self.clf = GridSearchCV(estimator=self.clf,
                                     param_grid=param_grid)
 
-    def fit(self, X, y, cv=None, class_weight = 'auto'):
+    def fit(self, X, y, cv=None, class_weight='auto'):
         """ Fits X to outcomes y, using clf """
 
         # Incorporate error checking such as :
@@ -274,7 +299,7 @@ class Classifier:
         self.X = X
         self.y = y
 
-        self.set_class_weight(class_weight=class_weight, y = y)
+        self.set_class_weight(class_weight=class_weight, y=y)
 
         self.clf = self.clf.fit(X, y)
 
@@ -283,29 +308,30 @@ class Classifier:
     def set_class_weight(self, class_weight='auto', y=None):
         """ Sets the class_weight of the classifier to match y """
 
-        if class_weight == None:
+        if class_weight is None:
             cw = None
 
             try:
-                self.clf.set_params(class_weight = cw)
+                self.clf.set_params(class_weight=cw)
             except ValueError:
                 pass
-                
+
         elif class_weight == 'auto':
             c = np.bincount(y)
             ii = np.nonzero(c)[0]
             c = c / float(c.sum())
-            cw = dict(zip(ii[::-1],c[ii]))
+            cw = dict(zip(ii[::-1], c[ii]))
 
             try:
-                self.clf.set_params(class_weight = cw)
+                self.clf.set_params(class_weight=cw)
             except ValueError:
                 import warnings
-                warnings.warn("Tried to set class_weight, but failed. The classifier probably doesn't support it")
+                warnings.warn(
+                    "Tried to set class_weight, but failed. The classifier "
+                    "probably doesn't support it")
 
-
-
-    def cross_val_fit(self, X, y, cross_val='4-Fold', scoring='accuracy', feat_select=None, class_weight = 'auto'):
+    def cross_val_fit(self, X, y, cross_val='4-Fold', scoring='accuracy',
+                      feat_select=None, class_weight='auto'):
         """ Fits X to outcomes y, using clf and cv_method """
 
         from sklearn import cross_validation
@@ -313,10 +339,10 @@ class Classifier:
         self.X = X
         self.y = y
 
-        self.set_class_weight(class_weight=class_weight, y = y)
+        self.set_class_weight(class_weight=class_weight, y=y)
 
         # Set cross validator
-        if isinstance(cross_val, basestring):
+        if isinstance(cross_val, string_types):
             if re.match('.*-Fold', cross_val) is not None:
                 n = int(cross_val.split('-')[0])
                 self.cver = cross_validation.StratifiedKFold(self.y, n)
@@ -335,7 +361,8 @@ class Classifier:
 
             if feat_select is not None:
                 warnings.warn(
-                    "Cross-validated feature selection not supported witih GridSearchCV")
+                    "Cross-validated feature selection not supported with "
+                    "GridSearchCV")
             self.clf.set_params(cv=self.cver, scoring=scoring)
 
             with warnings.catch_warnings():
@@ -344,11 +371,12 @@ class Classifier:
 
             self.cvs = self.clf.best_score_
         else:
-            self.cvs = self.feat_select_cvs(feat_select=feat_select, scoring=scoring)
+            self.cvs = self.feat_select_cvs(
+                feat_select=feat_select, scoring=scoring)
 
         if feat_select is not None:
             fs = feature_selection(
-                    feat_select, X, y)
+                feat_select, X, y)
             self.features_selected.append(fs)
 
             X = X[:, fs]
@@ -357,8 +385,8 @@ class Classifier:
 
         return self.cvs.mean()
 
-    def feat_select_cvs(self, scoring = None, feat_select=None):
-        """ Returns cross validated scores (just like cross_val_score), 
+    def feat_select_cvs(self, scoring=None, feat_select=None):
+        """ Returns cross validated scores (just like cross_val_score),
         but includes feature selection as part of the cross validation loop """
 
         scores = []
@@ -385,7 +413,8 @@ class Classifier:
             self.clf.fit(X_train, y_train)
 
             # Test classifier
-            predicition, s = get_score(X_test, y_test, self.clf, scoring = scoring)
+            predicition, s = get_score(
+                X_test, y_test, self.clf, scoring=scoring)
 
             scores.append(s)
             self.predictions.append((y_test, predicition))

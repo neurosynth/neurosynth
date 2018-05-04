@@ -163,7 +163,8 @@ class Decoder:
         """
         self.feature_names = self.dataset.feature_table.feature_names
         if features is not None:
-            self.feature_names = [f for f in features if f in self.feature_names]
+            self.feature_names = [f for f in features
+                                  if f in self.feature_names]
         from neurosynth.analysis import meta
         self.feature_images = meta.analyze_features(
             self.dataset, self.feature_names, image_type=image_type,
@@ -234,7 +235,7 @@ class Decoder:
             return r
         elif value == 'z':
             f_r = np.arctanh(r)
-            return f_r*np.sqrt(y.shape[0]-3)
+            return f_r * np.sqrt(y.shape[0] - 3)
 
     def _xy_corr(self, x, y):
         x, y = x - x.mean(0), y - y.mean(0)
@@ -244,7 +245,6 @@ class Decoder:
     def plot_polar(self, data, n_top=3, overplot=False, labels=None,
                    palette='husl'):
 
-        r = np.linspace(0, 10, num=100)
         n_panels = data.shape[1]
 
         if labels is None:

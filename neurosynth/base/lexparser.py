@@ -65,7 +65,7 @@ class Parser(object):
 
     def p_list_andnot(self, p):
         'list : list ANDNOT list'
-        p[0] = p[1][set(p[1].index)-set(p[3].index)]
+        p[0] = p[1][set(p[1].index) - set(p[3].index)]
 
     def p_list_and(self, p):
         'list : list AND list'
