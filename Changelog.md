@@ -1,3 +1,6 @@
+## 0.3.6 (July 10, 2018)
+This release collects various bug fixes and improvements since the last release. It will probably be the last release (barring occasional maintenance releases) due to deprecation of this package in favor of other alternatives.
+
 ## 0.3.5 (March, 8, 2016)
 - Reworked base.py: now uses a pandas DataFrame to store activation data, and the Mappable class has been removed.
 - Fixed bug in peak-based search
