@@ -1,7 +1,15 @@
 language: python
-python:
-  - "3.6"
-  - "2.7"
+
+# Use explicit matrix so we can condition deployment on version
+matrix:
+  include:
+    - python: "2.7"
+      env:
+        - PYTHON_VERSION=2.7
+    - python: "3.6"
+      env:
+        - PYTHON_VERSION=3.6
+
 install:
   - pip install -r requirements.txt
   - pip install coveralls pytest pytest-cov
@@ -9,3 +17,12 @@ script: py.test --pyargs neurosynth --cov-report term-missing --cov=neurosynth
 after_success:
   - coveralls
 sudo: false
+
+deploy:
+  provider: pypi
+  user: $PYPI_USER
+  password: $PYPI_PASS
+  skip_cleanup: true
+  on:
+    tags: true
+    condition: $PYTHON_VERSION = "3.6"
