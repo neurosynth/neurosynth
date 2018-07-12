@@ -1,3 +1,8 @@
+## 0.3.7 (July 11, 2018)
+Minor release. Changes:
+- Update travis-ci config to deploy on tagged build
+- Rename output images
+
 ## 0.3.6 (July 10, 2018)
 This release collects various bug fixes and improvements since the last release. It will probably be the last release (barring occasional maintenance releases) due to deprecation of this package in favor of other alternatives.
 
