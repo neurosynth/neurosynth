@@ -13,7 +13,7 @@ from six import string_types
 class Decoder:
 
     def __init__(self, dataset=None, method='pearson', features=None,
-                 mask=None, image_type='specificity_z', threshold=0.001):
+                 mask=None, image_type='association-test_z', threshold=0.001):
         """ Initialize a new Decoder instance.
 
         Args:
