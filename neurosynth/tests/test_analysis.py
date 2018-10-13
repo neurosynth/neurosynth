@@ -124,6 +124,11 @@ class TestAnalysis(unittest.TestCase):
         self.assertEqual(n_unique, 4)
         shutil.rmtree(d)
 
+    def test_fdr(self):
+        pvals = np.array([.005, .1, .2, .5])
+        fdr_p = stats.fdr(pvals)
+        self.assertEqual(fdr_p, pvals[0])
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestAnalysis)
 
