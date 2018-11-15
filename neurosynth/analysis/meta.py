@@ -135,8 +135,8 @@ class MetaAnalysis(object):
 
         # Recompute conditionals with uniform prior
         logger.debug("Recomputing with uniform priors...")
-        pAgF_prior = prior * pAgF + (1 - prior) * pAgU
-        pFgA_prior = pAgF * prior / pAgF_prior
+        pA_prior = prior * pAgF + (1 - prior) * pAgU
+        pFgA_prior = pAgF * prior / pA_prior
 
         def p_to_z(p, sign):
             p = p / 2  # convert to two-tailed
@@ -178,7 +178,7 @@ class MetaAnalysis(object):
             'pA': pA,
             'pAgF': pAgF,
             'pFgA': pFgA,
-            ('pAgF_given_pF=%0.2f' % prior): pAgF_prior,
+            ('pA_given_pF=%0.2f' % prior): pA_prior,
             ('pFgA_given_pF=%0.2f' % prior): pFgA_prior,
             'uniformity-test_z': pAgF_z,
             'association-test_z': pFgA_z,
