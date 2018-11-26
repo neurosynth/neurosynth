@@ -158,13 +158,22 @@ def magic(dataset, method='coactivation', roi_mask=None,
         reference = roi
 
     if reduce_reference is not None:
+
+        # For non-coactivation-based approaches, transpose the data matrix
+        transpose = (method == 'coactivation')
+
         if isinstance(reduce_reference, string_types):
+
+            # Number of components can't exceed feature count or cluster count
+            n_feat = len(reference.data.T if transpose else reference.data)
+            n_components = min(n_components, n_feat)
+            if n_clusters is not None:
+                n_components = min(n_components, n_clusters)
+
             reduce_reference = {
-                'pca': sk_decomp.RandomizedPCA,
+                'pca': sk_decomp.PCA,
                 'ica': sk_decomp.FastICA
             }[reduce_reference](n_components)
-
-        transpose = (method == 'coactivation')
         reference = reference.transform(reduce_reference, transpose=transpose)
 
     if method == 'coactivation':
