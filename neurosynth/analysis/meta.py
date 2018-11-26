@@ -109,8 +109,9 @@ class MetaAnalysis(object):
         # If ids2 is provided, we only use mappables explicitly in either ids or ids2.
         # Otherwise, all mappables not in the ids list are used as the control
         # condition.
-        unselected_id_indices = ~self.selected_id_indices if ids2 == None \
+        unselected_id_indices = ~self.selected_id_indices if ids2 is None \
             else np.in1d(mt.ids, ids2)
+        mappable_id_indices = self.selected_id_indices | unselected_id_indices
 
         # Calculate different count variables
         logger.debug("Calculating counts...")
@@ -125,7 +126,8 @@ class MetaAnalysis(object):
         # U = unselected, A = activation. So, e.g., pAgF = p(A|F) = probability of activation
         # in a voxel if we know that the feature is present in a study.
         pF = (n_selected * 1.0) / n_mappables
-        pA = np.array((mt.data.sum(axis=1) * 1.0) / n_mappables).squeeze()
+        mappable_data = mt.data if ids2 is None else mt.data[:, mappable_id_indices]
+        pA = np.array((mappable_data.sum(axis=1) * 1.0) / n_mappables).squeeze()
 
         # Conditional probabilities
         logger.debug("Calculating conditional probabilities...")
@@ -135,8 +137,8 @@ class MetaAnalysis(object):
 
         # Recompute conditionals with uniform prior
         logger.debug("Recomputing with uniform priors...")
-        pAgF_prior = prior * pAgF + (1 - prior) * pAgU
-        pFgA_prior = pAgF * prior / pAgF_prior
+        pA_prior = prior * pAgF + (1 - prior) * pAgU
+        pFgA_prior = pAgF * prior / pA_prior
 
         def p_to_z(p, sign):
             p = p / 2  # convert to two-tailed
@@ -178,7 +180,7 @@ class MetaAnalysis(object):
             'pA': pA,
             'pAgF': pAgF,
             'pFgA': pFgA,
-            ('pAgF_given_pF=%0.2f' % prior): pAgF_prior,
+            ('pA_given_pF=%0.2f' % prior): pA_prior,
             ('pFgA_given_pF=%0.2f' % prior): pFgA_prior,
             'uniformity-test_z': pAgF_z,
             'association-test_z': pFgA_z,
