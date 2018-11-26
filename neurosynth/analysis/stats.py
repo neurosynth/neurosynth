@@ -66,4 +66,4 @@ def fdr(p, q=.05):
     nvox = p.shape[0]
     null = np.array(range(1, nvox + 1), dtype='float') * q / nvox
     below = np.where(s <= null)[0]
-    return s[max(below)] if any(below) else -1
+    return s[max(below)] if len(below) else -1
