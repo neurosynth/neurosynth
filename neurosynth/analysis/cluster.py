@@ -85,6 +85,9 @@ def magic(dataset, method='coactivation', roi_mask=None,
             'studies': Treat each study as a feature in an n-dimensional space.
                 I.e., voxels will be assigned to the same cluster if they tend
                 to be co-reported in similar studies.
+            'features': Voxels will be assigned to the same cluster if they
+                tend to have similar feature vectors (i.e., the studies that
+                activate those voxels tend to use similar terms).
         roi_mask: A string, nibabel image, or numpy array providing an
             inclusion mask of voxels to cluster. If None, the default mask
             in the Dataset instance is used (typically, all in-brain voxels).
@@ -158,12 +161,19 @@ def magic(dataset, method='coactivation', roi_mask=None,
         reference = roi
 
     if reduce_reference is not None:
+
         if isinstance(reduce_reference, string_types):
+
+            # Number of components can't exceed feature count or cluster count
+            n_feat = reference.data.shape[1]
+            n_components = min(n_components, n_feat)
+
             reduce_reference = {
-                'pca': sk_decomp.RandomizedPCA,
+                'pca': sk_decomp.PCA,
                 'ica': sk_decomp.FastICA
             }[reduce_reference](n_components)
 
+        # For non-coactivation-based approaches, transpose the data matrix
         transpose = (method == 'coactivation')
         reference = reference.transform(reduce_reference, transpose=transpose)
 
@@ -181,7 +191,6 @@ def magic(dataset, method='coactivation', roi_mask=None,
         }[clustering_algorithm](n_clusters, **clustering_kwargs)
 
     labels = clustering_algorithm.fit_predict(distances) + 1.
-
     header = roi.masker.get_header()
     header['cal_max'] = labels.max()
     header['cal_min'] = labels.min()
