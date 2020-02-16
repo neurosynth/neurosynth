@@ -631,7 +631,9 @@ class FeatureTable(object):
 
         data = old_data.merge(
             features, how=merge, left_index=True, right_index=True)
-        self.data = data.fillna(0.0).sparse.to_sparse()
+        self.data = data.fillna(0.0)
+        if self.data.dtypes.apply(pd.api.types.is_sparse).all():
+            self.data = sparse.to_sparse()
 
     @property
     def feature_names(self):
