@@ -663,10 +663,10 @@ class FeatureTable(object):
         result = self.data
 
         if ids is not None:
-            result = result.ix[ids]
+            result = result.loc[ids]
 
         if features is not None:
-            result = result.ix[:, features]
+            result = result.loc[:, features]
 
         return result.sparse.to_dense() if dense else result
 
@@ -719,7 +719,7 @@ class FeatureTable(object):
         if isinstance(features, str):
             features = [features]
         features = self.search_features(features)  # Expand wild cards
-        feature_weights = self.data.ix[:, features]
+        feature_weights = self.data.loc[:, features]
         weights = feature_weights.apply(func, 1)
         above_thresh = weights[weights >= threshold]
         # ids_to_keep = self.ids[above_thresh]
@@ -757,7 +757,7 @@ class FeatureTable(object):
                             get_weights=False):
         ''' Returns features for which the mean loading across all specified
         studies (in ids) is >= threshold. '''
-        weights = self.data.ix[ids].apply(func, 0)
+        weights = self.data.loc[ids].apply(func, 0)
         above_thresh = weights[weights >= threshold]
         return above_thresh if get_weights else list(above_thresh.index)
 
