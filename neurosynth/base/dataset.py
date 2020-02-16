@@ -621,7 +621,11 @@ class FeatureTable(object):
                 "instance from a newer database file that uses PMIDs rather "
                 "than doi's as the study identifiers in the first column.")
 
-        old_data = self.data.sparse.to_dense()
+        old_data = self.data
+        
+        if self.data.dtypes.apply(pd.api.types.is_sparse).all():
+            old_data = self.data.sparse.to_dense()
+        
         # Handle features with duplicate names
         common_features = list(set(old_data.columns) & set(features.columns))
         if duplicates == 'ignore':
@@ -759,7 +763,11 @@ class FeatureTable(object):
 
     def _sdf_to_csr(self):
         """ Convert FeatureTable to SciPy CSR matrix. """
-        data = self.data.sparse.to_dense()
+        data = self.data
+        
+        if data.dtypes.apply(pd.api.types.is_sparse).all():
+            data.sparse.to_dense()
+            
         self.data = {
             'columns': list(data.columns),
             'index': list(data.index),
