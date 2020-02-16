@@ -631,7 +631,7 @@ class FeatureTable(object):
 
         data = old_data.merge(
             features, how=merge, left_index=True, right_index=True)
-        self.data = data.fillna(0.0).to_sparse()
+        self.data = data.fillna(0.0).sparse.to_sparse()
 
     @property
     def feature_names(self):
@@ -768,4 +768,4 @@ class FeatureTable(object):
         """ Inverse of _sdf_to_csr(). """
         self.data = pd.DataFrame(self.data['values'].todense(),
                                  index=self.data['index'],
-                                 columns=self.data['columns']).to_sparse()
+                                 columns=self.data['columns']).sparse.to_sparse()
