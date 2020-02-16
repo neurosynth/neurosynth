@@ -776,6 +776,11 @@ class FeatureTable(object):
 
     def _csr_to_sdf(self):
         """ Inverse of _sdf_to_csr(). """
-        self.data = pd.DataFrame(self.data['values'].todense(),
-                                 index=self.data['index'],
-                                 columns=self.data['columns']).sparse.to_sparse()
+        if ~self.data.dtypes.apply(pd.api.types.is_sparse).all():
+            self.data = pd.DataFrame(self.data['values'].todense(),
+                                     index=self.data['index'],
+                                     columns=self.data['columns']).sparse.to_sparse()
+        else:
+            self.data = pd.DataFrame(self.data['values'].todense(),
+                                     index=self.data['index'],
+                                     columns=self.data['columns'])
