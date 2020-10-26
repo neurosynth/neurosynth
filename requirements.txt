@@ -2,7 +2,7 @@ matplotlib
 nibabel>=1.2
 numpy>=1.9
 scipy
-pandas>=0.13
+pandas~=0.13
 ply
 scikit-learn
 six
