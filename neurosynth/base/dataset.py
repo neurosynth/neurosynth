@@ -621,7 +621,7 @@ class FeatureTable(object):
                 "instance from a newer database file that uses PMIDs rather "
                 "than doi's as the study identifiers in the first column.")
 
-        old_data = self.data.to_dense()
+        old_data = self.data.sparse.to_dense()
         # Handle features with duplicate names
         common_features = list(set(old_data.columns) & set(features.columns))
         if duplicates == 'ignore':
@@ -631,7 +631,7 @@ class FeatureTable(object):
 
         data = old_data.merge(
             features, how=merge, left_index=True, right_index=True)
-        self.data = data.fillna(0.0).to_sparse()
+        self.data = data.fillna(0.0)
 
     @property
     def feature_names(self):
@@ -657,10 +657,10 @@ class FeatureTable(object):
         result = self.data
 
         if ids is not None:
-            result = result.ix[ids]
+            result = result.iloc[ids]
 
         if features is not None:
-            result = result.ix[:, features]
+            result = result[features]
 
         return result.to_dense() if dense else result
 
@@ -713,7 +713,7 @@ class FeatureTable(object):
         if isinstance(features, str):
             features = [features]
         features = self.search_features(features)  # Expand wild cards
-        feature_weights = self.data.ix[:, features]
+        feature_weights = self.data[features]
         weights = feature_weights.apply(func, 1)
         above_thresh = weights[weights >= threshold]
         # ids_to_keep = self.ids[above_thresh]
@@ -751,7 +751,7 @@ class FeatureTable(object):
                             get_weights=False):
         ''' Returns features for which the mean loading across all specified
         studies (in ids) is >= threshold. '''
-        weights = self.data.ix[ids].apply(func, 0)
+        weights = self.data.iloc[ids].apply(func, 0)
         above_thresh = weights[weights >= threshold]
         return above_thresh if get_weights else list(above_thresh.index)
 
@@ -768,4 +768,4 @@ class FeatureTable(object):
         """ Inverse of _sdf_to_csr(). """
         self.data = pd.DataFrame(self.data['values'].todense(),
                                  index=self.data['index'],
-                                 columns=self.data['columns']).to_sparse()
+                                 columns=self.data['columns'])
