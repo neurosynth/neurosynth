@@ -2,7 +2,7 @@
 
 import numpy as np
 from functools import reduce
-from sklearn.feature_selection.univariate_selection import SelectKBest
+from sklearn.feature_selection import SelectKBest
 import re
 from six import string_types
 
