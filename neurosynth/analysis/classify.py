@@ -2,7 +2,7 @@
 
 import numpy as np
 from functools import reduce
-from sklearn.feature_selection.univariate_selection import SelectKBest
+from sklearn.feature_selection import SelectKBest
 import re
 from six import string_types
 
@@ -284,7 +284,7 @@ class Classifier:
                 raise Exception('Unrecognized classification method')
 
         if isinstance(param_grid, dict):
-            from sklearn.grid_search import GridSearchCV
+            from sklearn.model_selection import GridSearchCV
             self.clf = GridSearchCV(estimator=self.clf,
                                     param_grid=param_grid)
 
@@ -334,7 +334,8 @@ class Classifier:
                       feat_select=None, class_weight='auto'):
         """ Fits X to outcomes y, using clf and cv_method """
 
-        from sklearn import cross_validation
+        # from sklearn.model_selection import cross_validation
+        from sklearn import model_selection 
 
         self.X = X
         self.y = y
@@ -345,7 +346,8 @@ class Classifier:
         if isinstance(cross_val, string_types):
             if re.match('.*-Fold', cross_val) is not None:
                 n = int(cross_val.split('-')[0])
-                self.cver = cross_validation.StratifiedKFold(self.y, n)
+                self.cver = model_selection.StratifiedKFold(n_splits=n).split(X,y)
+                # self.cver = model_selection.StratifiedKFold(self.y, n)
             else:
                 raise Exception('Unrecognized cross validation method')
         else:
@@ -355,8 +357,8 @@ class Classifier:
             self.features_selected = []
 
         # Perform cross-validated classification
-        from sklearn.grid_search import GridSearchCV
-        if isinstance(self.clf, GridSearchCV):
+        # from sklearn.grid_search import GridSearchCV
+        if isinstance(self.clf, model_selection.GridSearchCV):
             import warnings
 
             if feat_select is not None:
