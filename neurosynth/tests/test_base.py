@@ -67,7 +67,7 @@ class TestBase(unittest.TestCase):
         self.assertEqual(len(self.dataset.get_feature_names()), 5)
         self.assertEqual(tt.data.shape, (5, 5))
         self.assertEqual(tt.data.columns[3], 'f4')
-        self.assertEqual(tt.data.to_dense().iloc[0, 0], 0.0003)
+        self.assertEqual(tt.data.astype(np.float64).iloc[0, 0], 0.0003)
 
     def test_feature_addition(self):
         """ Add feature data from multiple sources to FeatureTable. """
@@ -225,8 +225,11 @@ class TestBase(unittest.TestCase):
             self.assertGreater(c, 0, "feature %s has no hits" % f)
         # and should be equal to the ones computed directly (we do not do
         # any fancy queries atm), assumes default threshold of 0.001
-        feature_counts_ = dict([(feature, np.sum(self.dataset.feature_table.data.to_dense().ix[:, col] > 0.001))
-                                for col, feature in enumerate(self.dataset.feature_table.feature_names)])
+        ft = self.dataset.feature_table
+        feature_counts_ = dict(
+            (feature, np.sum(ft.data.iloc[:, col].sparse.to_dense() > 0.001))
+            for col, feature in enumerate(ft.feature_names)
+        )
         self.assertEqual(feature_counts, feature_counts_)
 
     def test_get_feature_data(self):
