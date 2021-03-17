@@ -621,7 +621,11 @@ class FeatureTable(object):
                 "instance from a newer database file that uses PMIDs rather "
                 "than doi's as the study identifiers in the first column.")
 
-        old_data = self.data.sparse.to_dense()
+        old_data = self.data
+
+        if self.data.dtypes.apply(pd.api.types.is_sparse).all():
+            old_data = self.data.sparse.to_dense()
+
         # Handle features with duplicate names
         common_features = list(set(old_data.columns) & set(features.columns))
         if duplicates == 'ignore':
@@ -631,7 +635,8 @@ class FeatureTable(object):
 
         data = old_data.merge(
             features, how=merge, left_index=True, right_index=True)
-        self.data = data.fillna(0.0)
+        self.data = data.fillna(0.0).astype(pd.SparseDtype(np.float64))
+
 
     @property
     def feature_names(self):
@@ -662,7 +667,7 @@ class FeatureTable(object):
         if features is not None:
             result = result[features]
 
-        return result.to_dense() if dense else result
+        return result.sparse.to_dense() if dense else result
 
     def get_ordered_names(self, features):
         """ Given a list of features, returns features in order that they
@@ -757,7 +762,7 @@ class FeatureTable(object):
 
     def _sdf_to_csr(self):
         """ Convert FeatureTable to SciPy CSR matrix. """
-        data = self.data.to_dense()
+        data = self.data.astype(np.float64)
         self.data = {
             'columns': list(data.columns),
             'index': list(data.index),
