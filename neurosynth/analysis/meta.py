@@ -46,8 +46,11 @@ def analyze_features(dataset, features=None, image_type='association-test_z',
         ma = MetaAnalysis(dataset, ids, q=q)
 
         if output_dir is None:
-            in_mask = dataset.masker.get_mask(in_global_mask=True)
-            result[:, i] = ma.images[image_type][in_mask]
+            if dataset.masker.layers:
+                in_mask = dataset.masker.get_mask(in_global_mask=True)
+                result[:, i] = ma.images[image_type][in_mask]
+            else:
+                result[:, i] = ma.images[image_type]
         else:
             pfx = f if prefix is None else prefix + '_' + f
             ma.save_results(output_dir=output_dir, prefix=pfx)
