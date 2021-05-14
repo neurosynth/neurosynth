@@ -169,10 +169,6 @@ class Decoder:
         self.feature_images = meta.analyze_features(
             self.dataset, self.feature_names, image_type=image_type,
             threshold=threshold)
-        # Apply a mask if one was originally passed
-        if self.masker.layers:
-            in_mask = self.masker.get_mask(in_global_mask=True)
-            self.feature_images = self.feature_images[in_mask, :]
 
     def _load_features_from_images(self, images, names=None):
         """ Load feature image data from image files.
