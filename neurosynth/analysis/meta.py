@@ -44,8 +44,10 @@ def analyze_features(dataset, features=None, image_type='association-test_z',
     for i, f in enumerate(features):
         ids = dataset.get_studies(features=f, frequency_threshold=threshold)
         ma = MetaAnalysis(dataset, ids, q=q)
+
         if output_dir is None:
-            result[:, i] = ma.images[image_type]
+            in_mask = dataset.masker.get_mask(in_global_mask=True)
+            result[:, i] = ma.images[image_type][in_mask]
         else:
             pfx = f if prefix is None else prefix + '_' + f
             ma.save_results(output_dir=output_dir, prefix=pfx)
