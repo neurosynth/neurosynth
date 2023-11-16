@@ -1,9 +1,8 @@
+**Note: this package is no longer actively maintained; most of its functionality has been integrated into the much more expansive [NiMARE](https://github.com/neurostuff/NiMARE) package, which we recommend using instead.**
 
 # What is Neurosynth?
 
 Neurosynth is a Python package for large-scale synthesis of functional neuroimaging data.
-
-**Note: this package is no longer actively maintained; most of its functionality has been integrated into the much more expansive [NiMARE](https://github.com/neurostuff/NiMARE) package, which we recommend using instead.**
 
 ## Code status
 
