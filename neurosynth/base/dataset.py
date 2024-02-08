@@ -35,7 +35,7 @@ def download(path='.', url=None, unpack=False):
     """
 
     if url is None:
-        url = 'https://github.com/neurosynth/neurosynth-data/blob/master/current_data.tar.gz?raw=true'
+        url = 'https://github.com/neurosynth/neurosynth-data/blob/e8f27c4/current_data.tar.gz?raw=true'
     if os.path.exists(path) and os.path.isdir(path):
         basename = os.path.basename(url).split('?')[0]
         filename = os.path.join(path, basename)
