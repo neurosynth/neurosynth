@@ -34,7 +34,7 @@ Assuming you have those packages in working order, the easiest way to install Ne
 
 Alternatively, if you want the latest development version, you can install directly from the github repo:
 
-	> pip install git+https://github.com/neurosynth/neurosynth.git
+	> pip install -e git+https://github.com/neurosynth/neurosynth.git#egg=neurosynth
 
 Depending on your operating system, you may need superuser privileges (prefix the above line with 'sudo').
 
